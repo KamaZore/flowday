@@ -208,7 +208,9 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               to={item.path}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-1 flex-col items-center justify-center gap-0.5 pb-[env(safe-area-inset-bottom,0px)] pt-2 text-[10px] font-medium text-muted-foreground transition-colors",
+                  // Container .safe-nav already covers the home-indicator inset;
+                  // adding it here too double-counted it on notched phones.
+                  "flex flex-1 flex-col items-center justify-center gap-0.5 pt-2 text-[10px] font-medium text-muted-foreground transition-colors",
                   isActive && "text-primary",
                 )
               }
@@ -251,12 +253,19 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 /** Mobile “More” menu covering the nav items that don't fit in the bottom bar. */
 function MobileMoreMenu() {
   const { t } = useI18n();
+  const location = useLocation();
   const moreItems = NAV_ITEMS.slice(3);
+  // useLocation re-renders on every navigation, so the active state is never
+  // stale (the old window.location.pathname read was — it didn't update).
+  const moreActive = moreItems.some((i) => location.pathname === i.path);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex flex-1 flex-col items-center justify-center gap-0.5 pb-[env(safe-area-inset-bottom,0px)] pt-2 text-[10px] font-medium text-muted-foreground transition-colors data-[active=true]:text-primary" data-active={moreItems.some((i) => window.location.pathname === i.path)}>
-          <LayoutGrid className="size-5" />
+        <button
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 pt-2 text-[10px] font-medium text-muted-foreground transition-colors data-[active=true]:text-primary"
+          data-active={moreActive}
+        >
+          <LayoutGrid className={cn("size-5", moreActive && "text-primary")} />
           {t("nav.more")}
         </button>
       </DropdownMenuTrigger>

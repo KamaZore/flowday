@@ -121,8 +121,7 @@ export default function Landing() {
               <span className="text-primary">{t("landing.heroB")}</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-              Flowday turns goals into projects, projects into routines, and
-              routines into the tasks you actually do — today.
+              {t("landing.heroSub")}
             </p>
           </motion.div>
           <motion.div
@@ -133,11 +132,11 @@ export default function Landing() {
           >
             <Button asChild size="lg" className="h-12 rounded-2xl px-7 text-base">
               <Link to="/register">
-                Start planning free <ArrowRight className="ml-1 size-4" />
+                {t("landing.ctaStartFree")} <ArrowRight className="ml-1 size-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 rounded-2xl px-7 text-base">
-              <Link to="/auth">Sign in to Flowday</Link>
+              <Link to="/auth">{t("landing.ctaSignIn")}</Link>
             </Button>
           </motion.div>
 
@@ -205,10 +204,10 @@ export default function Landing() {
       <section id="flow" className="border-t border-border/60 bg-muted/30 px-4 py-16">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-2xl font-bold tracking-tight md:text-3xl">
-            From intention to action
+            {t("landing.flowTitle")}
           </h2>
           <p className="mx-auto mt-2 max-w-lg text-center text-sm text-muted-foreground">
-            One connected system instead of five disconnected apps.
+            {t("landing.flowSub")}
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-2 md:gap-3">
             {FLOW.map((f, i) => (
@@ -230,7 +229,7 @@ export default function Landing() {
       <section id="features" className="px-4 py-16">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-2xl font-bold tracking-tight md:text-3xl">
-            Simple by design
+            {t("landing.featuresTitle")}
           </h2>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
@@ -255,26 +254,26 @@ export default function Landing() {
       <section className="px-4 pb-20">
         <div className="card-soft mx-auto max-w-3xl rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 text-center md:p-12">
           <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
-            Ready to find your flow?
+            {t("landing.ctaTitle")}
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Start in seconds. Sample data included so you can feel the flow
-            before adding your own.
+            {t("landing.ctaSub")}
           </p>
           <Button asChild size="lg" className="mt-6 h-12 rounded-2xl px-8 text-base">
             <Link to={isAuthenticated ? "/today" : "/register"}>
-              {isAuthenticated ? "Open Flowday" : "Create your free account"} <ArrowRight className="ml-1 size-4" />
+              {isAuthenticated ? t("landing.ctaOpen") : t("landing.ctaButton")}{" "}
+              <ArrowRight className="ml-1 size-4" />
             </Link>
           </Button>
           <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <Smartphone className="size-3.5" />
-            Installable on iOS, Android & desktop
+            {t("landing.installNote")}
           </p>
         </div>
       </section>
 
       <footer className="border-t border-border/60 px-4 py-8 text-center text-xs text-muted-foreground">
-        Flowday — your day, in flow. Made for one: you.
+        {t("landing.footer")}
       </footer>
     </div>
   );

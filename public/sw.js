@@ -1,7 +1,7 @@
 /* Flowday service worker — offline-first app shell caching */
 // Bump this version whenever app assets change so clients pick up the new
 // build instead of serving a stale cache (classic "preview looks broken" bug).
-const VERSION = "flowday-v3";
+const VERSION = "flowday-v4";
 const APP_SHELL = [
   "/",
   "/today",
