@@ -9,6 +9,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  administration: write
 
 concurrency:
   group: pages
@@ -29,6 +30,19 @@ jobs:
         env:
           VITE_NEON_DATABASE_URL: ${{ secrets.VITE_NEON_DATABASE_URL }}
         run: bun run build:pages
+
+      - name: Enable GitHub Pages (first deploy only)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STATUS=$(gh api "repos/${{ github.repository }}/pages" --jq .status 2>/dev/null || echo "none")
+          if [ "$STATUS" = "none" ]; then
+            gh api -X POST "repos/${{ github.repository }}/pages" -f build_type=workflow
+            echo "GitHub Pages enabled (source: GitHub Actions)"
+          else
+            echo "GitHub Pages already configured (status: $STATUS)"
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
