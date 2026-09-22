@@ -2,10 +2,12 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { useConvex } from "convex/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { classifyAuthError, useAuth } from "@/hooks/use-auth";
+import { api } from "@/convex/_generated/api";
 import { useI18n } from "@/lib/i18n";
 
 function resolveRedirect(returnTo: string | null, fallback = "/today") {
@@ -22,6 +24,7 @@ function RegisterInner() {
   const { t } = useI18n();
   const { isAuthenticated, isLoading } = useAuth();
   const { signIn } = useAuthActions();
+  const convex = useConvex();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
@@ -49,21 +52,25 @@ function RegisterInner() {
     }
     setBusy(true);
     try {
+      // Normalize the email so register/login lookups always agree.
+      const normalizedEmail = email.trim().toLowerCase();
+      // Convex Auth's signUp does NOT reject duplicate emails (it would just
+      // create a second account), so check first and guide the user to sign in.
+      const alreadyExists = await convex.query(api.accountCheck.exists, {
+        email: normalizedEmail,
+      });
+      if (alreadyExists) {
+        setError(t("auth.errExists"));
+        return;
+      }
       // Params must be Convex values, so only include `name` when provided.
       const params: Record<string, string> = {
-        email: email.trim(),
+        email: normalizedEmail,
         password,
         flow: "signUp",
       };
       if (name.trim()) params.name = name.trim();
-      const res = (await signIn("password", params)) as
-        | { signedIn?: boolean }
-        | null
-        | undefined;
-      if (res && typeof res === "object" && res.signedIn === false) {
-        setError(t("auth.errGeneric"));
-        return;
-      }
+      await signIn("password", params);
       // Auth state flip navigates via the effect above.
     } catch (err) {
       const kind = classifyAuthError(err);

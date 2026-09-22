@@ -43,15 +43,11 @@ function AuthInner() {
     setError(null);
     setBusy(true);
     try {
-      const res = (await signIn("password", {
-        email: email.trim(),
+      await signIn("password", {
+        email: email.trim().toLowerCase(),
         password,
         flow: "signIn",
-      })) as { signedIn?: boolean } | null | undefined;
-      if (res && typeof res === "object" && res.signedIn === false) {
-        setError(t("auth.errGeneric"));
-        return;
-      }
+      });
       // Auth state flip navigates via the effect above.
     } catch (err) {
       const kind = classifyAuthError(err);

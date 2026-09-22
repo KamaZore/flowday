@@ -41,15 +41,19 @@ export function useAuth() {
 
 /**
  * Map a Convex Auth error to a UI-facing kind so pages can show the right
- * bilingual message. Convex Auth throws plain Errors like
- * "Invalid credentials" (wrong email/password) or an "already exists"-style
- * message when registering a duplicate email.
+ * bilingual message. Verified against the real backend:
+ *   - wrong password  → throws "InvalidSecret"
+ *   - unknown email   → throws "InvalidAccountId"
+ *   - duplicate email → signUp silently succeeds, so the register page
+ *     pre-checks via the accountCheck.exists query instead.
  */
 export type AuthErrorKind = "invalid" | "exists" | "generic";
 
 export function classifyAuthError(err: unknown): AuthErrorKind {
   const msg = err instanceof Error ? err.message : String(err);
-  if (/invalid credentials/i.test(msg)) return "invalid";
+  if (/InvalidSecret|InvalidAccountId|invalid credentials/i.test(msg)) {
+    return "invalid";
+  }
   if (/exist|already/i.test(msg)) return "exists";
   return "generic";
 }
