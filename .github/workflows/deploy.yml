@@ -26,6 +26,8 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build (relative base for GitHub Pages)
+        env:
+          VITE_NEON_DATABASE_URL: ${{ secrets.VITE_NEON_DATABASE_URL }}
         run: bun run build:pages
 
       - name: Upload artifact
