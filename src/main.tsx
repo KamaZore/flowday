@@ -110,7 +110,52 @@ function UserStoreBridge() {
   return null;
 }
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+// The Convex URL is injected by the platform. When running the project
+// locally it must be provided via .env (see .env.example) — otherwise show a
+// clear setup screen instead of crashing on a white page.
+const CONVEX_URL = import.meta.env.VITE_CONVEX_URL as string | undefined;
+const convex = CONVEX_URL ? new ConvexReactClient(CONVEX_URL) : null;
+
+function MissingConvexEnv() {
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-background p-6">
+      <div className="max-w-lg space-y-3 text-center">
+        <p className="text-lg font-bold">Convex URL missing · គ្មាន URL របស់ Convex</p>
+        <p className="text-sm text-muted-foreground">
+          This app needs the backend URL to start. Inside the Freebuff preview it
+          is injected automatically — for local runs, copy{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">.env.example</code>{" "}
+          to <code className="rounded bg-muted px-1.5 py-0.5 text-xs">.env</code>,
+          set <code className="rounded bg-muted px-1.5 py-0.5 text-xs">VITE_CONVEX_URL</code>,
+          then run <code className="rounded bg-muted px-1.5 py-0.5 text-xs">bun install</code>{" "}
+          and <code className="rounded bg-muted px-1.5 py-0.5 text-xs">bunx convex dev</code>.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          ប្រតិភូគម្រោងត្រូវការ VITE_CONVEX_URL ក្នុងឯកសារ .env ដើម្បីដំណើរការក្នុងស្រុក។
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Root() {
+  if (!convex) return <MissingConvexEnv />;
+  return (
+    <ConvexAuthProvider client={convex}>
+      <I18nProvider>
+        <BrowserRouter>
+          <RouteSyncer />
+          <ServiceWorkerRegistrar />
+          <UserStoreBridge />
+          <Suspense fallback={<RouteLoading />}>
+            <AppRoutes />
+          </Suspense>
+        </BrowserRouter>
+        <Toaster />
+      </I18nProvider>
+    </ConvexAuthProvider>
+  );
+}
 
 /** App pages share the AppLayout (sidebar / bottom nav / quick add). */
 function AppRoutes() {
@@ -281,19 +326,7 @@ createRoot(document.getElementById("root")!).render(
       <ToolbarErrorBoundary>
         <VlyToolbar />
       </ToolbarErrorBoundary>
-      <ConvexAuthProvider client={convex}>
-        <I18nProvider>
-          <BrowserRouter>
-            <RouteSyncer />
-            <ServiceWorkerRegistrar />
-            <UserStoreBridge />
-            <Suspense fallback={<RouteLoading />}>
-              <AppRoutes />
-            </Suspense>
-          </BrowserRouter>
-          <Toaster />
-        </I18nProvider>
-      </ConvexAuthProvider>
+      <Root />
     </RootErrorBoundary>
   </StrictMode>,
 );
