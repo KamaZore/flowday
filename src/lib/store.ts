@@ -4,6 +4,7 @@ import {
   recurrenceMatches,
   todayKey,
 } from "./date-utils";
+import { getAppData, saveAppData } from "./db";
 
 export { recurrenceMatches, recurrenceWeekdays } from "./date-utils";
 import type {
@@ -27,6 +28,45 @@ import type {
 export const DATA_VERSION = 1;
 const STORAGE_KEY = "flowday-data-v1";
 
+/* ------------------------------------------------------------------ */
+/* Session primitives (shared with hooks/use-auth.ts)                  */
+/* ------------------------------------------------------------------ */
+
+export const SESSION_KEY = "flowday-session-v1";
+
+export type AppSession = {
+  token: string;
+  userId: string;
+  email: string;
+  name: string;
+};
+
+export function readSession(): AppSession | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AppSession;
+    return parsed?.token && parsed?.userId ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeSession(s: AppSession | null) {
+  try {
+    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+    else localStorage.removeItem(SESSION_KEY);
+  } catch {
+    // storage unavailable — stay signed in for this tab only
+  }
+}
+
+/**
+ * Signed-in session for the current device. Kept beside the store so the
+ * sync layer and the auth provider share one source of truth.
+ */
+export const getSession = readSession;
+
 /**
  * Storage is scoped per signed-in account: each user gets an isolated
  * "table" of data (`flowday-data-v1:u:<userId>`), so accounts on the same
@@ -47,6 +87,8 @@ export function switchUser(owner: string | null) {
   data = load();
   persist();
   listeners.forEach((l) => l());
+  // Signed in: prefer the remote document so this device catches up.
+  if (owner) void pullRemote();
 }
 
 export function uid(): string {
@@ -406,7 +448,9 @@ function persist() {
 function set(updater: (d: AppData) => AppData) {
   data = updater(data);
   persist();
+  dirtySinceSync = true;
   listeners.forEach((l) => l());
+  queuePush(); // debounced background sync to Postgres
 }
 
 export function subscribe(listener: () => void): () => void {
@@ -420,6 +464,102 @@ export function getData(): AppData {
 
 function useAppData(): AppData {
   return useSyncExternalStore(subscribe, getData, getData);
+}
+
+/* ------------------------------------------------------------------ */
+/* Remote sync (Neon Postgres)                                         */
+/*                                                                     */
+/* Local-first: every mutation writes to localStorage immediately and   */
+/* then queues a debounced push of the whole document to the signed-in  */
+/* user's row in the `app_data` table. Signing in pulls the remote      */
+/* document first, so the same account sees the same data everywhere.   */
+/* ------------------------------------------------------------------ */
+
+export type SyncState = { syncing: boolean; error: string | null };
+
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let syncing = false;
+let lastSyncError: string | null = null;
+// True when the local document changed since the last pull/push. Prevents an
+// async pull from clobbering edits the user made while it was in flight.
+let dirtySinceSync = false;
+const syncListeners = new Set<() => void>();
+
+function notifySync() {
+  syncListeners.forEach((l) => l());
+}
+
+export function subscribeSync(listener: () => void): () => void {
+  syncListeners.add(listener);
+  return () => syncListeners.delete(listener);
+}
+
+export function getSyncState(): SyncState {
+  return { syncing, error: lastSyncError };
+}
+
+export function useSyncState(): SyncState {
+  return useSyncExternalStore(subscribeSync, getSyncState, getSyncState);
+}
+
+/** Pull the signed-in user's document from Postgres into local state. */
+export async function pullRemote(): Promise<boolean> {
+  const session = getSession();
+  if (!session) return false;
+  syncing = true;
+  lastSyncError = null;
+  notifySync();
+  try {
+    const remote = (await getAppData(session.userId)) as AppData | null;
+    if (dirtySinceSync) {
+      // Local edits happened while pulling — local wins, push instead.
+      queuePush();
+      return true;
+    }
+    if (remote && typeof remote === "object" && Array.isArray(remote.tasks)) {
+      data = { ...remote, version: DATA_VERSION };
+      persist();
+      dirtySinceSync = false;
+      listeners.forEach((l) => l());
+    }
+    return true;
+  } catch (err) {
+    lastSyncError = err instanceof Error ? err.message : String(err);
+    return false;
+  } finally {
+    syncing = false;
+    notifySync();
+  }
+}
+
+/** Push the current document to Postgres (debounced). */
+export function queuePush() {
+  if (!getSession()) return;
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    syncTimer = null;
+    void pushNow();
+  }, 1200);
+}
+
+export async function pushNow(): Promise<boolean> {
+  const session = getSession();
+  if (!session) return false;
+  if (syncing) return false;
+  syncing = true;
+  lastSyncError = null;
+  notifySync();
+  try {
+    await saveAppData(session.userId, data);
+    dirtySinceSync = false;
+    return true;
+  } catch (err) {
+    lastSyncError = err instanceof Error ? err.message : String(err);
+    return false;
+  } finally {
+    syncing = false;
+    notifySync();
+  }
 }
 
 /* ------------------------------------------------------------------ */

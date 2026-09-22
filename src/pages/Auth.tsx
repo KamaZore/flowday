@@ -1,11 +1,11 @@
-import { useAuthActions } from "@convex-dev/auth/react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { classifyAuthError, useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth";
+import { hasDb } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
 
 function resolveRedirect(returnTo: string | null, fallback = "/today") {
@@ -14,13 +14,12 @@ function resolveRedirect(returnTo: string | null, fallback = "/today") {
 }
 
 /**
- * Login page — email + password against the app's own database (Convex Auth).
+ * Login page — email + password against the app's own Neon Postgres database.
  * New visitors can jump to /register to create an account.
  */
 function AuthInner() {
   const { t } = useI18n();
-  const { isAuthenticated, isLoading } = useAuth();
-  const { signIn } = useAuthActions();
+  const { isAuthenticated, isLoading, signIn } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
@@ -43,15 +42,10 @@ function AuthInner() {
     setError(null);
     setBusy(true);
     try {
-      await signIn("password", {
-        email: email.trim().toLowerCase(),
-        password,
-        flow: "signIn",
-      });
+      await signIn(email, password);
       // Auth state flip navigates via the effect above.
-    } catch (err) {
-      const kind = classifyAuthError(err);
-      setError(kind === "invalid" ? t("auth.errInvalid") : t("auth.errGeneric"));
+    } catch {
+      setError(t("auth.errInvalid"));
     } finally {
       setBusy(false);
     }
@@ -75,6 +69,12 @@ function AuthInner() {
         </svg>
         <span className="text-xl font-bold">Flowday</span>
       </button>
+
+      {!hasDb && (
+        <p className="relative mb-4 w-full max-w-sm rounded-xl bg-amber-500/10 px-3 py-2 text-center text-xs font-medium text-amber-600 dark:text-amber-400">
+          {t("auth.dbMissing")}
+        </p>
+      )}
 
       <div className="card-soft relative w-full max-w-sm rounded-3xl border border-border/70 bg-card p-6">
         <h1 className="text-xl font-bold tracking-tight">{t("auth.title")}</h1>

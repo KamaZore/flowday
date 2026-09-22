@@ -1,12 +1,12 @@
-import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
-import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
-import { ConvexAuthProvider } from "@convex-dev/auth/react";
-import { ConvexReactClient } from "convex/react";
+import { AuthProvider } from "@/hooks/use-auth";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router";
+import {
+  createHashRouter,
+  RouterProvider,
+} from "react-router";
 import { I18nProvider } from "@/lib/i18n";
 import { switchUser } from "@/lib/store";
 import { useAuth } from "@/hooks/use-auth";
@@ -37,24 +37,6 @@ function RouteLoading() {
   );
 }
 
-/** Silent error boundary — if VlyToolbar crashes it renders nothing instead of
- *  crashing the whole app (e.g. hook errors in WebContainer environment). */
-class ToolbarErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-  componentDidCatch(err: Error) {
-    console.warn("[VlyToolbar] Caught error, toolbar disabled:", err.message);
-  }
-  render() {
-    return this.state.hasError ? null : this.props.children;
-  }
-}
-
 /** Hard guard so runtime errors never leave the preview as a blank page. */
 class RootErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -67,9 +49,6 @@ class RootErrorBoundary extends React.Component<
       message: error.message || "Unknown runtime error",
       stack: error.stack || "",
     };
-  }
-  componentDidCatch(err: Error) {
-    console.error("[WebContainer preview] Root crash:", err);
   }
   render() {
     if (this.state.hasError) {
@@ -96,7 +75,8 @@ class RootErrorBoundary extends React.Component<
 /**
  * Bridges auth state to the local store: each signed-in account gets its own
  * isolated dataset (its own "table") via switchUser(). Signing out returns
- * the app to the shared signed-out dataset.
+ * the app to the shared signed-out dataset. Data also syncs to the Neon
+ * Postgres `app_data` table per user (see lib/store.ts).
  */
 function UserStoreBridge() {
   const { isLoading, isAuthenticated, user } = useAuth();
@@ -112,35 +92,6 @@ function UserStoreBridge() {
     }
   }, [isLoading, isAuthenticated, userId]);
   return null;
-}
-
-const CONVEX_URL = import.meta.env.VITE_CONVEX_URL as string | undefined;
-const convex = CONVEX_URL ? new ConvexReactClient(CONVEX_URL) : null;
-
-// The platform injects VITE_CONVEX_URL in the preview. When missing — e.g. a
-// fork of this project — render a clear setup screen instead of crashing.
-function MissingConvexUrl() {
-  return (
-    <div className="flex min-h-dvh items-center justify-center bg-background p-6">
-      <div className="max-w-lg space-y-3 text-center">
-        <p className="text-lg font-bold">
-          Backend URL missing · គ្មានអាសយដ្ឋាន Backend
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Set{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-            VITE_CONVEX_URL
-          </code>{" "}
-          in the project's environment (Keys/API keys) or a local{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">.env</code>{" "}
-          file, then restart the dev server.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          សូមបញ្ចូល VITE_CONVEX_URL ក្នុងហ្វាក់ការកំណត់ រួច restart កម្មវិធី។
-        </p>
-      </div>
-    </div>
-  );
 }
 
 /** App pages share the AppLayout (sidebar / bottom nav / quick add). */
@@ -237,6 +188,7 @@ function AppRoutes() {
 
 // Imported after AppRoutes definition to avoid circular import confusion.
 import { AppLayout } from "@/components/app/AppLayout";
+import { Routes, Route } from "react-router";
 
 /** Renders the AppLayout chrome around the active page. */
 function AppLayoutMount({ view }: { view: string }) {
@@ -269,34 +221,12 @@ function AppLayoutMount({ view }: { view: string }) {
   return <AppLayout>{page}</AppLayout>;
 }
 
-function RouteSyncer() {
-  const location = useLocation();
-  useEffect(() => {
-    window.parent.postMessage(
-      { type: "iframe-route-change", path: location.pathname },
-      "*",
-    );
-  }, [location.pathname]);
-
-  useEffect(() => {
-    function handleMessage(event: MessageEvent) {
-      if (event.data?.type === "navigate") {
-        if (event.data.direction === "back") window.history.back();
-        if (event.data.direction === "forward") window.history.forward();
-      }
-    }
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
-
-  return null;
-}
-
 /** Register the service worker for offline support (production + preview). */
 function ServiceWorkerRegistrar() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch((err) => {
+      // Relative path so the SW also works under a GitHub Pages subpath.
+      navigator.serviceWorker.register("sw.js").catch((err) => {
         console.warn("Service worker registration skipped:", err);
       });
     }
@@ -305,30 +235,36 @@ function ServiceWorkerRegistrar() {
 }
 
 function Root() {
-  if (!convex) return <MissingConvexUrl />;
   return (
-    <ConvexAuthProvider client={convex}>
+    <AuthProvider>
       <I18nProvider>
-        <BrowserRouter>
-          <RouteSyncer />
-          <ServiceWorkerRegistrar />
-          <UserStoreBridge />
-          <Suspense fallback={<RouteLoading />}>
-            <AppRoutes />
-          </Suspense>
-        </BrowserRouter>
+        <RouterProvider router={router} />
         <Toaster />
       </I18nProvider>
-    </ConvexAuthProvider>
+    </AuthProvider>
   );
 }
+
+/**
+ * Hash router: GitHub Pages serves static files with no server-side routing,
+ * so /today lives at /#/today. Works identically in local dev.
+ */
+const router = createHashRouter([
+  {
+    path: "/*",
+    element: (
+      <Suspense fallback={<RouteLoading />}>
+        <ServiceWorkerRegistrar />
+        <UserStoreBridge />
+        <AppRoutes />
+      </Suspense>
+    ),
+  },
+]);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RootErrorBoundary>
-      <ToolbarErrorBoundary>
-        <VlyToolbar />
-      </ToolbarErrorBoundary>
       <Root />
     </RootErrorBoundary>
   </StrictMode>,

@@ -1,13 +1,11 @@
-import { useAuthActions } from "@convex-dev/auth/react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { useConvex } from "convex/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { classifyAuthError, useAuth } from "@/hooks/use-auth";
-import { api } from "@/convex/_generated/api";
+import { useAuth } from "@/hooks/use-auth";
+import { hasDb } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
 
 function resolveRedirect(returnTo: string | null, fallback = "/today") {
@@ -16,15 +14,13 @@ function resolveRedirect(returnTo: string | null, fallback = "/today") {
 }
 
 /**
- * Register page — creates a real account (email + password) in the app's own
- * database. Each account gets its own isolated data table on this device
- * (see UserStoreBridge in main.tsx).
+ * Register page — creates a real account (email + bcrypt password) in the
+ * app's own Neon Postgres database. Each account keeps its own isolated
+ * dataset locally and syncs to its own `app_data` row.
  */
 function RegisterInner() {
   const { t } = useI18n();
-  const { isAuthenticated, isLoading } = useAuth();
-  const { signIn } = useAuthActions();
-  const convex = useConvex();
+  const { isAuthenticated, isLoading, signUp } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
@@ -52,34 +48,14 @@ function RegisterInner() {
     }
     setBusy(true);
     try {
-      // Normalize the email so register/login lookups always agree.
-      const normalizedEmail = email.trim().toLowerCase();
-      // Convex Auth's signUp does NOT reject duplicate emails (it would just
-      // create a second account), so check first and guide the user to sign in.
-      const alreadyExists = await convex.query(api.accountCheck.exists, {
-        email: normalizedEmail,
-      });
-      if (alreadyExists) {
-        setError(t("auth.errExists"));
-        return;
-      }
-      // Params must be Convex values, so only include `name` when provided.
-      const params: Record<string, string> = {
-        email: normalizedEmail,
-        password,
-        flow: "signUp",
-      };
-      if (name.trim()) params.name = name.trim();
-      await signIn("password", params);
+      await signUp(name, email, password);
       // Auth state flip navigates via the effect above.
     } catch (err) {
-      const kind = classifyAuthError(err);
+      const msg = err instanceof Error ? err.message : String(err);
       setError(
-        kind === "exists"
+        /exists/i.test(msg)
           ? t("auth.errExists")
-          : kind === "invalid"
-            ? t("auth.errInvalid")
-            : t("auth.errGeneric"),
+          : t("auth.errGeneric"),
       );
     } finally {
       setBusy(false);
@@ -104,6 +80,12 @@ function RegisterInner() {
         </svg>
         <span className="text-xl font-bold">Flowday</span>
       </button>
+
+      {!hasDb && (
+        <p className="relative mb-4 w-full max-w-sm rounded-xl bg-amber-500/10 px-3 py-2 text-center text-xs font-medium text-amber-600 dark:text-amber-400">
+          {t("auth.dbMissing")}
+        </p>
+      )}
 
       <div className="card-soft relative w-full max-w-sm rounded-3xl border border-border/70 bg-card p-6">
         <h1 className="text-xl font-bold tracking-tight">

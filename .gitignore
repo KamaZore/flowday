@@ -1,4 +1,9 @@
+# Local env files (secrets) — set VITE_NEON_DATABASE_URL via Keys/API keys UI
 .env.local
+.env.keys
 node_modules
 dist
-src/convex/_generated
+
+# Convex (removed backend, kept out of the repo)
+convex/
+src/convex/

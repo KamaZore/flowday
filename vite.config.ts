@@ -5,8 +5,10 @@ import path from "path";
 import { defineConfig } from "vite";
 
 // https://vite.dev/config/
+// Deployed to GitHub Pages with `bun run build:pages` (relative asset base),
+// or `bun run build` for a root-path host / local preview.
 export default defineConfig({
-  plugins: [react(), vlyPlugin(), tailwindcss()],
+  plugins: [vlyPlugin(), react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -26,7 +28,7 @@ export default defineConfig({
         manualChunks: {
           // Vendor chunks for large libraries
           'react-vendor': ['react', 'react-dom', 'react-router'],
-          'convex-vendor': ['convex'],
+          'neon-vendor': ['@neondatabase/serverless'],
           // Large UI library chunks
           'radix-ui': [
             '@radix-ui/react-accordion',
@@ -83,7 +85,6 @@ export default defineConfig({
       'react-dom',
       'react-dom/client',
       'react-router',
-      '@convex-dev/auth/react',
       'framer-motion',
     ],
   },

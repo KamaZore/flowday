@@ -1,51 +1,51 @@
-# Flowday — Personal Workflow & Task Management PWA
+# Flowday — Personal Workflow & Tasks
 
-Local-first productivity PWA: Goal → Project → Process → Tasks → Daily actions → Progress.
+A mobile-first personal workflow & task management PWA: Goals → Projects → Processes → Tasks → Daily Actions → Progress.
 
-## Run locally
+**Stack:** React 19 · TypeScript · Vite · Tailwind CSS 4 · shadcn/ui · Framer Motion · Neon Postgres (serverless Postgres over HTTPS — works from a static site)
+
+## Architecture
+
+- **Frontend:** static Vite SPA — deployable to GitHub Pages, Netlify, or any static host.
+- **Backend:** Neon Postgres, accessed directly from the browser via `@neondatabase/serverless` (HTTP driver). No server to run or pay for.
+  - `users` — accounts (email + bcrypt password hash)
+  - `app_data` — one JSON document per user (tasks, projects, processes, habits, goals, notes, calendar)
+- **Local-first:** every change saves to `localStorage` instantly and syncs to Neon in the background (debounced). Offline changes stay on the device and push when back online. The app also works fully offline-signed-in thanks to the service worker.
+- **Routing:** hash-based (`/#/today`) so it works on static hosting without server rewrites.
+
+## Environment
+
+| Variable | Where to set it | Purpose |
+| --- | --- | --- |
+| `VITE_NEON_DATABASE_URL` | Freebuff editor → Keys/API keys (or a local `.env.local` when developing) | Neon Postgres connection string (`postgresql://…neon.tech/db?sslmode=require`) |
+
+Get the connection string from [console.neon.tech](https://console.neon.tech) → your project → **Connection string**. Tables are created automatically on first use.
+
+> Note: the connection string ships with the app bundle, so it is readable by anyone using the site. Use a dedicated Neon project/role for this app, and don't reuse a connection string that has other privileges.
+
+## Local development
 
 ```bash
 bun install
-bunx convex dev --once   # creates a Convex deployment; prints a URL (or reuse an existing one)
+bun run dev        # start dev server
+bun tsc -b --noEmit # typecheck
+bun run build:pages # production build for GitHub Pages (relative asset base)
 ```
 
-1. Create a `.env` file in the project root (copy the shape below). The platform blocks me from writing `.env` files directly — you create it:
+## Deploy to GitHub Pages
 
-   ```bash
-   echo 'VITE_CONVEX_URL=' > .env   # paste your Convex deployment URL after the =
+1. Push this repo to GitHub.
+2. Repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. Push to `main` (or run the "Deploy to GitHub Pages" workflow manually). `.github/workflows/deploy.yml` builds and publishes automatically.
+4. Add the `VITE_NEON_DATABASE_URL` build-time value if you build outside the Freebuff editor — on GitHub Actions, add it as a repo variable/secret and inject it into the build step, e.g.:
+   ```yaml
+   - name: Build
+     env:
+       VITE_NEON_DATABASE_URL: ${{ secrets.VITE_NEON_DATABASE_URL }}
+     run: bun run build:pages
    ```
 
-2. Paste your Convex deployment URL (from `bunx convex dev` output) as the value.
-3. Start the dev server:
+## PWA
 
-   ```bash
-   bun run dev
-   ```
-
-> Inside the Freebuff preview, `VITE_CONVEX_URL` is injected automatically — no `.env` needed there.
-
-### What works without a Convex URL
-
-The data layer is local-first (localStorage). Without `VITE_CONVEX_URL`, the app shows a clear setup screen explaining exactly this (instead of a white screen), since auth requires the backend.
-
-## Useful scripts
-
-| Command | Purpose |
-| --- | --- |
-| `bun run dev` | Vite dev server |
-| `bun run build` | Production build (typechecks first) |
-| `bun run preview` | Serve the production build |
-| `bun test src/lib/flowday.test.ts` | 39 unit tests for the data/parse logic |
-| `bun tsc -b --noEmit` | Typecheck only |
-
-## Languages
-
-English and Khmer (ភាសាខ្មែរ) — switch via the EN/ខ្មែរ button in the sidebar/mobile header or in Settings.
-
-## Accounts
-
-Login (`/auth`) and register (`/register`) use **email + password** (min 8 chars) backed by the app's own Convex database (`users` + `authAccounts` tables, passwords hashed server-side) — no external auth service or API key needed.
-
-## Data isolation
-
-Each signed-in account gets its own dataset on the device (its own "table"). Sign out to see the shared guest dataset. Export/import JSON backups in Settings.
+- Manifest + service worker are subpath-safe, so the installable PWA works at `username.github.io/repo/`.
+- Offline: the app shell is cached; data changes queue locally and sync when online.

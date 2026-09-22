@@ -1,27 +1,17 @@
 /* Flowday service worker — offline-first app shell caching */
 // Bump this version whenever app assets change so clients pick up the new
 // build instead of serving a stale cache (classic "preview looks broken" bug).
-const VERSION = "flowday-v4";
+const VERSION = "flowday-v5-neon";
+const BASE = new URL(self.registration.scope).pathname; // supports subpath hosting
 const APP_SHELL = [
-  "/",
-  "/today",
-  "/inbox",
-  "/tasks",
-  "/projects",
-  "/processes",
-  "/calendar",
-  "/habits",
-  "/goals",
-  "/progress",
-  "/settings",
-  "/auth",
-  "/manifest.webmanifest",
-  "/icon-192.png",
-  "/icon-512.png",
-  "/icon-maskable-192.png",
-  "/icon-maskable-512.png",
-  "/offline.html",
-];
+  "",
+  "manifest.webmanifest",
+  "icon-192.png",
+  "icon-512.png",
+  "icon-maskable-192.png",
+  "icon-maskable-512.png",
+  "offline.html",
+].map((p) => new URL(p, self.registration.scope).href);
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -49,7 +39,7 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin !== location.origin) return; // let Convex etc. pass through
+  if (url.origin !== location.origin) return; // let the Neon endpoint pass through
 
   // Navigations: network-first, fall back to cache, then offline page
   if (req.mode === "navigate") {
@@ -63,7 +53,7 @@ self.addEventListener("fetch", (event) => {
         .catch(() =>
           caches
             .match(req)
-            .then((hit) => hit || caches.match("/offline.html")),
+            .then((hit) => hit || caches.match(BASE + "offline.html")),
         ),
     );
     return;
@@ -74,7 +64,7 @@ self.addEventListener("fetch", (event) => {
     caches.match(req).then((hit) => {
       if (hit) return hit;
       return fetch(req).then((res) => {
-        if (res.ok && (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/icon"))) {
+        if (res.ok && (url.pathname.includes("/assets/") || url.pathname.includes("/icon"))) {
           const copy = res.clone();
           caches.open(VERSION).then((c) => c.put(req, copy));
         }

@@ -9,12 +9,15 @@ import {
   importData,
   resetDemoData,
   clearAllData,
+  pushNow,
+  useSyncState,
 } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import {
+  CloudUpload,
   Download,
   Languages,
   Moon,
@@ -42,8 +45,17 @@ export default function Settings() {
   const { mode, setMode } = useTheme();
   const { user, signOut, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const sync = useSyncState();
   const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
   const [name, setName] = useState(settings.name);
+
+  const syncLabel = !isAuthenticated
+    ? t("settings.syncState.local")
+    : sync.syncing
+      ? t("settings.syncState.syncing")
+      : sync.error
+        ? t("settings.syncState.error")
+        : t("settings.syncState.saved");
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -256,6 +268,19 @@ export default function Settings() {
           {t("settings.dataDesc")}
         </p>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="gap-1.5 rounded-xl"
+            disabled={!isAuthenticated || sync.syncing}
+            onClick={async () => {
+              const ok = await pushNow();
+              if (ok) toast.success(t("settings.syncNowDone"));
+              else toast.error(t("settings.syncState.error"));
+            }}
+          >
+            <CloudUpload className="size-4" /> {t("settings.syncNow")}
+            <span className="text-xs text-muted-foreground">· {syncLabel}</span>
+          </Button>
           <Button variant="outline" className="gap-1.5 rounded-xl" onClick={doExport}>
             <Download className="size-4" /> {t("settings.export")}
           </Button>
