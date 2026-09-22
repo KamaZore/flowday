@@ -57,7 +57,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "today.progress": "Today's progress",
     "today.ofTasksDone": "{done} of {total} tasks done",
     "today.overdueSuffix": "{n} overdue",
-    "today.overdueTasks": "{n} overdue {count, plural, one {task} other {tasks}}",
+    "today.overdueTasks": "{n} overdue",
     "today.viewAllOverdue": "View all overdue →",
     "today.addTask": "Add task",
     "today.newProject": "New project",

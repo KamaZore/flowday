@@ -99,14 +99,17 @@ class RootErrorBoundary extends React.Component<
  */
 function UserStoreBridge() {
   const { isLoading, isAuthenticated, user } = useAuth();
+  // Key on the stable user id (not the user object, whose identity changes
+  // every render) so the store only swaps when the account actually changes.
+  const userId = user?._id ?? null;
   useEffect(() => {
     if (isLoading) return;
-    if (isAuthenticated && user) {
-      switchUser(user._id);
+    if (isAuthenticated && userId) {
+      switchUser(userId);
     } else if (!isAuthenticated) {
       switchUser(null);
     }
-  }, [isLoading, isAuthenticated, user]);
+  }, [isLoading, isAuthenticated, userId]);
   return null;
 }
 

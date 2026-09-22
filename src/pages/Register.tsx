@@ -24,7 +24,7 @@ function RegisterInner() {
   }, [isLoaded, isSignedIn, navigate, redirect]);
 
   return (
-    <div className="safe-top safe-bottom flex min-h-dvh flex-col items-center justify-center px-4 py-10">
+    <div className="safe-top safe-bottom relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-10">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-primary/10 blur-3xl"

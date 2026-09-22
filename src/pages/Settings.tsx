@@ -224,9 +224,10 @@ export default function Settings() {
               variant="outline"
               className="shrink-0 rounded-xl"
               onClick={async () => {
-                await signOut();
                 toast.success(t("common.signOut"));
-                navigate("/auth");
+                // use-auth's signOut redirects to "/" itself; no extra
+                // navigate needed (it caused a double navigation race).
+                await signOut();
               }}
             >
               {t("settings.signOut")}

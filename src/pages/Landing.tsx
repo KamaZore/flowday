@@ -54,7 +54,7 @@ const FEATURES = [
   {
     icon: WifiOff,
     title: "Offline-first & private",
-    text: "Installable PWA. Your data lives on your device — no account required.",
+    text: "Installable PWA. Your data stays on your device, and each account has its own private space.",
   },
 ];
 
@@ -91,7 +91,7 @@ export default function Landing() {
                   <Link to="/auth">{t("landing.ctaSignin")}</Link>
                 </Button>
                 <Button asChild className="rounded-xl">
-                  <Link to="/auth">{t("landing.ctaStart")}</Link>
+                  <Link to="/register">{t("landing.ctaStart")}</Link>
                 </Button>
               </>
             )}
@@ -132,12 +132,12 @@ export default function Landing() {
             className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
           >
             <Button asChild size="lg" className="h-12 rounded-2xl px-7 text-base">
-              <Link to="/today">
+              <Link to="/register">
                 Start planning free <ArrowRight className="ml-1 size-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 rounded-2xl px-7 text-base">
-              <Link to="/today">See a live demo</Link>
+              <Link to="/auth">Sign in to Flowday</Link>
             </Button>
           </motion.div>
 
@@ -262,8 +262,8 @@ export default function Landing() {
             before adding your own.
           </p>
           <Button asChild size="lg" className="mt-6 h-12 rounded-2xl px-8 text-base">
-            <Link to="/today">
-              Open Flowday <ArrowRight className="ml-1 size-4" />
+            <Link to={isAuthenticated ? "/today" : "/register"}>
+              {isAuthenticated ? "Open Flowday" : "Create your free account"} <ArrowRight className="ml-1 size-4" />
             </Link>
           </Button>
           <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
