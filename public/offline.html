@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flowday — Offline</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #f7f8fc;
+        color: #1e1b3a;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #23222e; color: #f2f1f7; }
+        .card { box-shadow: none !important; }
+      }
+      .card {
+        text-align: center;
+        padding: 48px 36px;
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 6px 24px rgba(30, 27, 58, 0.08);
+        max-width: 340px;
+      }
+      .mark { font-size: 40px; margin-bottom: 12px; }
+      h1 { font-size: 18px; margin: 0 0 8px; }
+      p { font-size: 14px; line-height: 1.6; opacity: 0.7; margin: 0; }
+      button {
+        margin-top: 20px;
+        padding: 10px 22px;
+        border: 0;
+        border-radius: 12px;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="mark">🌊</div>
+      <h1>You're offline</h1>
+      <p>Flowday works offline. Your tasks and habits are stored on this device — everything is right where you left it.</p>
+      <button onclick="location.reload()">Try again</button>
+    </div>
+  </body>
+</html>

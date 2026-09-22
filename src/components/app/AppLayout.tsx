@@ -1,0 +1,256 @@
+import { QuickAddDialog } from "@/components/app/QuickAddDialog";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { NAV_ITEMS } from "@/components/app/nav";
+import { useTheme } from "@/hooks/use-theme";
+import { cn } from "@/lib/utils";
+import { LayoutGrid, Moon, Plus, Sun } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+
+export type QuickAddType =
+  | "task"
+  | "project"
+  | "process"
+  | "habit"
+  | "goal"
+  | "note";
+
+function FlowdayLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 512 512" className={className} aria-hidden>
+      <rect width="512" height="512" rx="112" fill="currentColor" />
+      <path
+        d="M150 176 L236 256 L150 336"
+        stroke="#fff"
+        strokeWidth="46"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        opacity="0.55"
+      />
+      <path
+        d="M250 176 L336 256 L250 336"
+        stroke="#fff"
+        strokeWidth="46"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        opacity="0.8"
+      />
+      <path
+        d="M350 176 L436 256 L350 336"
+        stroke="#fff"
+        strokeWidth="46"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+function SidebarNav() {
+  return (
+    <nav className="flex flex-col gap-1">
+      {NAV_ITEMS.map((item) => (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          className={({ isActive }) =>
+            cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+              isActive && "bg-primary/10 font-semibold text-primary",
+            )
+          }
+        >
+          <item.icon className="size-4" />
+          {item.label}
+        </NavLink>
+      ))}
+    </nav>
+  );
+}
+
+export function AppLayout({ children }: { children?: ReactNode }) {
+  const { resolved, toggle } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickAddType, setQuickAddType] = useState<QuickAddType>("task");
+
+  const openQuickAdd = (type: QuickAddType = "task") => {
+    setQuickAddType(type);
+    setQuickAddOpen(true);
+  };
+
+  // Support ?quickadd=task deep link (PWA shortcuts)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const qa = params.get("quickadd");
+    if (qa) {
+      openQuickAdd(qa as QuickAddType);
+      params.delete("quickadd");
+      const qs = params.toString();
+      navigate({ pathname: location.pathname, search: qs ? `?${qs}` : "" }, {
+        replace: true,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="min-h-dvh bg-background">
+      {/* Desktop sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
+        <button
+          onClick={() => navigate("/today")}
+          className="mb-6 flex items-center gap-2.5 px-2 text-left"
+        >
+          <FlowdayLogo className="size-9 rounded-xl text-primary" />
+          <span>
+            <span className="block text-[15px] font-bold leading-tight">
+              Flowday
+            </span>
+            <span className="block text-[11px] text-muted-foreground">
+              Your day, in flow
+            </span>
+          </span>
+        </button>
+        <SidebarNav />
+        <div className="mt-auto flex items-center gap-2 px-2 pt-4">
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-8 rounded-lg"
+            onClick={toggle}
+            aria-label="Toggle theme"
+          >
+            {resolved === "dark" ? (
+              <Sun className="size-4" />
+            ) : (
+              <Moon className="size-4" />
+            )}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {resolved === "dark" ? "Dark" : "Light"} mode
+          </span>
+        </div>
+      </aside>
+
+      {/* Mobile header */}
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 bg-background/80 px-4 backdrop-blur md:hidden">
+        <button
+          onClick={() => navigate("/today")}
+          className="flex items-center gap-2"
+        >
+          <FlowdayLogo className="size-7 rounded-lg text-primary" />
+          <span className="text-base font-bold">Flowday</span>
+        </button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-9"
+          onClick={toggle}
+          aria-label="Toggle theme"
+        >
+          {resolved === "dark" ? (
+            <Sun className="size-4" />
+          ) : (
+            <Moon className="size-4" />
+          )}
+        </Button>
+      </header>
+
+      {/* Main content */}
+      <main className="px-4 pb-32 pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
+        <div className="mx-auto max-w-5xl">{children ?? <Outlet />}</div>
+      </main>
+
+      {/* Mobile bottom nav */}
+      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 flex h-16 items-stretch justify-around border-t border-border/60 bg-background/90 backdrop-blur md:hidden">
+        {[0, 1, 2].map((idx) => {
+          const item = NAV_ITEMS[idx];
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors",
+                  isActive && "text-primary",
+                )
+              }
+            >
+              <item.icon className="size-5" />
+              {item.label}
+            </NavLink>
+          );
+        })}
+        <MobileMoreMenu />
+      </nav>
+
+      {/* Center FAB (mobile) */}
+      <button
+        onClick={() => openQuickAdd("task")}
+        className="card-soft fixed bottom-[76px] left-1/2 z-40 flex size-12 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
+        aria-label="Quick add"
+      >
+        <Plus className="size-6" />
+      </button>
+
+      {/* Desktop quick add button */}
+      <Button
+        onClick={() => openQuickAdd("task")}
+        className="card-soft fixed bottom-6 right-6 z-40 hidden h-12 gap-2 rounded-full px-5 shadow-lg md:inline-flex"
+      >
+        <Plus className="size-5" />
+        Quick add
+      </Button>
+
+      <QuickAddDialog
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        defaultType={quickAddType}
+      />
+    </div>
+  );
+}
+
+/** Mobile “More” menu covering the nav items that don't fit in the bottom bar. */
+function MobileMoreMenu() {
+  const moreItems = NAV_ITEMS.slice(3); // Projects, Processes, Calendar, Habits, Goals, Progress, Settings
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors data-[active=true]:text-primary" data-active={moreItems.some((i) => `#${i.path}` === window.location.hash) || moreItems.some((i) => window.location.pathname === i.path)}>
+          <LayoutGrid className="size-5" />
+          More
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="end" className="mb-2 grid grid-cols-3 gap-1 rounded-2xl p-2">
+        {moreItems.map((item) => (
+          <DropdownMenuItem key={item.path} asChild>
+            <NavLink
+              to={item.path}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-1 rounded-xl px-3 py-2.5 text-[10px] font-medium text-muted-foreground",
+                  isActive && "bg-primary/10 text-primary",
+                )
+              }
+            >
+              <item.icon className="size-5" />
+              {item.label}
+            </NavLink>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

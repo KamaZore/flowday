@@ -1,0 +1,33 @@
+{
+  "name": "Flowday — Personal Workflow & Tasks",
+  "short_name": "Flowday",
+  "description": "Goals, projects, processes, tasks, and habits in one calm, local-first app.",
+  "id": "/",
+  "start_url": "/today",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f7f8fc",
+  "theme_color": "#4f46e5",
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add a task",
+      "short_name": "Add task",
+      "url": "/today?quickadd=task",
+      "description": "Capture a task in seconds"
+    },
+    {
+      "name": "Today",
+      "short_name": "Today",
+      "url": "/today",
+      "description": "See what needs doing today"
+    }
+  ]
+}

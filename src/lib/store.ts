@@ -1,0 +1,1164 @@
+import { useSyncExternalStore } from "react";
+import {
+  addDaysKey,
+  recurrenceMatches,
+  todayKey,
+} from "./date-utils";
+
+export { recurrenceMatches, recurrenceWeekdays } from "./date-utils";
+import type {
+  AppData,
+  AppSettings,
+  CalendarEvent,
+  Goal,
+  Habit,
+  InboxItem,
+  Note,
+  Priority,
+  Process,
+  ProcessStep,
+  Project,
+  Recurrence,
+  Subtask,
+  Task,
+  TaskStatus,
+} from "./types";
+
+export const DATA_VERSION = 1;
+const STORAGE_KEY = "flowday-data-v1";
+
+export function uid(): string {
+  return (
+    Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+  ).slice(0, 12);
+}
+
+function nowTs(): number {
+  return Date.now();
+}
+
+/* ------------------------------------------------------------------ */
+/* Seed demo data                                                      */
+/* ------------------------------------------------------------------ */
+
+function seedData(): AppData {
+  const t = nowTs();
+  const goalHealth: Goal = {
+    id: "goal-health",
+    title: "Become healthier",
+    description: "Build lasting fitness and energy habits.",
+    status: "active",
+    color: "#10b981",
+    createdAt: t - 30 * 864e5,
+    updatedAt: t,
+  };
+  const goalEnglish: Goal = {
+    id: "goal-english",
+    title: "Learn English",
+    description: "Reach confident conversational fluency.",
+    status: "active",
+    color: "#6366f1",
+    createdAt: t - 60 * 864e5,
+    updatedAt: t,
+  };
+
+  const projFitness: Project = {
+    id: "proj-fitness",
+    name: "Fitness",
+    description: "Get moving every day and build strength.",
+    goalId: "goal-health",
+    status: "active",
+    color: "#10b981",
+    order: 0,
+    createdAt: t - 30 * 864e5,
+    updatedAt: t,
+  };
+  const projEnglish: Project = {
+    id: "proj-english",
+    name: "Learn English",
+    description: "Daily vocabulary, speaking and listening.",
+    goalId: "goal-english",
+    dueDate: addDaysKey(todayKey(), 60),
+    status: "active",
+    color: "#6366f1",
+    order: 1,
+    createdAt: t - 60 * 864e5,
+    updatedAt: t,
+  };
+  const projWebsite: Project = {
+    id: "proj-website",
+    name: "Personal Website",
+    description: "Design and launch my portfolio site.",
+    status: "planning",
+    color: "#f59e0b",
+    order: 2,
+    createdAt: t - 10 * 864e5,
+    updatedAt: t,
+  };
+
+  const morningProcess: Process = {
+    id: "proc-morning",
+    name: "Morning Workout",
+    description: "Wake the body up before the day starts.",
+    steps: [
+      { id: uid(), title: "Stretch", durationMin: 5, order: 0 },
+      { id: uid(), title: "Run 20 minutes", durationMin: 20, order: 1 },
+      { id: uid(), title: "Drink water", durationMin: 2, order: 2 },
+      { id: uid(), title: "Shower", durationMin: 10, order: 3 },
+    ],
+    recurrence: { type: "daily" },
+    tagIds: ["tag-health"],
+    createdAt: t - 20 * 864e5,
+    updatedAt: t,
+  };
+  const englishProcess: Process = {
+    id: "proc-english",
+    name: "Daily English Practice",
+    description: "A little every day beats a lot once a week.",
+    steps: [
+      { id: uid(), title: "Learn 10 words", durationMin: 15, order: 0 },
+      { id: uid(), title: "Speak for 10 minutes", durationMin: 10, order: 1 },
+      { id: uid(), title: "Review notes", durationMin: 5, order: 2 },
+    ],
+    recurrence: { type: "weekdays" },
+    tagIds: ["tag-learning"],
+    createdAt: t - 45 * 864e5,
+    updatedAt: t,
+  };
+
+  const habitExercise: Habit = {
+    id: "habit-exercise",
+    name: "Exercise",
+    icon: "dumbbell",
+    color: "#10b981",
+    schedule: { type: "daily" },
+    completions: [todayKey(), addDaysKey(todayKey(), -1), addDaysKey(todayKey(), -2), addDaysKey(todayKey(), -4), addDaysKey(todayKey(), -5)],
+    createdAt: t - 25 * 864e5,
+    updatedAt: t,
+  };
+  const habitWater: Habit = {
+    id: "habit-water",
+    name: "Drink water",
+    icon: "droplets",
+    color: "#0ea5e9",
+    schedule: { type: "daily" },
+    completions: [todayKey(), addDaysKey(todayKey(), -1), addDaysKey(todayKey(), -3), addDaysKey(todayKey(), -4), addDaysKey(todayKey(), -6)],
+    createdAt: t - 25 * 864e5,
+    updatedAt: t,
+  };
+  const habitSleep: Habit = {
+    id: "habit-sleep",
+    name: "Sleep 8 hours",
+    icon: "moon",
+    color: "#8b5cf6",
+    schedule: { type: "daily" },
+    completions: [addDaysKey(todayKey(), -1), addDaysKey(todayKey(), -2), addDaysKey(todayKey(), -3)],
+    createdAt: t - 15 * 864e5,
+    updatedAt: t,
+  };
+  const habitRead: Habit = {
+    id: "habit-read",
+    name: "Read",
+    icon: "book-open",
+    color: "#f59e0b",
+    schedule: { type: "daily" },
+    completions: [addDaysKey(todayKey(), -1), addDaysKey(todayKey(), -2), addDaysKey(todayKey(), -3), addDaysKey(todayKey(), -6)],
+    createdAt: t - 15 * 864e5,
+    updatedAt: t,
+  };
+
+  function mkTask(partial: Partial<Task> & { title: string }): Task {
+    return {
+      id: uid(),
+      title: partial.title,
+      description: partial.description,
+      notes: partial.notes,
+      status: partial.status ?? "todo",
+      priority: partial.priority ?? "medium",
+      dueDate: partial.dueDate,
+      dueTime: partial.dueTime,
+      projectId: partial.projectId,
+      processId: partial.processId,
+      processRunId: partial.processRunId,
+      goalId: partial.goalId,
+      tagIds: partial.tagIds ?? [],
+      subtasks: partial.subtasks ?? [],
+      recurrence: partial.recurrence,
+      reminder: partial.reminder,
+      order: partial.order ?? 0,
+      createdAt: partial.createdAt ?? t,
+      updatedAt: t,
+      completedAt: partial.completedAt,
+    };
+  }
+
+  const today = todayKey();
+  const tasks: Task[] = [
+    mkTask({
+      title: "Finish project outline",
+      status: "in_progress",
+      priority: "high",
+      dueDate: today,
+      dueTime: "14:00",
+      projectId: "proj-website",
+      order: 0,
+    }),
+    mkTask({
+      title: "Run 20 minutes",
+      status: "todo",
+      priority: "medium",
+      dueDate: today,
+      projectId: "proj-fitness",
+      processId: "proc-morning",
+      order: 1,
+    }),
+    mkTask({
+      title: "Learn 10 words",
+      status: "todo",
+      priority: "medium",
+      dueDate: today,
+      projectId: "proj-english",
+      processId: "proc-english",
+      order: 2,
+    }),
+    mkTask({
+      title: "Read 20 pages",
+      status: "todo",
+      priority: "low",
+      dueDate: today,
+      order: 3,
+    }),
+    mkTask({
+      title: "Book dentist appointment",
+      status: "waiting",
+      priority: "low",
+      dueDate: addDaysKey(today, 2),
+      order: 4,
+    }),
+    mkTask({
+      title: "Buy running shoes",
+      status: "todo",
+      priority: "medium",
+      dueDate: addDaysKey(today, -1),
+      projectId: "proj-fitness",
+      order: 5,
+    }),
+    mkTask({
+      title: "Practice speaking",
+      status: "todo",
+      priority: "high",
+      dueDate: addDaysKey(today, 1),
+      projectId: "proj-english",
+      order: 6,
+      subtasks: [
+        { id: uid(), title: "Shadow a podcast for 5 min", completed: false },
+        { id: uid(), title: "Record 1 min self-intro", completed: false },
+      ],
+    }),
+    mkTask({
+      title: "Plan next week",
+      status: "todo",
+      priority: "medium",
+      dueDate: addDaysKey(today, 3),
+      order: 7,
+    }),
+    mkTask({
+      title: "Morning stretch",
+      status: "completed",
+      priority: "low",
+      dueDate: today,
+      projectId: "proj-fitness",
+      completedAt: t - 3 * 36e5,
+      order: 8,
+    }),
+    mkTask({
+      title: "Watch English video",
+      status: "completed",
+      priority: "low",
+      dueDate: today,
+      projectId: "proj-english",
+      completedAt: t - 5 * 36e5,
+      order: 9,
+    }),
+    mkTask({
+      title: "Review last week's spending",
+      status: "completed",
+      priority: "low",
+      dueDate: addDaysKey(today, -1),
+      completedAt: t - 26 * 36e5,
+      order: 10,
+    }),
+  ];
+
+  const events: CalendarEvent[] = [
+    {
+      id: uid(),
+      title: "English course deadline",
+      date: addDaysKey(today, 5),
+      kind: "deadline",
+      linkedId: "proj-english",
+      createdAt: t,
+      updatedAt: t,
+    },
+    {
+      id: uid(),
+      title: "Friend's birthday dinner",
+      date: addDaysKey(today, 2),
+      time: "19:00",
+      kind: "event",
+      createdAt: t,
+      updatedAt: t,
+    },
+  ];
+
+  return {
+    version: DATA_VERSION,
+    seeded: true,
+    settings: {
+      theme: "system",
+      name: "there",
+      weekStartsMonday: true,
+    },
+    tasks,
+    inboxItems: [
+      { id: uid(), text: "Call John tomorrow", createdAt: t - 2 * 36e5 },
+      { id: uid(), text: "Idea: blog post about habits", createdAt: t - 5 * 36e5 },
+    ],
+    projects: [projFitness, projEnglish, projWebsite],
+    processes: [morningProcess, englishProcess],
+    processRuns: [],
+    habits: [habitExercise, habitWater, habitSleep, habitRead],
+    goals: [goalHealth, goalEnglish],
+    tags: [
+      { id: "tag-health", name: "health", color: "#10b981", createdAt: t },
+      { id: "tag-learning", name: "learning", color: "#6366f1", createdAt: t },
+      { id: "tag-errand", name: "errand", color: "#f59e0b", createdAt: t },
+    ],
+    notes: [
+      {
+        id: uid(),
+        title: "Weekly review questions",
+        body: "What went well?\nWhat did I avoid?\nWhat's the ONE thing next week?",
+        createdAt: t - 7 * 864e5,
+        updatedAt: t - 7 * 864e5,
+      },
+    ],
+    calendarEvents: events,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Store plumbing                                                      */
+/* ------------------------------------------------------------------ */
+
+let data: AppData = load();
+const listeners = new Set<() => void>();
+
+function load(): AppData {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as AppData;
+      if (parsed && parsed.version === DATA_VERSION) return parsed;
+    }
+  } catch {
+    // corrupted storage — fall through to fresh seed
+  }
+  const fresh = seedData();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+  } catch {
+    // storage may be unavailable (private mode); keep in-memory
+  }
+  return fresh;
+}
+
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+function set(updater: (d: AppData) => AppData) {
+  data = updater(data);
+  persist();
+  listeners.forEach((l) => l());
+}
+
+export function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function getData(): AppData {
+  return data;
+}
+
+function useAppData(): AppData {
+  return useSyncExternalStore(subscribe, getData, getData);
+}
+
+/* ------------------------------------------------------------------ */
+/* Settings / theme                                                    */
+/* ------------------------------------------------------------------ */
+
+export function useSettings(): AppSettings {
+  return useAppData().settings;
+}
+
+export function updateSettings(patch: Partial<AppSettings>) {
+  set((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Tasks                                                               */
+/* ------------------------------------------------------------------ */
+
+export function useTasks(): Task[] {
+  return useAppData().tasks;
+}
+
+export type NewTaskInput = Partial<Omit<Task, "id" | "createdAt" | "updatedAt">> & {
+  title: string;
+};
+
+export function addTask(input: NewTaskInput, tasksOverride?: Task[]): Task {
+  const list = tasksOverride ?? data.tasks;
+  const order = list.length
+    ? Math.min(...list.map((t) => t.order)) - 1
+    : 0;
+  const task: Task = {
+    id: uid(),
+    title: input.title,
+    description: input.description,
+    status: input.status ?? (input.dueDate ? "todo" : "inbox"),
+    priority: input.priority ?? "medium",
+    dueDate: input.dueDate,
+    dueTime: input.dueTime,
+    projectId: input.projectId,
+    processId: input.processId,
+    goalId: input.goalId,
+    tagIds: input.tagIds ?? [],
+    subtasks: input.subtasks ?? [],
+    recurrence: input.recurrence,
+    reminder: input.reminder,
+    order: input.order ?? order,
+    createdAt: nowTs(),
+    updatedAt: nowTs(),
+  };
+  if (tasksOverride) return task; // caller manages list
+  set((d) => ({ ...d, tasks: [task, ...d.tasks] }));
+  return task;
+}
+
+export function updateTask(id: string, patch: Partial<Task>) {
+  set((d) => ({
+    ...d,
+    tasks: d.tasks.map((t) =>
+      t.id === id ? { ...t, ...patch, updatedAt: nowTs() } : t,
+    ),
+  }));
+}
+
+export function toggleTask(id: string) {
+  const task = data.tasks.find((t) => t.id === id);
+  if (!task) return;
+  const completed = task.status === "completed";
+  set((d) => ({
+    ...d,
+    tasks: d.tasks.map((t) =>
+      t.id === id
+        ? {
+            ...t,
+            status: completed ? "todo" : "completed",
+            completedAt: completed ? undefined : nowTs(),
+            subtasks: completed
+              ? t.subtasks
+              : t.subtasks.map((s) => ({ ...s, completed: true })),
+            updatedAt: nowTs(),
+          }
+        : t,
+    ),
+  }));
+  // When completing a recurring task, spawn the next occurrence
+  if (!completed && task.recurrence) {
+    spawnNextRecurrence(task);
+  }
+}
+
+function spawnNextRecurrence(task: Task) {
+  if (!task.dueDate || !task.recurrence) return;
+  let next = addDaysKey(task.dueDate, 1);
+  let guard = 0;
+  while (!recurrenceMatches(task.recurrence, next) && guard < 400) {
+    next = addDaysKey(next, 1);
+    guard++;
+  }
+  if (guard >= 400) return;
+  const copy: Task = {
+    ...task,
+    id: uid(),
+    status: "todo",
+    completedAt: undefined,
+    dueDate: next,
+    order: task.order - 1,
+    createdAt: nowTs(),
+    updatedAt: nowTs(),
+    subtasks: task.subtasks.map((s) => ({ ...s, completed: false })),
+  };
+  set((d) => ({ ...d, tasks: [copy, ...d.tasks] }));
+}
+
+export function deleteTask(id: string) {
+  set((d) => ({ ...d, tasks: d.tasks.filter((t) => t.id !== id) }));
+}
+
+export function reorderTasks(activeId: string, overId: string) {
+  const tasks = [...data.tasks];
+  const a = tasks.find((t) => t.id === activeId);
+  const b = tasks.find((t) => t.id === overId);
+  if (!a || !b) return;
+  const others = tasks.filter((t) => t.id !== activeId);
+  const overIndex = others.findIndex((t) => t.id === overId);
+  const moved = others[overIndex];
+  const newList = [...others];
+  newList.splice(overIndex, 0, { ...a });
+  // Renormalize order values
+  const sorted = newList.map((t, i) => ({ ...t, order: i }));
+  set((d) => ({ ...d, tasks: sorted }));
+  void moved;
+}
+
+export function toggleSubtask(taskId: string, subtaskId: string) {
+  set((d) => ({
+    ...d,
+    tasks: d.tasks.map((t) =>
+      t.id === taskId
+        ? {
+            ...t,
+            subtasks: t.subtasks.map((s) =>
+              s.id === subtaskId ? { ...s, completed: !s.completed } : s,
+            ),
+            updatedAt: nowTs(),
+          }
+        : t,
+    ),
+  }));
+}
+
+export function addSubtask(taskId: string, title: string) {
+  set((d) => ({
+    ...d,
+    tasks: d.tasks.map((t) =>
+      t.id === taskId
+        ? {
+            ...t,
+            subtasks: [...t.subtasks, { id: uid(), title, completed: false }],
+            updatedAt: nowTs(),
+          }
+        : t,
+    ),
+  }));
+}
+
+export function removeSubtask(taskId: string, subtaskId: string) {
+  set((d) => ({
+    ...d,
+    tasks: d.tasks.map((t) =>
+      t.id === taskId
+        ? {
+            ...t,
+            subtasks: t.subtasks.filter((s) => s.id !== subtaskId),
+            updatedAt: nowTs(),
+          }
+        : t,
+    ),
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Inbox                                                               */
+/* ------------------------------------------------------------------ */
+
+export function useInboxItems(): InboxItem[] {
+  return useAppData().inboxItems;
+}
+
+export function addInboxItem(text: string) {
+  const item: InboxItem = { id: uid(), text: text.trim(), createdAt: nowTs() };
+  set((d) => ({ ...d, inboxItems: [item, ...d.inboxItems] }));
+}
+
+export function deleteInboxItem(id: string) {
+  set((d) => ({ ...d, inboxItems: d.inboxItems.filter((i) => i.id !== id) }));
+}
+
+export function organizeInboxItem(
+  itemId: string,
+  target: "task" | "project" | "goal" | "habit" | "process",
+) {
+  const item = data.inboxItems.find((i) => i.id === itemId);
+  if (!item) return;
+  let newId: string | undefined;
+  switch (target) {
+    case "task":
+      newId = addTask({ title: item.text, status: "todo" }).id;
+      break;
+    case "project":
+      newId = addProject({ name: item.text }).id;
+      break;
+    case "goal":
+      newId = addGoal({ title: item.text }).id;
+      break;
+    case "habit":
+      newId = addHabit({ name: item.text, schedule: { type: "daily" } }).id;
+      break;
+    case "process":
+      newId = addProcess({
+        name: item.text,
+        steps: [{ id: uid(), title: item.text, order: 0 }],
+      }).id;
+      break;
+  }
+  set((d) => ({
+    ...d,
+    inboxItems: d.inboxItems.map((i) =>
+      i.id === itemId
+        ? { ...i, organizedId: newId, organizedType: target }
+        : i,
+    ),
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Projects                                                            */
+/* ------------------------------------------------------------------ */
+
+export function useProjects(): Project[] {
+  return useAppData().projects;
+}
+
+export function addProject(input: Partial<Project> & { name: string }): Project {
+  const project: Project = {
+    id: uid(),
+    name: input.name,
+    description: input.description,
+    goalId: input.goalId,
+    dueDate: input.dueDate,
+    status: input.status ?? "active",
+    color: input.color,
+    order: input.order ?? data.projects.length,
+    createdAt: nowTs(),
+    updatedAt: nowTs(),
+  };
+  set((d) => ({ ...d, projects: [...d.projects, project] }));
+  return project;
+}
+
+export function updateProject(id: string, patch: Partial<Project>) {
+  set((d) => ({
+    ...d,
+    projects: d.projects.map((p) =>
+      p.id === id ? { ...p, ...patch, updatedAt: nowTs() } : p,
+    ),
+  }));
+}
+
+export function deleteProject(id: string) {
+  set((d) => ({
+    ...d,
+    projects: d.projects.filter((p) => p.id !== id),
+    tasks: d.tasks.map((t) =>
+      t.projectId === id ? { ...t, projectId: undefined, updatedAt: nowTs() } : t,
+    ),
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Processes                                                           */
+/* ------------------------------------------------------------------ */
+
+export function useProcesses(): Process[] {
+  return useAppData().processes;
+}
+
+export function addProcess(
+  input: Partial<Process> & { name: string },
+): Process {
+  const process: Process = {
+    id: uid(),
+    name: input.name,
+    description: input.description,
+    steps: input.steps ?? [],
+    recurrence: input.recurrence,
+    startDate: input.startDate,
+    endDate: input.endDate,
+    tagIds: input.tagIds ?? [],
+    createdAt: nowTs(),
+    updatedAt: nowTs(),
+  };
+  set((d) => ({ ...d, processes: [...d.processes, process] }));
+  return process;
+}
+
+export function updateProcess(id: string, patch: Partial<Process>) {
+  set((d) => ({
+    ...d,
+    processes: d.processes.map((p) =>
+      p.id === id ? { ...p, ...patch, updatedAt: nowTs() } : p,
+    ),
+  }));
+}
+
+export function deleteProcess(id: string) {
+  set((d) => ({
+    ...d,
+    processes: d.processes.filter((p) => p.id !== id),
+    tasks: d.tasks.filter((t) => !(t.processId === id && t.status !== "completed")),
+  }));
+}
+
+export function addProcessStep(processId: string, title: string) {
+  set((d) => ({
+    ...d,
+    processes: d.processes.map((p) =>
+      p.id === processId
+        ? {
+            ...p,
+            steps: [
+              ...p.steps,
+              { id: uid(), title, order: p.steps.length },
+            ],
+            updatedAt: nowTs(),
+          }
+        : p,
+    ),
+  }));
+}
+
+export function updateProcessStep(
+  processId: string,
+  stepId: string,
+  patch: Partial<ProcessStep>,
+) {
+  set((d) => ({
+    ...d,
+    processes: d.processes.map((p) =>
+      p.id === processId
+        ? {
+            ...p,
+            steps: p.steps.map((s) =>
+              s.id === stepId ? { ...s, ...patch } : s,
+            ),
+            updatedAt: nowTs(),
+          }
+        : p,
+    ),
+  }));
+}
+
+export function deleteProcessStep(processId: string, stepId: string) {
+  set((d) => ({
+    ...d,
+    processes: d.processes.map((p) =>
+      p.id === processId
+        ? {
+            ...p,
+            steps: p.steps
+              .filter((s) => s.id !== stepId)
+              .map((s, i) => ({ ...s, order: i })),
+            updatedAt: nowTs(),
+          }
+        : p,
+    ),
+  }));
+}
+
+export function moveProcessStep(processId: string, stepId: string, dir: -1 | 1) {
+  set((d) => ({
+    ...d,
+    processes: d.processes.map((p) => {
+      if (p.id !== processId) return p;
+      const steps = [...p.steps];
+      const idx = steps.findIndex((s) => s.id === stepId);
+      const target = idx + dir;
+      if (idx < 0 || target < 0 || target >= steps.length) return p;
+      [steps[idx], steps[target]] = [steps[target], steps[idx]];
+      return { ...p, steps: steps.map((s, i) => ({ ...s, order: i })) };
+    }),
+  }));
+}
+
+/** Create tasks for a process scheduled on dateKey (one run per date). */
+export function scheduleProcess(processId: string, dateKey: string): boolean {
+  const proc = data.processes.find((p) => p.id === processId);
+  if (!proc) return false;
+  const already = data.tasks.some(
+    (t) => t.processId === processId && t.dueDate === dateKey,
+  );
+  if (already) return false;
+  const runId = uid();
+  const newTasks: Task[] = proc.steps.map((step, i) => ({
+    id: uid(),
+    title: step.title,
+    status: "todo",
+    priority: "medium",
+    dueDate: dateKey,
+    processId,
+    processRunId: runId,
+    tagIds: [...proc.tagIds],
+    subtasks: [],
+    order: i,
+    createdAt: nowTs(),
+    updatedAt: nowTs(),
+  }));
+  set((d) => ({
+    ...d,
+    tasks: [...newTasks, ...d.tasks],
+    processRuns: [
+      ...d.processRuns,
+      {
+        id: runId,
+        processId,
+        date: dateKey,
+        startedAt: nowTs(),
+      },
+    ],
+  }));
+  return true;
+}
+
+export function unscheduleProcess(processId: string, dateKey: string) {
+  set((d) => ({
+    ...d,
+    tasks: d.tasks.filter(
+      (t) => !(t.processId === processId && t.dueDate === dateKey && t.status !== "completed"),
+    ),
+    processRuns: d.processRuns.filter(
+      (r) => !(r.processId === processId && r.date === dateKey),
+    ),
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Habits                                                              */
+/* ------------------------------------------------------------------ */
+
+export function useHabits(): Habit[] {
+  return useAppData().habits.filter((h) => !h.archived);
+}
+
+export function addHabit(
+  input: Partial<Habit> & { name: string; schedule: Recurrence },
+): Habit {
+  const habit: Habit = {
+    id: uid(),
+    name: input.name,
+    description: input.description,
+    icon: input.icon,
+    color: input.color,
+    schedule: input.schedule,
+    timeOfDay: input.timeOfDay ?? "anytime",
+    completions: [],
+    createdAt: nowTs(),
+    updatedAt: nowTs(),
+  };
+  set((d) => ({ ...d, habits: [...d.habits, habit] }));
+  return habit;
+}
+
+export function updateHabit(id: string, patch: Partial<Habit>) {
+  set((d) => ({
+    ...d,
+    habits: d.habits.map((h) =>
+      h.id === id ? { ...h, ...patch, updatedAt: nowTs() } : h,
+    ),
+  }));
+}
+
+export function deleteHabit(id: string) {
+  set((d) => ({ ...d, habits: d.habits.filter((h) => h.id !== id) }));
+}
+
+export function toggleHabitDate(habitId: string, dateKey: string) {
+  set((d) => ({
+    ...d,
+    habits: d.habits.map((h) => {
+      if (h.id !== habitId) return h;
+      const has = h.completions.includes(dateKey);
+      return {
+        ...h,
+        completions: has
+          ? h.completions.filter((c) => c !== dateKey)
+          : [...h.completions, dateKey],
+        updatedAt: nowTs(),
+      };
+    }),
+  }));
+}
+
+/** Consecutive days (ending today or yesterday) habit was completed AND scheduled. */
+export function habitStreak(habit: Habit): number {
+  let streak = 0;
+  let cursor = todayKey();
+  // Allow today to be incomplete without breaking yesterday's streak
+  if (!habit.completions.includes(cursor)) {
+    cursor = addDaysKey(cursor, -1);
+  }
+  while (habit.completions.includes(cursor)) {
+    streak++;
+    cursor = addDaysKey(cursor, -1);
+  }
+  return streak;
+}
+
+export function habitBestStreak(habit: Habit): number {
+  const days = [...habit.completions].sort();
+  let best = 0;
+  let run = 0;
+  let prev: string | null = null;
+  for (const day of days) {
+    if (prev && addDaysKey(prev, 1) === day) run++;
+    else run = 1;
+    best = Math.max(best, run);
+    prev = day;
+  }
+  return best;
+}
+
+/* ------------------------------------------------------------------ */
+/* Goals                                                               */
+/* ------------------------------------------------------------------ */
+
+export function useGoals(): Goal[] {
+  return useAppData().goals;
+}
+
+export function addGoal(input: Partial<Goal> & { title: string }): Goal {
+  const goal: Goal = {
+    id: uid(),
+    title: input.title,
+    description: input.description,
+    targetDate: input.targetDate,
+    status: input.status ?? "active",
+    color: input.color,
+    createdAt: nowTs(),
+    updatedAt: nowTs(),
+  };
+  set((d) => ({ ...d, goals: [...d.goals, goal] }));
+  return goal;
+}
+
+export function updateGoal(id: string, patch: Partial<Goal>) {
+  set((d) => ({
+    ...d,
+    goals: d.goals.map((g) => (g.id === id ? { ...g, ...patch, updatedAt: nowTs() } : g)),
+  }));
+}
+
+export function deleteGoal(id: string) {
+  set((d) => ({
+    ...d,
+    goals: d.goals.filter((g) => g.id !== id),
+    projects: d.projects.map((p) =>
+      p.goalId === id ? { ...p, goalId: undefined, updatedAt: nowTs() } : p,
+    ),
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Tags                                                                */
+/* ------------------------------------------------------------------ */
+
+export function useTags() {
+  return useAppData().tags;
+}
+
+export function addTag(name: string, color?: string): string {
+  const tag = { id: uid(), name: name.toLowerCase(), color, createdAt: nowTs() };
+  set((d) => ({ ...d, tags: [...d.tags, tag] }));
+  return tag.id;
+}
+
+export function ensureTagIds(names: string[]): string[] {
+  return names.map((n) => {
+    const existing = data.tags.find(
+      (t) => t.name.toLowerCase() === n.toLowerCase(),
+    );
+    return existing ? existing.id : addTag(n);
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Notes                                                               */
+/* ------------------------------------------------------------------ */
+
+export function useNotes(): Note[] {
+  return useAppData().notes;
+}
+
+export function addNote(title: string, body?: string): Note {
+  const note: Note = { id: uid(), title, body, createdAt: nowTs(), updatedAt: nowTs() };
+  set((d) => ({ ...d, notes: [note, ...d.notes] }));
+  return note;
+}
+
+export function updateNote(id: string, patch: Partial<Note>) {
+  set((d) => ({
+    ...d,
+    notes: d.notes.map((n) =>
+      n.id === id ? { ...n, ...patch, updatedAt: nowTs() } : n,
+    ),
+  }));
+}
+
+export function deleteNote(id: string) {
+  set((d) => ({ ...d, notes: d.notes.filter((n) => n.id !== id) }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Calendar events                                                     */
+/* ------------------------------------------------------------------ */
+
+export function useCalendarEvents(): CalendarEvent[] {
+  return useAppData().calendarEvents;
+}
+
+export function addEvent(
+  input: Partial<CalendarEvent> & { title: string; date: string },
+): CalendarEvent {
+  const event: CalendarEvent = {
+    id: uid(),
+    title: input.title,
+    date: input.date,
+    time: input.time,
+    kind: input.kind ?? "event",
+    linkedId: input.linkedId,
+    notes: input.notes,
+    createdAt: nowTs(),
+    updatedAt: nowTs(),
+  };
+  set((d) => ({ ...d, calendarEvents: [...d.calendarEvents, event] }));
+  return event;
+}
+
+export function updateEvent(id: string, patch: Partial<CalendarEvent>) {
+  set((d) => ({
+    ...d,
+    calendarEvents: d.calendarEvents.map((e) =>
+      e.id === id ? { ...e, ...patch, updatedAt: nowTs() } : e,
+    ),
+  }));
+}
+
+export function deleteEvent(id: string) {
+  set((d) => ({
+    ...d,
+    calendarEvents: d.calendarEvents.filter((e) => e.id !== id),
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Data management                                                     */
+/* ------------------------------------------------------------------ */
+
+export function resetDemoData() {
+  const fresh = seedData();
+  set(() => fresh);
+}
+
+export function clearAllData() {
+  const t = nowTs();
+  const empty: AppData = {
+    version: DATA_VERSION,
+    seeded: false,
+    settings: data.settings,
+    tasks: [],
+    inboxItems: [],
+    projects: [],
+    processes: [],
+    processRuns: [],
+    habits: [],
+    goals: [],
+    tags: [],
+    notes: [],
+    calendarEvents: [],
+  };
+  void t;
+  set(() => empty);
+}
+
+export function exportData(): string {
+  return JSON.stringify(data, null, 2);
+}
+
+export function importData(json: string): boolean {
+  try {
+    const parsed = JSON.parse(json) as AppData;
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.tasks)) {
+      return false;
+    }
+    set(() => ({ ...parsed, version: DATA_VERSION }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Derived helpers                                                     */
+/* ------------------------------------------------------------------ */
+
+export function tasksForDate(tasks: Task[], dateKey: string): Task[] {
+  return tasks.filter(
+    (t) => t.dueDate === dateKey && t.status !== "inbox",
+  );
+}
+
+export function overdueTasks(tasks: Task[]): Task[] {
+  const today = todayKey();
+  return tasks.filter(
+    (t) => t.status !== "completed" && t.status !== "inbox" && t.dueDate && t.dueDate < today,
+  );
+}
+
+export function projectProgress(tasks: Task[], projectId: string): number {
+  const pt = tasks.filter((t) => t.projectId === projectId);
+  if (pt.length === 0) return 0;
+  const done = pt.filter((t) => t.status === "completed").length;
+  return Math.round((done / pt.length) * 100);
+}
+
+export function goalProgress(
+  tasks: Task[],
+  projects: Project[],
+  goalId: string,
+): number {
+  const goalProjects = projects.filter((p) => p.goalId === goalId);
+  const goalTasks = tasks.filter(
+    (t) =>
+      t.goalId === goalId ||
+      (t.projectId && goalProjects.some((p) => p.id === t.projectId)),
+  );
+  if (goalTasks.length === 0) {
+    const gp = goalProjects.map((p) => projectProgress(tasks, p.id));
+    if (gp.length === 0) return 0;
+    return Math.round(gp.reduce((a, b) => a + b, 0) / gp.length);
+  }
+  const done = goalTasks.filter((t) => t.status === "completed").length;
+  return Math.round((done / goalTasks.length) * 100);
+}
+
+export function nextOccurrencePreview(rec: Recurrence | undefined): string {
+  if (!rec) return "";
+  let cursor = addDaysKey(todayKey(), 1);
+  for (let i = 0; i < 400; i++) {
+    if (recurrenceMatches(rec, cursor)) return cursor;
+    cursor = addDaysKey(cursor, 1);
+  }
+  return "";
+}
+
+export type { Task, TaskStatus, Priority, Subtask };
