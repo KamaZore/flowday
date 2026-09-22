@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { parseCapture } from "@/lib/parse";
+import { useI18n } from "@/lib/i18n";
 import {
   addGoal,
   addHabit,
@@ -40,13 +41,13 @@ type Kind = "task" | "project" | "process" | "habit" | "goal" | "note";
 
 export type { Kind as QuickAddType };
 
-const KINDS: { value: Kind; label: string; icon: typeof ListTodo }[] = [
-  { value: "task", label: "Task", icon: ListTodo },
-  { value: "project", label: "Project", icon: FolderKanban },
-  { value: "process", label: "Process", icon: Repeat2 },
-  { value: "habit", label: "Habit", icon: CheckCircle2 },
-  { value: "goal", label: "Goal", icon: Target },
-  { value: "note", label: "Note", icon: StickyNote },
+const KINDS: { value: Kind; labelKey: string; icon: typeof ListTodo }[] = [
+  { value: "task", labelKey: "kind.task", icon: ListTodo },
+  { value: "project", labelKey: "kind.project", icon: FolderKanban },
+  { value: "process", labelKey: "kind.process", icon: Repeat2 },
+  { value: "habit", labelKey: "kind.habit", icon: CheckCircle2 },
+  { value: "goal", labelKey: "kind.goal", icon: Target },
+  { value: "note", labelKey: "kind.note", icon: StickyNote },
 ];
 
 export function QuickAddDialog({
@@ -58,6 +59,7 @@ export function QuickAddDialog({
   onOpenChange: (v: boolean) => void;
   defaultType?: Kind;
 }) {
+  const { t } = useI18n();
   const [kind, setKind] = useState<Kind>(defaultType);
   const [text, setText] = useState("");
   const [projectBody, setProjectBody] = useState("");
@@ -95,16 +97,16 @@ export function QuickAddDialog({
           tagIds: ensureTagIds(p.tagNames),
           recurrence: p.recurrence,
         });
-        toast("Task added", {
+        toast(t("quick.taskAdded"), {
           description: p.dueDate
-            ? `Scheduled for ${p.dueDate}${p.dueTime ? ` at ${p.dueTime}` : ""}`
-            : "Saved to Inbox — organize it later",
+            ? `${t("quick.scheduledFor", { date: p.dueDate })}${p.dueTime ? ` · ${p.dueTime}` : ""}`
+            : t("quick.savedToInbox"),
         });
         break;
       }
       case "project":
         addProject({ name: value, description: projectBody });
-        toast.success("Project created");
+        toast.success(t("quick.projectCreated"));
         break;
       case "process": {
         const proc = addProcess({
@@ -112,8 +114,8 @@ export function QuickAddDialog({
           steps: [],
         });
         void proc;
-        toast.success("Process created", {
-          description: "Open Processes to add steps",
+        toast.success(t("quick.processCreated"), {
+          description: t("quick.processHint"),
         });
         break;
       }
@@ -123,15 +125,15 @@ export function QuickAddDialog({
           schedule: habitRecurrence,
           timeOfDay: habitTime,
         });
-        toast.success("Habit created");
+        toast.success(t("quick.habitCreated"));
         break;
       case "goal":
         addGoal({ title: value });
-        toast.success("Goal created");
+        toast.success(t("quick.goalCreated"));
         break;
       case "note":
         addNote(value, projectBody);
-        toast.success("Note saved");
+        toast.success(t("quick.noteSaved"));
         break;
     }
     setText("");
@@ -144,13 +146,13 @@ export function QuickAddDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="card-soft top-auto bottom-0 translate-y-0 gap-0 rounded-t-3xl p-0 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:rounded-3xl">
-        <DialogHeader className="px-5 pb-3 pt-5">
+        <DialogHeader className="safe-top px-5 pb-3 pt-5">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Sparkles className="size-4 text-primary" />
-            Quick add
+            {t("quick.title")}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Capture anything in seconds
+            {t("quick.subtitle")}
           </DialogDescription>
         </DialogHeader>
 
@@ -168,7 +170,7 @@ export function QuickAddDialog({
               )}
             >
               <k.icon className="size-3.5" />
-              {k.label}
+              {t(k.labelKey)}
             </button>
           ))}
         </div>
@@ -185,7 +187,7 @@ export function QuickAddDialog({
                   createByKind();
                 }
               }}
-              placeholder='e.g. "Call John tomorrow 3pm !high #errand"'
+              placeholder={t("quick.taskPlaceholder")}
               className="h-11 rounded-xl"
             />
           ) : kind === "note" || kind === "project" ? (
@@ -194,7 +196,7 @@ export function QuickAddDialog({
                 autoFocus
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={kind === "note" ? "Note title" : "Project name"}
+                placeholder={kind === "note" ? t("quick.noteTitle") : t("quick.projectName")}
                 className="h-11 rounded-xl"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -207,7 +209,7 @@ export function QuickAddDialog({
                 value={projectBody}
                 onChange={(e) => setProjectBody(e.target.value)}
                 placeholder={
-                  kind === "note" ? "Write something…" : "Description (optional)"
+                  kind === "note" ? t("quick.writeSomething") : t("quick.descOptional")
                 }
                 className="min-h-20 rounded-xl"
               />
@@ -226,22 +228,22 @@ export function QuickAddDialog({
                 }}
                 placeholder={
                   kind === "habit"
-                    ? "Habit name — e.g. Read 20 minutes"
+                    ? t("quick.habitName")
                     : kind === "process"
-                      ? "Process name — e.g. Morning Routine"
-                      : "Goal — e.g. Run a 10k"
+                      ? t("quick.processName")
+                      : t("quick.goalName")
                 }
                 className="h-11 rounded-xl"
               />
               {kind === "habit" && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-xs text-muted-foreground">Repeat:</span>
+                  <span className="text-xs text-muted-foreground">{t("quick.repeat")}</span>
                   {(
                     [
-                      { label: "Daily", value: { type: "daily" } },
-                      { label: "Weekdays", value: { type: "weekdays" } },
+                      { label: t("quick.daily"), value: { type: "daily" } },
+                      { label: t("quick.weekdays"), value: { type: "weekdays" } },
                       {
-                        label: "Weekly",
+                        label: t("quick.weekly"),
                         value: { type: "weekly", weekdays: [] },
                       },
                     ] as { label: string; value: Recurrence }[]
@@ -260,26 +262,26 @@ export function QuickAddDialog({
                       {opt.label}
                     </button>
                   ))}
-                  <span className="ml-2 text-xs text-muted-foreground">Time:</span>
+                  <span className="ml-2 text-xs text-muted-foreground">{t("quick.time")}</span>
                   {(
                     [
-                      "anytime",
-                      "morning",
-                      "afternoon",
-                      "evening",
+                      { key: "quick.anytime", value: "anytime" },
+                      { key: "quick.morning", value: "morning" },
+                      { key: "quick.afternoon", value: "afternoon" },
+                      { key: "quick.evening", value: "evening" },
                     ] as const
-                  ).map((t) => (
+                  ).map((opt) => (
                     <button
-                      key={t}
-                      onClick={() => setHabitTime(t)}
+                      key={opt.value}
+                      onClick={() => setHabitTime(opt.value)}
                       className={cn(
-                        "rounded-full border px-2.5 py-1 text-xs font-medium capitalize transition-colors",
-                        habitTime === t
+                        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                        habitTime === opt.value
                           ? "border-primary bg-primary/10 text-primary"
                           : "text-muted-foreground hover:bg-muted",
                       )}
                     >
-                      {t}
+                      {t(opt.key)}
                     </button>
                   ))}
                 </div>
@@ -322,7 +324,7 @@ export function QuickAddDialog({
                 </span>
               ))}
               <span className="text-muted-foreground/70">
-                detected — press Enter to save
+                {t("quick.detected")}
               </span>
               <CornerDownLeft className="size-3 text-muted-foreground/70" />
             </div>
@@ -334,7 +336,7 @@ export function QuickAddDialog({
               onClick={() => onOpenChange(false)}
               className="rounded-xl"
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={createByKind}
@@ -342,7 +344,7 @@ export function QuickAddDialog({
               className="gap-1.5 rounded-xl"
             >
               <activeKind.icon className="size-4" />
-              Add {activeKind.label.toLowerCase()}
+              {t("quick.addTo", { x: t(activeKind.labelKey).toLowerCase() })}
             </Button>
           </div>
         </div>

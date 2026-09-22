@@ -6,10 +6,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useI18n } from "@/lib/i18n";
 import { NAV_ITEMS } from "@/components/app/nav";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
-import { LayoutGrid, Moon, Plus, Sun } from "lucide-react";
+import { Languages, LayoutGrid, Moon, Plus, Sun } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 
@@ -56,6 +57,7 @@ function FlowdayLogo({ className }: { className?: string }) {
 }
 
 function SidebarNav() {
+  const { t } = useI18n();
   return (
     <nav className="flex flex-col gap-1">
       {NAV_ITEMS.map((item) => (
@@ -70,15 +72,33 @@ function SidebarNav() {
           }
         >
           <item.icon className="size-4" />
-          {item.label}
+          {t(item.labelKey)}
         </NavLink>
       ))}
     </nav>
   );
 }
 
+function LangToggle() {
+  const { lang, setLang } = useI18n();
+  const next = lang === "en" ? "km" : "en";
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-semibold"
+      onClick={() => setLang(next)}
+      aria-label="Switch language / ប្ដូរភាសា"
+    >
+      <Languages className="size-4" />
+      {next === "km" ? "ខ្មែរ" : "EN"}
+    </Button>
+  );
+}
+
 export function AppLayout({ children }: { children?: ReactNode }) {
   const { resolved, toggle } = useTheme();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -107,7 +127,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   return (
     <div className="min-h-dvh bg-background">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
+      <aside className="safe-x fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
         <button
           onClick={() => navigate("/today")}
           className="mb-6 flex items-center gap-2.5 px-2 text-left"
@@ -118,7 +138,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               Flowday
             </span>
             <span className="block text-[11px] text-muted-foreground">
-              Your day, in flow
+              {t("app.tagline")}
             </span>
           </span>
         </button>
@@ -138,42 +158,48 @@ export function AppLayout({ children }: { children?: ReactNode }) {
             )}
           </Button>
           <span className="text-xs text-muted-foreground">
-            {resolved === "dark" ? "Dark" : "Light"} mode
+            {resolved === "dark" ? t("theme.darkMode") : t("theme.lightMode")}
           </span>
+          <LangToggle />
         </div>
       </aside>
 
-      {/* Mobile header */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 bg-background/80 px-4 backdrop-blur md:hidden">
-        <button
-          onClick={() => navigate("/today")}
-          className="flex items-center gap-2"
-        >
-          <FlowdayLogo className="size-7 rounded-lg text-primary" />
-          <span className="text-base font-bold">Flowday</span>
-        </button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-9"
-          onClick={toggle}
-          aria-label="Toggle theme"
-        >
-          {resolved === "dark" ? (
-            <Sun className="size-4" />
-          ) : (
-            <Moon className="size-4" />
-          )}
-        </Button>
+      {/* Mobile header — safe-area aware */}
+      <header className="safe-top sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur md:hidden">
+        <div className="flex h-14 items-center justify-between px-4">
+          <button
+            onClick={() => navigate("/today")}
+            className="flex items-center gap-2"
+          >
+            <FlowdayLogo className="size-7 rounded-lg text-primary" />
+            <span className="text-base font-bold">Flowday</span>
+          </button>
+          <div className="flex items-center gap-1.5">
+            <LangToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-9"
+              onClick={toggle}
+              aria-label="Toggle theme"
+            >
+              {resolved === "dark" ? (
+                <Sun className="size-4" />
+              ) : (
+                <Moon className="size-4" />
+              )}
+            </Button>
+          </div>
+        </div>
       </header>
 
-      {/* Main content */}
-      <main className="px-4 pb-32 pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
+      {/* Main content — extra bottom padding clears the safe-area nav */}
+      <main className="safe-x px-4 pb-36 pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
         <div className="mx-auto max-w-5xl">{children ?? <Outlet />}</div>
       </main>
 
-      {/* Mobile bottom nav */}
-      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 flex h-16 items-stretch justify-around border-t border-border/60 bg-background/90 backdrop-blur md:hidden">
+      {/* Mobile bottom nav — grows with the home indicator inset */}
+      <nav className="safe-nav safe-x fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-border/60 bg-background/90 backdrop-blur md:hidden">
         {[0, 1, 2].map((idx) => {
           const item = NAV_ITEMS[idx];
           return (
@@ -182,24 +208,24 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               to={item.path}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors",
+                  "flex flex-1 flex-col items-center justify-center gap-0.5 pb-[env(safe-area-inset-bottom,0px)] pt-2 text-[10px] font-medium text-muted-foreground transition-colors",
                   isActive && "text-primary",
                 )
               }
             >
               <item.icon className="size-5" />
-              {item.label}
+              {t(item.labelKey)}
             </NavLink>
           );
         })}
         <MobileMoreMenu />
       </nav>
 
-      {/* Center FAB (mobile) */}
+      {/* Center FAB (mobile) — lifts above the safe-area nav */}
       <button
         onClick={() => openQuickAdd("task")}
-        className="card-soft fixed bottom-[76px] left-1/2 z-40 flex size-12 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
-        aria-label="Quick add"
+        className="card-soft fab-safe fixed left-1/2 z-40 flex size-12 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
+        aria-label={t("quick.title")}
       >
         <Plus className="size-6" />
       </button>
@@ -210,7 +236,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         className="card-soft fixed bottom-6 right-6 z-40 hidden h-12 gap-2 rounded-full px-5 shadow-lg md:inline-flex"
       >
         <Plus className="size-5" />
-        Quick add
+        {t("quick.title")}
       </Button>
 
       <QuickAddDialog
@@ -224,13 +250,14 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 
 /** Mobile “More” menu covering the nav items that don't fit in the bottom bar. */
 function MobileMoreMenu() {
-  const moreItems = NAV_ITEMS.slice(3); // Projects, Processes, Calendar, Habits, Goals, Progress, Settings
+  const { t } = useI18n();
+  const moreItems = NAV_ITEMS.slice(3);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors data-[active=true]:text-primary" data-active={moreItems.some((i) => `#${i.path}` === window.location.hash) || moreItems.some((i) => window.location.pathname === i.path)}>
+        <button className="flex flex-1 flex-col items-center justify-center gap-0.5 pb-[env(safe-area-inset-bottom,0px)] pt-2 text-[10px] font-medium text-muted-foreground transition-colors data-[active=true]:text-primary" data-active={moreItems.some((i) => window.location.pathname === i.path)}>
           <LayoutGrid className="size-5" />
-          More
+          {t("nav.more")}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="end" className="mb-2 grid grid-cols-3 gap-1 rounded-2xl p-2">
@@ -246,7 +273,7 @@ function MobileMoreMenu() {
               }
             >
               <item.icon className="size-5" />
-              {item.label}
+              {t(item.labelKey)}
             </NavLink>
           </DropdownMenuItem>
         ))}

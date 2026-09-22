@@ -127,6 +127,8 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
   button:not([disabled]),
   [role="button"]:not([disabled]) {
@@ -155,6 +157,23 @@
   }
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* Phone safe areas (notches, home indicator). viewport-fit=cover is set
+     in index.html, so these fill the real inset values on iOS/Android. */
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .safe-x {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .safe-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    /* Keep the bar readable above the home indicator instead of hugging it */
+    min-height: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+  .fab-safe {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
   .strike-soft {
     text-decoration: line-through;

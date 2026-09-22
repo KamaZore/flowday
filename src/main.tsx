@@ -7,6 +7,9 @@ import { ConvexReactClient } from "convex/react";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
+import { I18nProvider } from "@/lib/i18n";
+import { switchUser } from "@/lib/store";
+import { useAuth } from "@/hooks/use-auth";
 import "./index.css";
 
 // Lazy load route components for better code splitting
@@ -87,6 +90,24 @@ class RootErrorBoundary extends React.Component<
     }
     return this.props.children;
   }
+}
+
+/**
+ * Bridges auth state to the local store: each signed-in account gets its own
+ * isolated dataset (its own "table") via switchUser(). Signing out returns
+ * the app to the shared signed-out dataset. Rendered inside ConvexAuthProvider.
+ */
+function UserStoreBridge() {
+  const { isLoading, isAuthenticated, user } = useAuth();
+  useEffect(() => {
+    if (isLoading) return;
+    if (isAuthenticated && user) {
+      switchUser(user._id);
+    } else if (!isAuthenticated) {
+      switchUser(null);
+    }
+  }, [isLoading, isAuthenticated, user]);
+  return null;
 }
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -261,14 +282,17 @@ createRoot(document.getElementById("root")!).render(
         <VlyToolbar />
       </ToolbarErrorBoundary>
       <ConvexAuthProvider client={convex}>
-        <BrowserRouter>
-          <RouteSyncer />
-          <ServiceWorkerRegistrar />
-          <Suspense fallback={<RouteLoading />}>
-            <AppRoutes />
-          </Suspense>
-        </BrowserRouter>
-        <Toaster />
+        <I18nProvider>
+          <BrowserRouter>
+            <RouteSyncer />
+            <ServiceWorkerRegistrar />
+            <UserStoreBridge />
+            <Suspense fallback={<RouteLoading />}>
+              <AppRoutes />
+            </Suspense>
+          </BrowserRouter>
+          <Toaster />
+        </I18nProvider>
       </ConvexAuthProvider>
     </RootErrorBoundary>
   </StrictMode>,

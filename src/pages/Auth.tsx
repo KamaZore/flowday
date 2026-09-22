@@ -14,6 +14,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 
+import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { ArrowRight, Loader2, Mail, UserX } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
@@ -34,6 +35,7 @@ function resolveRedirectAfterAuth(
 }
 
 function Auth({ redirectAfterAuth }: AuthProps = {}) {
+  const { t } = useI18n();
   const { isLoading: authLoading, isAuthenticated, signIn } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -106,7 +108,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   return (
     <div className="min-h-dvh">
       {/* Subtle backdrop */}
-      <div className="relative flex min-h-dvh flex-col items-center justify-center px-4">
+      <div className="safe-top safe-bottom relative flex min-h-dvh flex-col items-center justify-center px-4">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-primary/10 blur-3xl"
@@ -128,10 +130,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
           {step === "signIn" ? (
             <>
               <CardHeader className="text-center">
-                <CardTitle className="text-xl">Welcome to Flowday</CardTitle>
-                <CardDescription>
-                  Sign in to sync your flow — or continue as guest
-                </CardDescription>
+                <CardTitle className="text-xl">{t("auth.welcome")}</CardTitle>
+                <CardDescription>{t("auth.subtitle")}</CardDescription>
               </CardHeader>
               <form onSubmit={handleEmailSubmit}>
                 <CardContent>
@@ -140,7 +140,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         name="email"
-                        placeholder="name@example.com"
+                        placeholder={t("auth.emailPlaceholder")}
                         type="email"
                         className="pl-9"
                         disabled={isLoading}
@@ -171,7 +171,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       </div>
                       <div className="relative flex justify-center text-xs uppercase">
                         <span className="bg-card px-2 text-muted-foreground">
-                          Or
+                          {t("auth.or")}
                         </span>
                       </div>
                     </div>
@@ -184,7 +184,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       disabled={isLoading}
                     >
                       <UserX className="mr-2 h-4 w-4" />
-                      Continue as guest
+                      {t("auth.guest")}
                     </Button>
                   </div>
                 </CardContent>
@@ -193,9 +193,9 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
           ) : (
             <>
               <CardHeader className="text-center">
-                <CardTitle>Check your email</CardTitle>
+                <CardTitle>{t("auth.checkEmail")}</CardTitle>
                 <CardDescription>
-                  We've sent a code to {step.email}
+                  {t("auth.codeSent", { email: step.email })}
                 </CardDescription>
               </CardHeader>
               <form onSubmit={handleOtpSubmit}>
@@ -235,7 +235,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       className="p-0 h-auto"
                       onClick={() => setStep("signIn")}
                     >
-                      Try again
+                      {t("auth.tryAgain")}
                     </Button>
                   </p>
                 </CardContent>
@@ -248,11 +248,11 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Verifying…
+                        {t("auth.verifying")}
                       </>
                     ) : (
                       <>
-                        Verify code
+                        {t("auth.verify")}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     )}
@@ -264,7 +264,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     disabled={isLoading}
                     className="w-full"
                   >
-                    Use different email
+                    {t("auth.differentEmail")}
                   </Button>
                 </CardFooter>
               </form>
@@ -272,7 +272,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
           )}
 
           <div className="rounded-b-3xl border-t border-border/60 bg-muted/50 py-3 px-6 text-center text-xs text-muted-foreground">
-            Local-first & private — your data lives on your device
+            {t("auth.localNote")}
           </div>
         </Card>
       </div>

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import {
   ArrowRight,
@@ -58,6 +59,7 @@ const FEATURES = [
 ];
 
 export default function Landing() {
+  const { t } = useI18n();
   const { isAuthenticated } = useAuth();
 
   return (
@@ -75,21 +77,21 @@ export default function Landing() {
             <span className="text-lg font-bold">Flowday</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <a href="#features" className="hover:text-foreground">Features</a>
-            <a href="#flow" className="hover:text-foreground">How it works</a>
+            <a href="#features" className="hover:text-foreground">{t("landing.navFeatures")}</a>
+            <a href="#flow" className="hover:text-foreground">{t("landing.navHow")}</a>
           </nav>
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <Button asChild className="rounded-xl">
-                <Link to="/today">Open app</Link>
+                <Link to="/today">{t("landing.ctaOpen")}</Link>
               </Button>
             ) : (
               <>
                 <Button asChild variant="ghost" className="rounded-xl">
-                  <Link to="/auth">Sign in</Link>
+                  <Link to="/auth">{t("landing.ctaSignin")}</Link>
                 </Button>
                 <Button asChild className="rounded-xl">
-                  <Link to="/auth">Get started</Link>
+                  <Link to="/auth">{t("landing.ctaStart")}</Link>
                 </Button>
               </>
             )}
@@ -111,12 +113,12 @@ export default function Landing() {
           >
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               <Sparkles className="size-3.5" />
-              Local-first · Installable · Free
+              {t("landing.badge")}
             </span>
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl">
-              Your goals, your flow,
+              {t("landing.heroA")}
               <br />
-              <span className="text-primary">every single day.</span>
+              <span className="text-primary">{t("landing.heroB")}</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
               Flowday turns goals into projects, projects into routines, and

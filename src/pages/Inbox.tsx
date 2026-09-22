@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addInboxItem, deleteInboxItem, organizeInboxItem, useInboxItems } from "@/lib/store";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   ArrowRightCircle,
@@ -26,6 +27,7 @@ const ORGANIZE_OPTIONS = [
 ];
 
 export default function Inbox() {
+  const { t } = useI18n();
   const items = useInboxItems();
   const [text, setText] = useState("");
 
@@ -38,9 +40,9 @@ export default function Inbox() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Inbox</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("inbox.title")}</h1>
         <p className="text-sm text-muted-foreground">
-          Capture first, organize later
+          {t("inbox.subtitle")}
         </p>
       </div>
 
@@ -58,15 +60,15 @@ export default function Inbox() {
                 capture();
               }
             }}
-            placeholder='Type anything… "Call John tomorrow"'
+            placeholder={t("inbox.placeholder")}
             className="h-10 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
           />
           <Button size="sm" onClick={capture} disabled={!text.trim()} className="rounded-xl">
-            Save
+            {t("common.save")}
           </Button>
         </div>
         <div className="flex items-center gap-1 border-t border-border/60 pt-2 text-[11px] text-muted-foreground">
-          <CornerDownLeft className="size-3" /> Enter to capture instantly
+          <CornerDownLeft className="size-3" /> {t("inbox.enterHint")}
         </div>
       </div>
 
@@ -92,7 +94,7 @@ export default function Inbox() {
             {item.organizedType ? (
               <p className="mt-2 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="size-3.5" />
-                Organized as {item.organizedType}
+                {t("inbox.organizedAs", { type: item.organizedType ?? "" })}
               </p>
             ) : (
               <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -116,9 +118,9 @@ export default function Inbox() {
         {items.length === 0 && (
           <div className="card-soft flex flex-col items-center justify-center rounded-2xl border border-dashed py-14 text-center">
             <InboxIcon className="mb-2 size-8 text-muted-foreground/50" />
-            <p className="text-sm font-medium">Inbox zero</p>
+            <p className="text-sm font-medium">{t("inbox.empty")}</p>
             <p className="mt-1 max-w-60 text-xs text-muted-foreground">
-              Everything captured has been organized. Nice.
+              {t("inbox.emptySub")}
             </p>
           </div>
         )}

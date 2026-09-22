@@ -27,6 +27,28 @@ import type {
 export const DATA_VERSION = 1;
 const STORAGE_KEY = "flowday-data-v1";
 
+/**
+ * Storage is scoped per signed-in account: each user gets an isolated
+ * "table" of data (`flowday-data-v1:u:<userId>`), so accounts on the same
+ * device never see each other's tasks. Signed-out visitors share the
+ * default key. `switchUser` swaps the active dataset.
+ */
+let ownerId: string | null = null;
+
+function storageKey(): string {
+  return ownerId ? `${STORAGE_KEY}:u:${ownerId}` : STORAGE_KEY;
+}
+
+/** Point the store at another account's dataset (or the signed-out one). */
+export function switchUser(owner: string | null) {
+  if (owner === ownerId) return;
+  persist(); // save the outgoing user's data under their key
+  ownerId = owner;
+  data = load();
+  persist();
+  listeners.forEach((l) => l());
+}
+
 export function uid(): string {
   return (
     Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
@@ -356,7 +378,7 @@ const listeners = new Set<() => void>();
 
 function load(): AppData {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey());
     if (raw) {
       const parsed = JSON.parse(raw) as AppData;
       if (parsed && parsed.version === DATA_VERSION) return parsed;
@@ -366,7 +388,7 @@ function load(): AppData {
   }
   const fresh = seedData();
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+    localStorage.setItem(storageKey(), JSON.stringify(fresh));
   } catch {
     // storage may be unavailable (private mode); keep in-memory
   }
@@ -375,7 +397,7 @@ function load(): AppData {
 
 function persist() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(storageKey(), JSON.stringify(data));
   } catch {
     // ignore quota errors
   }

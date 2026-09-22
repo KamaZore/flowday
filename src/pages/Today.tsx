@@ -1,4 +1,5 @@
 import { QuickAddDialog, type QuickAddType } from "@/components/app/QuickAddDialog";
+import { useI18n } from "@/lib/i18n";
 import { TaskEditor } from "@/components/app/tasks/TaskEditor";
 import { TaskRow } from "@/components/app/tasks/TaskRow";
 import { Button } from "@/components/ui/button";
@@ -31,12 +32,12 @@ import {
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
-function greeting(): string {
+function greetingKey(): string {
   const h = new Date().getHours();
-  if (h < 5) return "Good night";
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
+  if (h < 5) return "today.greeting.night";
+  if (h < 12) return "today.greeting.morning";
+  if (h < 17) return "today.greeting.afternoon";
+  return "today.greeting.evening";
 }
 
 function greetingIcon() {
@@ -47,6 +48,7 @@ function greetingIcon() {
 }
 
 export default function Today() {
+  const { t } = useI18n();
   const tasks = useTasks();
   const habits = useHabits();
   const processes = useProcesses();
@@ -115,13 +117,14 @@ export default function Today() {
   };
 
   const GreetingIcon = greetingIcon();
+  const greeting = t(greetingKey());
 
   return (
     <div className="space-y-5">
       {/* Greeting */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          {greeting()} <span>👋</span>
+          {greeting} <span>👋</span>
         </h1>
         <p className="text-sm text-muted-foreground">
           {formatDateKey(today, "EEEE, MMMM d")}
@@ -132,10 +135,11 @@ export default function Today() {
       <div className="card-soft rounded-3xl border border-border/70 bg-card p-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold">Today's progress</p>
+            <p className="text-sm font-semibold">{t("today.progress")}</p>
             <p className="text-xs text-muted-foreground">
-              {doneToday} of {totalToday} tasks done
-              {overdue.length > 0 && ` · ${overdue.length} overdue`}
+              {t("today.ofTasksDone", { done: doneToday, total: totalToday })}
+              {overdue.length > 0 &&
+                ` · ${t("today.overdueSuffix", { n: overdue.length })}`}
             </p>
           </div>
           <div className="text-right">
@@ -149,7 +153,7 @@ export default function Today() {
           <div className="mt-3 rounded-2xl bg-destructive/10 p-3">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-destructive">
               <AlarmClock className="size-3.5" />
-              {overdue.length} overdue {overdue.length === 1 ? "task" : "tasks"}
+              {t("today.overdueTasks", { n: overdue.length })}
             </p>
             <div className="mt-2 space-y-1.5">
               {overdue.slice(0, 3).map((t) => (
@@ -160,7 +164,7 @@ export default function Today() {
                   to="/tasks?filter=overdue"
                   className="block pt-1 text-xs font-medium text-destructive/80 hover:underline"
                 >
-                  View all overdue →
+                  {t("today.viewAllOverdue")}
                 </Link>
               )}
             </div>
@@ -174,23 +178,23 @@ export default function Today() {
           onClick={() => openQuick("task")}
           className="shrink-0 gap-1.5 rounded-full"
         >
-          <Plus className="size-4" /> Add task
+          <Plus className="size-4" /> {t("today.addTask")}
         </Button>
         {(
           [
-            ["project", "New project"],
-            ["process", "New process"],
-            ["habit", "New habit"],
-            ["goal", "New goal"],
+            ["project", "today.newProject"],
+            ["process", "today.newProcess"],
+            ["habit", "today.newHabit"],
+            ["goal", "today.newGoal"],
           ] as [QuickAddType, string][]
-        ).map(([type, label]) => (
+        ).map(([type, labelKey]) => (
           <Button
             key={type}
             variant="outline"
             onClick={() => openQuick(type)}
             className="shrink-0 rounded-full"
           >
-            {label}
+            {t(labelKey)}
           </Button>
         ))}
       </div>
@@ -198,7 +202,7 @@ export default function Today() {
       {/* Today's tasks */}
       <section>
         <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-          <ListChecks className="size-4" /> Today
+          <ListChecks className="size-4" /> {t("today.sectionToday")}
         </h2>
         <div className="space-y-2">
           {todaysTasks.map((task) => (
@@ -216,7 +220,7 @@ export default function Today() {
               onClick={() => openQuick("task")}
               className="card-soft flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed py-8 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              <Plus className="size-4" /> Plan your day — add a task
+              <Plus className="size-4" /> {t("today.planDay")}
             </button>
           )}
         </div>
@@ -226,7 +230,7 @@ export default function Today() {
       {todayHabits.length > 0 && (
         <section>
           <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-            <Flame className="size-4" /> Habits
+            <Flame className="size-4" /> {t("today.habits")}
           </h2>
           <div className="card-soft divide-y divide-border/60 rounded-2xl border border-border/70 bg-card">
             {todayHabits.map((h) => {
@@ -265,7 +269,7 @@ export default function Today() {
       {scheduledProcesses.length > 0 && (
         <section>
           <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-            <Repeat2 className="size-4" /> Process routines
+            <Repeat2 className="size-4" /> {t("today.processRoutines")}
           </h2>
           <div className="space-y-2">
             {scheduledProcesses.map((p) => {
@@ -298,9 +302,8 @@ export default function Today() {
 
       {/* Tomorrow peek */}
       <section>
-        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-          <CalendarDays className="size-4" /> Tomorrow
-        </h2>
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">            <CalendarDays className="size-4" /> {t("today.tomorrow")}
+          </h2>
         <div className="space-y-2 opacity-80">
           {tasks
             .filter((t) => t.dueDate === addDaysKey(today, 1) && t.status !== "inbox")

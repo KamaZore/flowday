@@ -12,20 +12,21 @@ import {
 } from "lucide-react";
 
 export type NavItem = {
-  label: string;
+  /** i18n key — labels localize automatically via t() */
+  labelKey: string;
   path: string;
   icon: LucideIcon;
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Today", path: "/today", icon: CalendarDays },
-  { label: "Inbox", path: "/inbox", icon: Inbox },
-  { label: "Tasks", path: "/tasks", icon: ListChecks },
-  { label: "Projects", path: "/projects", icon: LayoutList },
-  { label: "Processes", path: "/processes", icon: Repeat2 },
-  { label: "Calendar", path: "/calendar", icon: CalendarDays },
-  { label: "Habits", path: "/habits", icon: CheckCircle2 },
-  { label: "Goals", path: "/goals", icon: Target },
-  { label: "Progress", path: "/progress", icon: LineChart },
-  { label: "Settings", path: "/settings", icon: Settings },
+  { labelKey: "nav.today", path: "/today", icon: CalendarDays },
+  { labelKey: "nav.inbox", path: "/inbox", icon: Inbox },
+  { labelKey: "nav.tasks", path: "/tasks", icon: ListChecks },
+  { labelKey: "nav.projects", path: "/projects", icon: LayoutList },
+  { labelKey: "nav.processes", path: "/processes", icon: Repeat2 },
+  { labelKey: "nav.calendar", path: "/calendar", icon: CalendarDays },
+  { labelKey: "nav.habits", path: "/habits", icon: CheckCircle2 },
+  { labelKey: "nav.goals", path: "/goals", icon: Target },
+  { labelKey: "nav.progress", path: "/progress", icon: LineChart },
+  { labelKey: "nav.settings", path: "/settings", icon: Settings },
 ];

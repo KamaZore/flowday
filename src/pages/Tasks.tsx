@@ -1,4 +1,5 @@
 import { TaskEditor } from "@/components/app/tasks/TaskEditor";
+import { useI18n } from "@/lib/i18n";
 import { TaskRow } from "@/components/app/tasks/TaskRow";
 import { Button } from "@/components/ui/button";
 import { addDaysKey, todayKey } from "@/lib/date-utils";
@@ -21,6 +22,7 @@ type FilterKey =
   | `tag:${string}`;
 
 export default function Tasks() {
+  const { t } = useI18n();
   const tasks = useTasks();
   const projects = useProjects();
   const tags = useTags();
@@ -135,32 +137,51 @@ export default function Tasks() {
     </button>
   );
 
+  const filterLabel = (key: FilterKey): string => {
+    switch (key) {
+      case "all": return t("filter.all");
+      case "today": return t("filter.today");
+      case "upcoming": return t("filter.upcoming");
+      case "overdue": return t("filter.overdue");
+      case "completed": return t("filter.completed");
+      case "inbox": return t("filter.inbox");
+      default:
+        if (key.startsWith("priority:")) {
+          const p = key.slice(9);
+          return t(
+            p === "high" ? "quick.priorityHigh" : p === "low" ? "quick.priorityLow" : "quick.priorityMedium",
+          );
+        }
+        return key.split(":")[1] ?? key;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t("tasks.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            {sorted.filter((t) => t.status !== "completed").length} open
+            {sorted.filter((t) => t.status !== "completed").length} open · {t("tasks.subtitle")}
           </p>
         </div>
         <Button onClick={() => setNewOpen(true)} className="gap-1.5 rounded-xl">
-          <Plus className="size-4" /> New task
+          <Plus className="size-4" /> {t("tasks.newTask")}
         </Button>
         <TaskEditor open={newOpen} onOpenChange={setNewOpen} />
       </div>
 
       {/* Filters */}
       <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        {chip("all", "All")}
-        {chip("today", "Today")}
-        {chip("upcoming", "Upcoming")}
-        {chip("overdue", "Overdue")}
-        {chip("completed", "Completed")}
-        {chip("inbox", "Inbox")}
-        {["high", "medium", "low"].map((p) => chip(`priority:${p}`, p[0].toUpperCase() + p.slice(1)))}
+        {chip("all", t("filter.all"))}
+        {chip("today", t("filter.today"))}
+        {chip("upcoming", t("filter.upcoming"))}
+        {chip("overdue", t("filter.overdue"))}
+        {chip("completed", t("filter.completed"))}
+        {chip("inbox", t("filter.inbox"))}
+        {["high", "medium", "low"].map((p) => chip(`priority:${p}`, filterLabel(`priority:${p}`)))}
         {projects.map((p) => chip(`project:${p.id}`, p.name))}
-        {tags.map((t) => chip(`tag:${t.id}`, `#${t.name}`))}
+        {tags.map((tag) => chip(`tag:${tag.id}`, `#${tag.name}`))}
       </div>
 
       {/* List */}
