@@ -1,7 +1,12 @@
-import { SignUp, useUser } from "@clerk/clerk-react";
-import { useI18n } from "@/lib/i18n";
-import { useEffect } from "react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { classifyAuthError, useAuth } from "@/hooks/use-auth";
+import { useI18n } from "@/lib/i18n";
 
 function resolveRedirect(returnTo: string | null, fallback = "/today") {
   if (returnTo?.startsWith("/") && !returnTo.startsWith("//")) return returnTo;
@@ -9,19 +14,65 @@ function resolveRedirect(returnTo: string | null, fallback = "/today") {
 }
 
 /**
- * Register page — creates a new Clerk account. Each account gets its own
- * isolated data table on this device (see UserStoreBridge in main.tsx).
+ * Register page — creates a real account (email + password) in the app's own
+ * database. Each account gets its own isolated data table on this device
+ * (see UserStoreBridge in main.tsx).
  */
 function RegisterInner() {
   const { t } = useI18n();
-  const { isSignedIn, isLoaded } = useUser();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { signIn } = useAuthActions();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirect = resolveRedirect(searchParams.get("returnTo"));
+  const returnTo = searchParams.get("returnTo");
+  const redirect = resolveRedirect(returnTo);
 
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Already signed in (e.g. revisiting /register) → straight to the app.
   useEffect(() => {
-    if (isLoaded && isSignedIn) navigate(redirect, { replace: true });
-  }, [isLoaded, isSignedIn, navigate, redirect]);
+    if (!isLoading && isAuthenticated) navigate(redirect, { replace: true });
+  }, [isLoading, isAuthenticated, navigate, redirect]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setError(null);
+    if (password.length < 8) {
+      setError(t("auth.passwordHint"));
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = (await signIn("password", {
+        email: email.trim(),
+        password,
+        name: name.trim() || undefined,
+        flow: "signUp",
+      })) as { signedIn?: boolean } | null | undefined;
+      if (res && typeof res === "object" && res.signedIn === false) {
+        setError(t("auth.errGeneric"));
+        return;
+      }
+      // Auth state flip navigates via the effect above.
+    } catch (err) {
+      const kind = classifyAuthError(err);
+      setError(
+        kind === "exists"
+          ? t("auth.errExists")
+          : kind === "invalid"
+            ? t("auth.errInvalid")
+            : t("auth.errGeneric"),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="safe-top safe-bottom relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-10">
@@ -42,28 +93,87 @@ function RegisterInner() {
         <span className="text-xl font-bold">Flowday</span>
       </button>
 
-      <div className="w-full max-w-sm">
-        <SignUp
-          signInUrl="/auth"
-          fallbackRedirectUrl={redirect}
-          appearance={{
-            variables: {
-              colorPrimary: "#4f46e5",
-              colorBackground: "transparent",
-              borderRadius: "0.875rem",
-            },
-            elements: {
-              card: "shadow-none bg-transparent",
-            },
-          }}
-        />
+      <div className="card-soft relative w-full max-w-sm rounded-3xl border border-border/70 bg-card p-6">
+        <h1 className="text-xl font-bold tracking-tight">
+          {t("auth.registerTitle")}
+        </h1>
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="name">{t("auth.name")}</Label>
+            <Input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("auth.namePlaceholder")}
+              className="h-10 rounded-xl"
+              autoComplete="name"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="email">{t("auth.email")}</Label>
+            <Input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("auth.emailPlaceholder")}
+              className="h-10 rounded-xl"
+              autoComplete="email"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">{t("auth.password")}</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPw ? "text" : "password"}
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-10 rounded-xl pr-10"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={showPw ? "Hide password" : "Show password"}
+                tabIndex={-1}
+              >
+                {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">{t("auth.passwordHint")}</p>
+          </div>
+
+          {error && (
+            <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+              {error}
+            </p>
+          )}
+
+          <Button type="submit" className="h-10 w-full rounded-xl" disabled={busy}>
+            {busy ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                {t("auth.creating")}
+              </>
+            ) : (
+              t("auth.createBtn")
+            )}
+          </Button>
+        </form>
+
         <p className="mt-4 text-center text-sm text-muted-foreground">
           {t("auth.haveAccount")}{" "}
           <button
             onClick={() =>
               navigate(
-                searchParams.get("returnTo")
-                  ? `/auth?returnTo=${encodeURIComponent(searchParams.get("returnTo")!)}`
+                returnTo
+                  ? `/auth?returnTo=${encodeURIComponent(returnTo)}`
                   : "/auth",
               )
             }
@@ -72,10 +182,11 @@ function RegisterInner() {
             {t("auth.goSignin")}
           </button>
         </p>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          {t("auth.localNote")}
-        </p>
       </div>
+
+      <p className="relative mt-4 text-center text-xs text-muted-foreground">
+        {t("auth.localNote")}
+      </p>
     </div>
   );
 }

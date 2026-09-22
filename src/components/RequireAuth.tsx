@@ -1,17 +1,27 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router";
 
 /**
- * Auth gate — Clerk resolves client-side, so no backend timeout fallback is
- * needed. Unauthenticated users are sent to /auth?returnTo=<path>.
+ * If the auth backend is unreachable (e.g. the installed PWA opened offline),
+ * don't hang forever — fall through so the user can reach the sign-in page
+ * (which will show a clear error) instead of a frozen spinner.
  */
+const AUTH_TIMEOUT_MS = 6000;
+
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
+  const [timedOut, setTimedOut] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading) return;
+    const id = setTimeout(() => setTimedOut(true), AUTH_TIMEOUT_MS);
+    return () => clearTimeout(id);
+  }, [isLoading]);
+
+  if (isLoading && !timedOut) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />

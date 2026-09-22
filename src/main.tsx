@@ -2,7 +2,8 @@ import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ConvexAuthProvider } from "@convex-dev/auth/react";
+import { ConvexReactClient } from "convex/react";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
@@ -113,25 +114,29 @@ function UserStoreBridge() {
   return null;
 }
 
-const CLERK_PK = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+const CONVEX_URL = import.meta.env.VITE_CONVEX_URL as string | undefined;
+const convex = CONVEX_URL ? new ConvexReactClient(CONVEX_URL) : null;
 
-// Clerk keys are safe to expose (publishable). When missing — e.g. a fork of
-// this project — render a clear setup screen instead of crashing.
-function MissingClerkKey() {
+// The platform injects VITE_CONVEX_URL in the preview. When missing — e.g. a
+// fork of this project — render a clear setup screen instead of crashing.
+function MissingConvexUrl() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background p-6">
       <div className="max-w-lg space-y-3 text-center">
         <p className="text-lg font-bold">
-          Auth key missing · គ្មានកូដគណនី
+          Backend URL missing · គ្មានអាសយដ្ឋាន Backend
         </p>
         <p className="text-sm text-muted-foreground">
-          Set <code className="rounded bg-muted px-1.5 py-0.5 text-xs">VITE_CLERK_PUBLISHABLE_KEY</code>{" "}
+          Set{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+            VITE_CONVEX_URL
+          </code>{" "}
           in the project's environment (Keys/API keys) or a local{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">.env</code> file,
-          then restart the dev server.
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">.env</code>{" "}
+          file, then restart the dev server.
         </p>
         <p className="text-xs text-muted-foreground">
-          សូមបញ្ចូល VITE_CLERK_PUBLISHABLE_KEY ក្នុងហ្វាក់ការកំណត់ រួច restart កម្មវិធី។
+          សូមបញ្ចូល VITE_CONVEX_URL ក្នុងហ្វាក់ការកំណត់ រួច restart កម្មវិធី។
         </p>
       </div>
     </div>
@@ -300,9 +305,9 @@ function ServiceWorkerRegistrar() {
 }
 
 function Root() {
-  if (!CLERK_PK) return <MissingClerkKey />;
+  if (!convex) return <MissingConvexUrl />;
   return (
-    <ClerkProvider publishableKey={CLERK_PK}>
+    <ConvexAuthProvider client={convex}>
       <I18nProvider>
         <BrowserRouter>
           <RouteSyncer />
@@ -314,7 +319,7 @@ function Root() {
         </BrowserRouter>
         <Toaster />
       </I18nProvider>
-    </ClerkProvider>
+    </ConvexAuthProvider>
   );
 }
 
