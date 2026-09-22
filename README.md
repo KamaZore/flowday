@@ -42,6 +42,10 @@ The data layer is local-first (localStorage). Without `VITE_CONVEX_URL`, the app
 
 English and Khmer (ភាសាខ្មែរ) — switch via the EN/ខ្មែរ button in the sidebar/mobile header or in Settings.
 
+## Accounts
+
+Login (`/auth`) and register (`/register`) use **email + password** (min 8 chars) backed by the app's own Convex database (`users` + `authAccounts` tables, passwords hashed server-side) — no external auth service or API key needed.
+
 ## Data isolation
 
 Each signed-in account gets its own dataset on the device (its own "table"). Sign out to see the shared guest dataset. Export/import JSON backups in Settings.

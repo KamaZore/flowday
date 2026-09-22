@@ -49,12 +49,17 @@ function RegisterInner() {
     }
     setBusy(true);
     try {
-      const res = (await signIn("password", {
+      // Params must be Convex values, so only include `name` when provided.
+      const params: Record<string, string> = {
         email: email.trim(),
         password,
-        name: name.trim() || undefined,
         flow: "signUp",
-      })) as { signedIn?: boolean } | null | undefined;
+      };
+      if (name.trim()) params.name = name.trim();
+      const res = (await signIn("password", params)) as
+        | { signedIn?: boolean }
+        | null
+        | undefined;
       if (res && typeof res === "object" && res.signedIn === false) {
         setError(t("auth.errGeneric"));
         return;
