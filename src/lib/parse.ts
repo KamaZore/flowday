@@ -117,15 +117,7 @@ export function parseCapture(input: string): ParsedCapture {
       return "";
     });
   }
-  if (!recurrence && /\bevery week\b|\bweekly\b/i.test(text)) {
-    recurrence = { type: "weekly", weekdays: [] };
-    text = text.replace(/\bevery week\b|\bweekly\b/i, (m) => {
-      matched.push(m);
-      return "";
-    });
-  }
-
-  // "every monday" / "mondays" — collect all weekday mentions if recurrence intended
+  // "every monday" — a specific weekday recurrence (checked before generic "weekly")
   if (!recurrence && /\b(every|each)\s+(mon|tue|wed|thu|fri|sat|sun)\w*/i.test(text)) {
     const days: number[] = [];
     text = text.replace(
@@ -137,13 +129,22 @@ export function parseCapture(input: string): ParsedCapture {
       },
     );
     if (days.length > 0) recurrence = { type: "weekly", weekdays: days };
-  } else if (!recurrence && /\b(mon|tues?|wed(nes)?|thur?s?|fri|sat(ur)?|sun)\b/i.test(text)) {
+  }
+  if (!recurrence && /\bevery week\b|\bweekly\b/i.test(text)) {
+    recurrence = { type: "weekly", weekdays: [] };
+    text = text.replace(/\bevery week\b|\bweekly\b/i, (m) => {
+      matched.push(m);
+      return "";
+    });
+  }
+
+  if (!recurrence && /\b(?:next\s+|on\s+|this\s+|last\s+)?(?:sunday|monday|tuesday|tues|wednesday|weds|wed|thursday|thurs|thur|thu|friday|fri|saturday|sat|sun)\b/i.test(text)) {
     // bare weekday mention like "next monday" or "on friday"
     const days: number[] = [];
     text = text.replace(
-      /\b((?:next\s+|on\s+|this\s+)?(?:mon|tues?|wed(?:nes)?|thur?s?|fri|sat(?:ur)?|sun)\w*)\b/gi,
+      /\b((?:next\s+|on\s+|this\s+|last\s+)?(?:mon|tues?|wed(?:nes)?|thur?s?|fri|sat(?:ur)?|sun)\w*)\b/gi,
       (m, word: string) => {
-        const key = word.toLowerCase().replace(/^(next|on|this)\s+/, "").slice(0, 4);
+        const key = word.toLowerCase().replace(/^(next|on|this|last)\s+/, "").slice(0, 4);
         const norm = key.slice(0, 3);
         if (WEEKDAYS[norm] !== undefined && /next|on|this|s$|day/i.test(word)) {
           days.push(WEEKDAYS[norm]);

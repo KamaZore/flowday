@@ -1,0 +1,415 @@
+import { describe, expect, test, beforeEach } from "bun:test";
+import {
+  addDaysKey,
+  buildMonthGrid,
+  formatDateKey,
+  formatTime,
+  isInRange,
+  isOverdue,
+  parseDateKey,
+  recurrenceLabel,
+  recurrenceMatches,
+  toLocalDateKey,
+  todayKey,
+} from "./date-utils";
+import { parseCapture } from "./parse";
+import {
+  addProcessStep,
+  addSubtask,
+  addTask,
+  clearAllData,
+  deleteProject,
+  deleteProcess,
+  exportData,
+  getData,
+  goalProgress,
+  habitBestStreak,
+  habitStreak,
+  importData,
+  moveProcessStep,
+  organizeInboxItem,
+  projectProgress,
+  resetDemoData,
+  scheduleProcess,
+  toggleHabitDate,
+  toggleSubtask,
+  toggleTask,
+  updateSettings,
+} from "./store";
+import type { Habit, Process, Task } from "./types";
+
+/* ------------------------------------------------------------------ */
+/* parse.ts — smart capture                                            */
+/* ------------------------------------------------------------------ */
+
+describe("parseCapture", () => {
+  test("parses 'Call John tomorrow 3pm !high #errands'", () => {
+    const r = parseCapture("Call John tomorrow 3pm !high #errands");
+    expect(r.title).toBe("Call John");
+    expect(r.dueDate).toBe(addDaysKey(todayKey(), 1));
+    expect(r.dueTime).toBe("15:00");
+    expect(r.priority).toBe("high");
+    expect(r.tagNames).toEqual(["errands"]);
+  });
+
+  test("parses 24h time and 'today'", () => {
+    const r = parseCapture("Submit taxes today 9:30am");
+    expect(r.title).toBe("Submit taxes");
+    expect(r.dueDate).toBe(todayKey());
+    expect(r.dueTime).toBe("09:30");
+  });
+
+  test("'tonight' defaults to 20:00 today", () => {
+    const r = parseCapture("Night run tonight");
+    expect(r.title).toBe("Night run");
+    expect(r.dueDate).toBe(todayKey());
+    expect(r.dueTime).toBe("20:00");
+  });
+
+  test("bare weekday mention schedules next occurrence", () => {
+    const r = parseCapture("Plan review on friday");
+    expect(r.title).toBe("Plan review");
+    expect(r.dueDate).toBeDefined();
+    expect(r.dueDate).not.toBe("invalid");
+    const dow = parseDateKey(r.dueDate as string).getDay();
+    expect(dow).toBe(5); // Friday
+  });
+
+  test("'every monday' becomes a weekly recurrence", () => {
+    const r = parseCapture("Weekly review every monday");
+    expect(r.recurrence).toEqual({ type: "weekly", weekdays: [1] });
+  });
+
+  test("'every weekday' becomes a weekdays recurrence", () => {
+    const r = parseCapture("Standup every weekday");
+    expect(r.recurrence).toEqual({ type: "weekdays" });
+  });
+
+  test("plain text is untouched", () => {
+    const r = parseCapture("Buy milk");
+    expect(r.title).toBe("Buy milk");
+    expect(r.dueDate).toBeUndefined();
+    expect(r.dueTime).toBeUndefined();
+    expect(r.priority).toBeUndefined();
+    expect(r.tagNames).toEqual([]);
+  });
+
+  test("handles noon/midnight correctly", () => {
+    expect(parseCapture("Lunch at 12pm").dueTime).toBe("12:00");
+    expect(parseCapture("Wake up 12am").dueTime).toBe("00:00");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* date-utils.ts                                                       */
+/* ------------------------------------------------------------------ */
+
+describe("date-utils", () => {
+  test("toLocalDateKey / parseDateKey roundtrip", () => {
+    const key = "2026-09-22";
+    expect(toLocalDateKey(parseDateKey(key))).toBe(key);
+  });
+
+  test("addDaysKey crosses month boundaries", () => {
+    expect(addDaysKey("2026-01-31", 1)).toBe("2026-02-01");
+    expect(addDaysKey("2026-03-01", -1)).toBe("2026-02-28");
+    expect(addDaysKey("2026-12-31", 1)).toBe("2027-01-01");
+  });
+
+  test("recurrenceMatches", () => {
+    expect(recurrenceMatches({ type: "daily" }, "2026-09-22")).toBe(true);
+    expect(
+      recurrenceMatches({ type: "weekdays" }, "2026-09-19"), // Saturday
+    ).toBe(false);
+    expect(
+      recurrenceMatches({ type: "weekdays" }, "2026-09-22"), // Tuesday
+    ).toBe(true);
+    expect(
+      recurrenceMatches({ type: "weekly", weekdays: [1] }, "2026-09-21"), // Monday
+    ).toBe(true);
+    expect(
+      recurrenceMatches(
+        { type: "monthly", dayOfMonth: 15 },
+        "2026-09-15",
+      ),
+    ).toBe(true);
+    expect(recurrenceMatches(undefined, "2026-09-22")).toBe(false);
+  });
+
+  test("recurrenceLabel", () => {
+    expect(recurrenceLabel(undefined)).toBe("No repeat");
+    expect(recurrenceLabel({ type: "daily" })).toBe("Every day");
+    expect(recurrenceLabel({ type: "weekdays" })).toBe("Weekdays");
+    expect(recurrenceLabel({ type: "weekly", weekdays: [1, 3] })).toBe(
+      "Mon, Wed",
+    );
+    expect(recurrenceLabel({ type: "monthly", dayOfMonth: 1 })).toBe(
+      "Monthly on day 1",
+    );
+  });
+
+  test("isOverdue", () => {
+    const yesterday = addDaysKey(todayKey(), -1);
+    expect(isOverdue(yesterday, false)).toBe(true);
+    expect(isOverdue(yesterday, true)).toBe(false);
+    expect(isOverdue(undefined, false)).toBe(false);
+    expect(isOverdue(todayKey(), false)).toBe(false);
+  });
+
+  test("buildMonthGrid returns full weeks of 7 days", () => {
+    const grid = buildMonthGrid(new Date(2026, 8, 22), true);
+    expect(grid.length).toBeGreaterThan(3);
+    for (const week of grid) expect(week.length).toBe(7);
+  });
+
+  test("formatTime renders 12-hour clock", () => {
+    expect(formatTime("14:05")).toBe("2:05 PM");
+    expect(formatTime("00:30")).toBe("12:30 AM");
+    expect(formatTime(undefined)).toBe("");
+  });
+
+  test("formatDateKey formats a date key", () => {
+    expect(formatDateKey("2026-09-22", "yyyy-MM-dd")).toBe("2026-09-22");
+  });
+
+  test("isInRange", () => {
+    expect(isInRange("2026-06-15", "2026-06-01", "2026-06-30")).toBe(true);
+    expect(isInRange("2026-07-15", "2026-06-01", "2026-06-30")).toBe(false);
+    expect(isInRange("2026-07-15")).toBe(true);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* store.ts                                                            */
+/* ------------------------------------------------------------------ */
+
+describe("store", () => {
+  beforeEach(() => {
+    resetDemoData();
+  });
+
+  test("demo seed contains the expected entities", () => {
+    const d = getData();
+    expect(d.seeded).toBe(true);
+    expect(d.tasks.length).toBeGreaterThan(5);
+    expect(d.habits.length).toBe(4);
+    expect(d.projects.length).toBe(3);
+    expect(d.processes.length).toBe(2);
+    expect(d.goals.length).toBe(2);
+    expect(d.inboxItems.length).toBeGreaterThan(0);
+  });
+
+  test("addTask defaults: no dueDate → inbox, with dueDate → todo", () => {
+    const inboxTask = addTask({ title: "Random idea" });
+    expect(inboxTask.status).toBe("inbox");
+
+    const dated = addTask({ title: "Dated", dueDate: todayKey() });
+    expect(dated.status).toBe("todo");
+    expect(dated.priority).toBe("medium");
+  });
+
+  test("toggleTask completes, un-completes, and clears completedAt", () => {
+    const t = addTask({ title: "Toggle me", status: "todo" });
+    toggleTask(t.id);
+    let after = getData().tasks.find((x) => x.id === t.id) as Task;
+    expect(after.status).toBe("completed");
+    expect(after.completedAt).toBeDefined();
+
+    toggleTask(t.id);
+    after = getData().tasks.find((x) => x.id === t.id) as Task;
+    expect(after.status).toBe("todo");
+    expect(after.completedAt).toBeUndefined();
+  });
+
+  test("completing a daily recurring task spawns tomorrow's occurrence", () => {
+    const t = addTask({
+      title: "Stretch",
+      dueDate: todayKey(),
+      recurrence: { type: "daily" },
+    });
+    toggleTask(t.id);
+    const spawned = getData().tasks.find(
+      (x) => x.title === "Stretch" && x.id !== t.id,
+    );
+    expect(spawned).toBeDefined();
+    expect(spawned?.status).toBe("todo");
+    expect(spawned?.dueDate).toBe(addDaysKey(todayKey(), 1));
+  });
+
+  test("subtasks can be added, toggled, removed", () => {
+    const t = addTask({ title: "With subtasks" });
+    addSubtask(t.id, "Step one");
+    addSubtask(t.id, "Step two");
+    let cur = getData().tasks.find((x) => x.id === t.id) as Task;
+    expect(cur.subtasks.length).toBe(2);
+
+    toggleSubtask(t.id, cur.subtasks[0].id);
+    cur = getData().tasks.find((x) => x.id === t.id) as Task;
+    expect(cur.subtasks[0].completed).toBe(true);
+    expect(cur.subtasks[1].completed).toBe(false);
+
+    toggleTask(t.id); // completing marks all subtasks done
+    cur = getData().tasks.find((x) => x.id === t.id) as Task;
+    expect(cur.subtasks.every((s) => s.completed)).toBe(true);
+  });
+
+  test("scheduleProcess creates one task per step, once per date", () => {
+    const proc = getData().processes[0] as Process;
+    const date = addDaysKey(todayKey(), 10);
+    expect(scheduleProcess(proc.id, date)).toBe(true);
+
+    const runTasks = getData().tasks.filter(
+      (t) => t.processId === proc.id && t.dueDate === date,
+    );
+    expect(runTasks.length).toBe(proc.steps.length);
+    expect(
+      runTasks.every((t) => t.status === "todo" && t.processRunId),
+    ).toBe(true);
+    expect(getData().processRuns.some((r) => r.processId === proc.id && r.date === date)).toBe(true);
+
+    // duplicate scheduling on the same date is rejected
+    expect(scheduleProcess(proc.id, date)).toBe(false);
+  });
+
+  test("moveProcessStep reorders and renormalizes step order", () => {
+    const proc = getData().processes[0] as Process;
+    const firstStepId = [...proc.steps].sort((a, b) => a.order - b.order)[0]
+      .id;
+    moveProcessStep(proc.id, firstStepId, 1);
+    const moved = getData().processes.find((p) => p.id === proc.id) as Process;
+    const sorted = [...moved.steps].sort((a, b) => a.order - b.order);
+    expect(sorted[0].id).not.toBe(firstStepId);
+    expect(sorted.map((s) => s.order)).toEqual(sorted.map((_, i) => i));
+  });
+
+  test("addProcessStep appends at the end", () => {
+    const proc = getData().processes[0] as Process;
+    addProcessStep(proc.id, "Cool down");
+    const updated = getData().processes.find((p) => p.id === proc.id) as Process;
+    const sorted = [...updated.steps].sort((a, b) => a.order - b.order);
+    const last = sorted[sorted.length - 1];
+    expect(last?.title).toBe("Cool down");
+  });
+
+  test("deleteProcess removes pending run tasks but keeps completed ones", () => {
+    const proc = getData().processes[0] as Process;
+    const date = addDaysKey(todayKey(), 9);
+    scheduleProcess(proc.id, date);
+    const runTasks = getData().tasks.filter(
+      (t) => t.processId === proc.id && t.dueDate === date,
+    );
+    toggleTask(runTasks[0].id); // complete one so it survives deletion
+
+    deleteProcess(proc.id);
+    const remaining = getData().tasks.filter((t) => t.processId === proc.id);
+    expect(remaining.length).toBe(1);
+    expect(remaining[0].status).toBe("completed");
+  });
+
+  test("habitStreak counts consecutive days ending today/yesterday", () => {
+    const habits = getData().habits;
+    const exercise = habits.find((h) => h.name === "Exercise") as Habit;
+    // seed: today, -1, -2, skip -3, -4, -5
+    expect(habitStreak(exercise)).toBe(3);
+    expect(habitBestStreak(exercise)).toBe(3);
+  });
+
+  test("today being incomplete doesn't break yesterday's streak", () => {
+    const habits = getData().habits;
+    const sleep = habits.find((h) => h.name === "Sleep 8 hours") as Habit;
+    // seed: -1, -2, -3 (today not done)
+    expect(habitStreak(sleep)).toBe(3);
+  });
+
+  test("toggleHabitDate adds and removes completions", () => {
+    const habit = getData().habits[0] as Habit;
+    const date = addDaysKey(todayKey(), -7);
+    const before = habit.completions.includes(date);
+    toggleHabitDate(habit.id, date);
+    const after = (
+      getData().habits.find((h) => h.id === habit.id) as Habit
+    ).completions.includes(date);
+    expect(after).toBe(!before);
+  });
+
+  test("projectProgress counts completed over total", () => {
+    const fitness = getData().projects.find((p) => p.name === "Fitness");
+    expect(fitness).toBeDefined();
+    const tasks = getData().tasks;
+    const expected = (() => {
+      const pt = tasks.filter((t) => t.projectId === fitness?.id);
+      return Math.round(
+        (pt.filter((t) => t.status === "completed").length / pt.length) * 100,
+      );
+    })();
+    expect(projectProgress(tasks, fitness!.id)).toBe(expected);
+    expect(projectProgress([], "nope")).toBe(0);
+  });
+
+  test("goalProgress aggregates via linked projects", () => {
+    const health = getData().goals.find((g) => g.title === "Become healthier");
+    expect(health).toBeDefined();
+    const tasks = getData().tasks;
+    const projects = getData().projects;
+    const pct = goalProgress(tasks, projects, health!.id);
+    expect(pct).toBeGreaterThanOrEqual(0);
+    expect(pct).toBeLessThanOrEqual(100);
+  });
+
+  test("organizeInboxItem promotes to a task and marks the item", () => {
+    const item = getData().inboxItems[0];
+    const taskCountBefore = getData().tasks.length;
+    organizeInboxItem(item.id, "task");
+    const d = getData();
+    expect(d.tasks.length).toBe(taskCountBefore + 1);
+    const organized = d.inboxItems.find((i) => i.id === item.id);
+    expect(organized?.organizedType).toBe("task");
+    expect(organized?.organizedId).toBeDefined();
+  });
+
+  test("deleteProject unlinks its tasks", () => {
+    const proj = getData().projects[0];
+    const linkedCount = getData().tasks.filter(
+      (t) => t.projectId === proj.id,
+    ).length;
+    expect(linkedCount).toBeGreaterThan(0);
+    deleteProject(proj.id);
+    const d = getData();
+    expect(d.projects.some((p) => p.id === proj.id)).toBe(false);
+    expect(d.tasks.some((t) => t.projectId === proj.id)).toBe(false);
+  });
+
+  test("updateSettings merges patches", () => {
+    updateSettings({ name: "Alex", theme: "dark" });
+    const s = getData().settings;
+    expect(s.name).toBe("Alex");
+    expect(s.theme).toBe("dark");
+    expect(s.weekStartsMonday).toBe(true); // untouched
+  });
+
+  test("exportData → importData roundtrip; invalid JSON rejected", () => {
+    const snapshot = exportData();
+    expect(importData("{ not json")).toBe(false);
+    expect(importData('{"tasks": 42}')).toBe(false);
+
+    clearAllData();
+    expect(getData().tasks.length).toBe(0);
+
+    expect(importData(snapshot)).toBe(true);
+    expect(getData().tasks.length).toBe(
+      (JSON.parse(snapshot) as { tasks: unknown[] }).tasks.length,
+    );
+    expect(getData().habits.length).toBe(4);
+  });
+
+  test("clearAllData empties collections but keeps settings", () => {
+    updateSettings({ name: "Keep me" });
+    clearAllData();
+    const d = getData();
+    expect(d.tasks.length).toBe(0);
+    expect(d.habits.length).toBe(0);
+    expect(d.projects.length).toBe(0);
+    expect(d.seeded).toBe(false);
+    expect(d.settings.name).toBe("Keep me");
+  });
+});
