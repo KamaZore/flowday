@@ -1,20 +1,37 @@
-import { api } from "@/convex/_generated/api";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useClerk, useUser } from "@clerk/clerk-react";
 
+/**
+ * Auth hook with the same app-facing shape the app already consumes
+ * (isLoading / isAuthenticated / user / signOut), backed by Clerk.
+ *
+ * `signIn`/`signUp` are not exposed here: Clerk's <SignIn/> / <SignUp/>
+ * components on /auth and /register handle those flows in the UI.
+ *
+ * user shape: { _id, email, name } — a normalized view of the Clerk user.
+ */
 export function useAuth() {
-  const { isLoading: isAuthLoading, isAuthenticated } = useConvexAuth();
-  const user = useQuery(api.users.currentUser);
-  const { signIn, signOut } = useAuthActions();
+  const { isLoaded, isSignedIn, user: clerkUser } = useUser();
+  const { signOut } = useClerk();
 
-  // Derive isLoading directly from the dependencies instead of managing separate state
-  const isLoading = isAuthLoading || user === undefined;
+  const user = clerkUser
+    ? {
+        _id: clerkUser.id,
+        email:
+          clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.id,
+        name:
+          clerkUser.fullName ??
+          clerkUser.username ??
+          clerkUser.primaryEmailAddress?.emailAddress ??
+          "",
+      }
+    : null;
 
   return {
-    isLoading,
-    isAuthenticated,
+    isLoading: !isLoaded,
+    isAuthenticated: !!isSignedIn,
     user,
-    signIn,
-    signOut,
+    signOut: async () => {
+      await signOut({ redirectUrl: "/" });
+    },
   };
 }

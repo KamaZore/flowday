@@ -75,10 +75,7 @@ export default function Settings() {
     reader.readAsText(file);
   };
 
-  const email =
-    "email" in (user ?? {})
-      ? String((user as { email?: string } | null)?.email ?? "")
-      : "";
+  const email = user?.email ?? "";
 
   return (
     <div className="space-y-4">

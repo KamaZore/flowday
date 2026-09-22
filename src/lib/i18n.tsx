@@ -174,7 +174,11 @@ const dict: Record<Lang, Record<string, string>> = {
     "auth.verifying": "Verifying…",
     "auth.tryAgain": "Try again",
     "auth.differentEmail": "Use different email",
-    "auth.localNote": "Local-first & private — your data lives on your device",
+    "auth.noAccount": "No account yet?",
+    "auth.goRegister": "Create one",
+    "auth.haveAccount": "Already have an account?",
+    "auth.goSignin": "Sign in",
+    "auth.localNote": "Local-first & private — each account keeps its own data",
 
     // Landing
     "landing.badge": "Local-first · Installable · Free",
@@ -335,7 +339,7 @@ const dict: Record<Lang, Record<string, string>> = {
 
     // Auth
     "auth.welcome": "សូមស្វាគមន៍មកកាន់ Flowday",
-    "auth.subtitle": "ចូល ឬបង្កើតគណនីរបស់អ្នក — អ៊ីមែលថ្មីនឹងត្រូវបានចុះឈ្មោះស្វ័យប្រវត្តិ",
+    "auth.subtitle": "ចូល ឬបង្កើតគណនីរបស់អ្នក",
     "auth.emailPlaceholder": "name@example.com",
     "auth.or": "ឬ",
     "auth.guest": "បន្តជាភ្ញៀវ",
@@ -345,7 +349,11 @@ const dict: Record<Lang, Record<string, string>> = {
     "auth.verifying": "កំពុងផ្ទៀងផ្ទាត់…",
     "auth.tryAgain": "សាកម្តងទៀត",
     "auth.differentEmail": "ប្រើអ៊ីមែលផ្សេង",
-    "auth.localNote": "ទិន្នន័យរក្សាទុកនៅឧបករណ៍របស់អ្នក — សុវត្ថិភាព",
+    "auth.noAccount": "មិនមានគណនីទេ?",
+    "auth.goRegister": "បង្កើតគណនី",
+    "auth.haveAccount": "មានគណនីរួចហើយ?",
+    "auth.goSignin": "ចូល",
+    "auth.localNote": "ទិន្នន័យក្នុងស្រុក & ឯកជន — គណនីនីមួយៗមានទិន្នន័យដាច់ដោយឡែក",
 
     // Landing
     "landing.badge": "ក្នុងស្រុកជាដំបូង · ដំឡើងបាន · ឥតគិតថ្លៃ",

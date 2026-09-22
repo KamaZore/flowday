@@ -2,8 +2,7 @@ import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
-import { ConvexAuthProvider } from "@convex-dev/auth/react";
-import { ConvexReactClient } from "convex/react";
+import { ClerkProvider } from "@clerk/clerk-react";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
@@ -15,6 +14,7 @@ import "./index.css";
 // Lazy load route components for better code splitting
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
+const RegisterPage = lazy(() => import("./pages/Register.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Today = lazy(() => import("./pages/Today.tsx"));
 const InboxPage = lazy(() => import("./pages/Inbox.tsx"));
@@ -95,7 +95,7 @@ class RootErrorBoundary extends React.Component<
 /**
  * Bridges auth state to the local store: each signed-in account gets its own
  * isolated dataset (its own "table") via switchUser(). Signing out returns
- * the app to the shared signed-out dataset. Rendered inside ConvexAuthProvider.
+ * the app to the shared signed-out dataset.
  */
 function UserStoreBridge() {
   const { isLoading, isAuthenticated, user } = useAuth();
@@ -110,50 +110,28 @@ function UserStoreBridge() {
   return null;
 }
 
-// The Convex URL is injected by the platform. When running the project
-// locally it must be provided via .env (see .env.example) — otherwise show a
-// clear setup screen instead of crashing on a white page.
-const CONVEX_URL = import.meta.env.VITE_CONVEX_URL as string | undefined;
-const convex = CONVEX_URL ? new ConvexReactClient(CONVEX_URL) : null;
+const CLERK_PK = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
-function MissingConvexEnv() {
+// Clerk keys are safe to expose (publishable). When missing — e.g. a fork of
+// this project — render a clear setup screen instead of crashing.
+function MissingClerkKey() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background p-6">
       <div className="max-w-lg space-y-3 text-center">
-        <p className="text-lg font-bold">Convex URL missing · គ្មាន URL របស់ Convex</p>
+        <p className="text-lg font-bold">
+          Auth key missing · គ្មានកូដគណនី
+        </p>
         <p className="text-sm text-muted-foreground">
-          This app needs the backend URL to start. Inside the Freebuff preview it
-          is injected automatically — for local runs, copy{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">.env.example</code>{" "}
-          to <code className="rounded bg-muted px-1.5 py-0.5 text-xs">.env</code>,
-          set <code className="rounded bg-muted px-1.5 py-0.5 text-xs">VITE_CONVEX_URL</code>,
-          then run <code className="rounded bg-muted px-1.5 py-0.5 text-xs">bun install</code>{" "}
-          and <code className="rounded bg-muted px-1.5 py-0.5 text-xs">bunx convex dev</code>.
+          Set <code className="rounded bg-muted px-1.5 py-0.5 text-xs">VITE_CLERK_PUBLISHABLE_KEY</code>{" "}
+          in the project's environment (Keys/API keys) or a local{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">.env</code> file,
+          then restart the dev server.
         </p>
         <p className="text-xs text-muted-foreground">
-          ប្រតិភូគម្រោងត្រូវការ VITE_CONVEX_URL ក្នុងឯកសារ .env ដើម្បីដំណើរការក្នុងស្រុក។
+          សូមបញ្ចូល VITE_CLERK_PUBLISHABLE_KEY ក្នុងហ្វាក់ការកំណត់ រួច restart កម្មវិធី។
         </p>
       </div>
     </div>
-  );
-}
-
-function Root() {
-  if (!convex) return <MissingConvexEnv />;
-  return (
-    <ConvexAuthProvider client={convex}>
-      <I18nProvider>
-        <BrowserRouter>
-          <RouteSyncer />
-          <ServiceWorkerRegistrar />
-          <UserStoreBridge />
-          <Suspense fallback={<RouteLoading />}>
-            <AppRoutes />
-          </Suspense>
-        </BrowserRouter>
-        <Toaster />
-      </I18nProvider>
-    </ConvexAuthProvider>
   );
 }
 
@@ -162,10 +140,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route
-        path="/auth"
-        element={<AuthPage redirectAfterAuth="/today" />}
-      />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route
         path="/today"
         element={
@@ -318,6 +294,25 @@ function ServiceWorkerRegistrar() {
     }
   }, []);
   return null;
+}
+
+function Root() {
+  if (!CLERK_PK) return <MissingClerkKey />;
+  return (
+    <ClerkProvider publishableKey={CLERK_PK}>
+      <I18nProvider>
+        <BrowserRouter>
+          <RouteSyncer />
+          <ServiceWorkerRegistrar />
+          <UserStoreBridge />
+          <Suspense fallback={<RouteLoading />}>
+            <AppRoutes />
+          </Suspense>
+        </BrowserRouter>
+        <Toaster />
+      </I18nProvider>
+    </ClerkProvider>
+  );
 }
 
 createRoot(document.getElementById("root")!).render(

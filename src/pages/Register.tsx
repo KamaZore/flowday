@@ -1,4 +1,4 @@
-import { SignIn, useUser } from "@clerk/clerk-react";
+import { SignUp, useUser } from "@clerk/clerk-react";
 import { useI18n } from "@/lib/i18n";
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -9,10 +9,10 @@ function resolveRedirect(returnTo: string | null, fallback = "/today") {
 }
 
 /**
- * Login page — Clerk-hosted UI mounted locally. New visitors can jump to
- * /register to create an account; both share the same auth "table".
+ * Register page — creates a new Clerk account. Each account gets its own
+ * isolated data table on this device (see UserStoreBridge in main.tsx).
  */
-function AuthInner() {
+function RegisterInner() {
   const { t } = useI18n();
   const { isSignedIn, isLoaded } = useUser();
   const navigate = useNavigate();
@@ -43,8 +43,8 @@ function AuthInner() {
       </button>
 
       <div className="w-full max-w-sm">
-        <SignIn
-          signUpUrl="/register"
+        <SignUp
+          signInUrl="/auth"
           fallbackRedirectUrl={redirect}
           appearance={{
             variables: {
@@ -58,18 +58,18 @@ function AuthInner() {
           }}
         />
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          {t("auth.noAccount")}{" "}
+          {t("auth.haveAccount")}{" "}
           <button
             onClick={() =>
               navigate(
                 searchParams.get("returnTo")
-                  ? `/register?returnTo=${encodeURIComponent(searchParams.get("returnTo")!)}`
-                  : "/register",
+                  ? `/auth?returnTo=${encodeURIComponent(searchParams.get("returnTo")!)}`
+                  : "/auth",
               )
             }
             className="font-semibold text-primary hover:underline"
           >
-            {t("auth.goRegister")}
+            {t("auth.goSignin")}
           </button>
         </p>
         <p className="mt-2 text-center text-xs text-muted-foreground">
@@ -80,6 +80,6 @@ function AuthInner() {
   );
 }
 
-export default function AuthPage() {
-  return <AuthInner />;
+export default function RegisterPage() {
+  return <RegisterInner />;
 }
