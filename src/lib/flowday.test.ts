@@ -29,12 +29,14 @@ import {
   moveProcessStep,
   organizeInboxItem,
   projectProgress,
+  reorderTasks,
   resetDemoData,
   scheduleProcess,
   toggleHabitDate,
   toggleSubtask,
   toggleTask,
   updateSettings,
+  updateTask,
 } from "./store";
 import type { Habit, Process, Task } from "./types";
 
@@ -411,5 +413,71 @@ describe("store", () => {
     expect(d.projects.length).toBe(0);
     expect(d.seeded).toBe(false);
     expect(d.settings.name).toBe("Keep me");
+  });
+
+  test("habitStreak skips unscheduled days (weekly schedule)", () => {
+    const todayDow = parseDateKey(todayKey()).getDay();
+    // Habit scheduled only on today's weekday: other days must not break it.
+    const habit: Habit = {
+      id: "habit-weekly",
+      name: "Weekly deep clean",
+      schedule: { type: "weekly", weekdays: [todayDow] },
+      completions: [todayKey()],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    expect(habitStreak(habit)).toBe(1);
+
+    // A completion logged on an unscheduled day must not inflate the streak.
+    const yesterday = addDaysKey(todayKey(), -1);
+    const withNoise: Habit = {
+      ...habit,
+      completions: [todayKey(), yesterday],
+    };
+    expect(habitStreak(withNoise)).toBe(1);
+
+    // A missed scheduled day breaks the streak.
+    const yesterdayDow = parseDateKey(yesterday).getDay();
+    const twoDayHabit: Habit = {
+      ...habit,
+      schedule: { type: "weekly", weekdays: [todayDow, yesterdayDow] },
+      completions: [todayKey()], // yesterday scheduled but missed
+    };
+    expect(habitStreak(twoDayHabit)).toBe(1);
+
+    // Scheduled AND completed yesterday extends the streak.
+    expect(habitStreak({ ...twoDayHabit, completions: [todayKey(), yesterday] })).toBe(2);
+  });
+
+  test("reorderTasks renormalizes manual order across mixed due dates", () => {
+    const a = addTask({ title: "A", status: "todo", dueDate: todayKey(), order: 0 });
+    const b = addTask({ title: "B", status: "todo", dueDate: addDaysKey(todayKey(), 5), order: 1 });
+    const c = addTask({ title: "C", status: "todo", dueDate: addDaysKey(todayKey(), 2), order: 2 });
+
+    // Drag B onto A: B should take A's slot, orders stay unique 0..n-1.
+    reorderTasks(b.id, a.id);
+    const tasks = getData().tasks;
+    const orders = tasks.map((t) => t.order);
+    expect(new Set(orders).size).toBe(tasks.length);
+    expect(new Set(orders)).toEqual(new Set(tasks.map((_, i) => i)));
+
+    const aAfter = tasks.find((t) => t.id === a.id) as Task;
+    const bAfter = tasks.find((t) => t.id === b.id) as Task;
+    expect(bAfter.order).toBeLessThan(aAfter.order);
+    void c;
+  });
+
+  test("updateTask keeps completedAt consistent with status changes", () => {
+    const done = addTask({ title: "Already done", status: "completed" });
+    expect(done.completedAt).toBeDefined();
+
+    updateTask(done.id, { status: "todo" });
+    let t = getData().tasks.find((x) => x.id === done.id) as Task;
+    expect(t.completedAt).toBeUndefined();
+
+    updateTask(done.id, { status: "completed" });
+    t = getData().tasks.find((x) => x.id === done.id) as Task;
+    expect(t.status).toBe("completed");
+    expect(t.completedAt).toBeDefined();
   });
 });

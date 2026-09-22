@@ -93,17 +93,23 @@ export default function Tasks() {
 
   const sorted = useMemo(() => {
     const list = [...filtered];
+    // Date-based views sort chronologically; everything else respects the
+    // user's manual drag order (order is renormalized on every reorder).
+    const dateView =
+      filter === "today" || filter === "upcoming" || filter === "overdue";
     list.sort((a, b) => {
-      if (a.dueDate !== b.dueDate) {
-        return (a.dueDate ?? "9999") < (b.dueDate ?? "9999") ? -1 : 1;
-      }
-      if (a.dueTime !== b.dueTime) {
-        return (a.dueTime ?? "99") < (b.dueTime ?? "99") ? -1 : 1;
+      if (dateView) {
+        if (a.dueDate !== b.dueDate) {
+          return (a.dueDate ?? "9999") < (b.dueDate ?? "9999") ? -1 : 1;
+        }
+        if (a.dueTime !== b.dueTime) {
+          return (a.dueTime ?? "99") < (b.dueTime ?? "99") ? -1 : 1;
+        }
       }
       return a.order - b.order;
     });
     return list;
-  }, [filtered]);
+  }, [filtered, filter]);
 
   const onDrop = (e: DragEvent, overId: string) => {
     e.preventDefault();

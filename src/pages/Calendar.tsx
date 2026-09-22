@@ -26,13 +26,11 @@ import {
 import {
   addEvent,
   deleteEvent,
-  recurrenceWeekdays,
   useCalendarEvents,
   useHabits,
   useTasks,
-  unscheduleProcess,
+  useSettings,
 } from "@/lib/store";
-import { useSettings } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import {
   CalendarPlus,

@@ -21,6 +21,7 @@ import {
   addSubtask,
   addTask,
   addTag,
+  deleteTask,
   removeSubtask,
   toggleSubtask,
   updateTask,
@@ -514,7 +515,7 @@ function DeleteTaskButton({
       variant="ghost"
       className="rounded-xl text-destructive hover:text-destructive"
       onClick={() => {
-        updateTask2Delete(taskId);
+        deleteTask(taskId);
         onDone();
         toast.success("Task deleted");
       }}
@@ -524,6 +525,3 @@ function DeleteTaskButton({
     </Button>
   );
 }
-
-// small indirection to avoid importing deleteTask twice
-import { deleteTask as updateTask2Delete } from "@/lib/store";

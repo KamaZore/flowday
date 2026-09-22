@@ -429,6 +429,7 @@ export function addTask(input: NewTaskInput, tasksOverride?: Task[]): Task {
   const order = list.length
     ? Math.min(...list.map((t) => t.order)) - 1
     : 0;
+  const ts = nowTs();
   const task: Task = {
     id: uid(),
     title: input.title,
@@ -439,14 +440,16 @@ export function addTask(input: NewTaskInput, tasksOverride?: Task[]): Task {
     dueTime: input.dueTime,
     projectId: input.projectId,
     processId: input.processId,
+    processRunId: input.processRunId,
     goalId: input.goalId,
     tagIds: input.tagIds ?? [],
     subtasks: input.subtasks ?? [],
     recurrence: input.recurrence,
     reminder: input.reminder,
     order: input.order ?? order,
-    createdAt: nowTs(),
-    updatedAt: nowTs(),
+    createdAt: ts,
+    updatedAt: ts,
+    completedAt: input.status === "completed" ? ts : undefined,
   };
   if (tasksOverride) return task; // caller manages list
   set((d) => ({ ...d, tasks: [task, ...d.tasks] }));
@@ -456,9 +459,18 @@ export function addTask(input: NewTaskInput, tasksOverride?: Task[]): Task {
 export function updateTask(id: string, patch: Partial<Task>) {
   set((d) => ({
     ...d,
-    tasks: d.tasks.map((t) =>
-      t.id === id ? { ...t, ...patch, updatedAt: nowTs() } : t,
-    ),
+    tasks: d.tasks.map((t) => {
+      if (t.id !== id) return t;
+      const next: Task = { ...t, ...patch, updatedAt: nowTs() };
+      // Keep completedAt consistent with the new status so completed-task
+      // metrics (Progress page) never count reopened tasks, and every
+      // completed task carries a completion timestamp.
+      if (patch.status !== undefined) {
+        next.completedAt =
+          patch.status === "completed" ? (t.completedAt ?? nowTs()) : undefined;
+      }
+      return next;
+    }),
   }));
 }
 
@@ -522,13 +534,12 @@ export function reorderTasks(activeId: string, overId: string) {
   if (!a || !b) return;
   const others = tasks.filter((t) => t.id !== activeId);
   const overIndex = others.findIndex((t) => t.id === overId);
-  const moved = others[overIndex];
+  if (overIndex < 0) return;
   const newList = [...others];
-  newList.splice(overIndex, 0, { ...a });
+  newList.splice(overIndex, 0, a);
   // Renormalize order values
   const sorted = newList.map((t, i) => ({ ...t, order: i }));
   set((d) => ({ ...d, tasks: sorted }));
-  void moved;
 }
 
 export function toggleSubtask(taskId: string, subtaskId: string) {
@@ -899,7 +910,12 @@ export function toggleHabitDate(habitId: string, dateKey: string) {
   }));
 }
 
-/** Consecutive days (ending today or yesterday) habit was completed AND scheduled. */
+/**
+ * Consecutive scheduled days (ending today or yesterday) the habit was
+ * completed. Days the habit is not scheduled (e.g. weekends for a weekdays
+ * schedule) are skipped without breaking the streak, and completions logged
+ * on unscheduled days don't count.
+ */
 export function habitStreak(habit: Habit): number {
   let streak = 0;
   let cursor = todayKey();
@@ -907,8 +923,11 @@ export function habitStreak(habit: Habit): number {
   if (!habit.completions.includes(cursor)) {
     cursor = addDaysKey(cursor, -1);
   }
-  while (habit.completions.includes(cursor)) {
-    streak++;
+  for (let guard = 0; guard < 800; guard++) {
+    if (recurrenceMatches(habit.schedule, cursor)) {
+      if (!habit.completions.includes(cursor)) break;
+      streak++;
+    }
     cursor = addDaysKey(cursor, -1);
   }
   return streak;
@@ -1070,7 +1089,6 @@ export function resetDemoData() {
 }
 
 export function clearAllData() {
-  const t = nowTs();
   const empty: AppData = {
     version: DATA_VERSION,
     seeded: false,
@@ -1086,7 +1104,6 @@ export function clearAllData() {
     notes: [],
     calendarEvents: [],
   };
-  void t;
   set(() => empty);
 }
 
