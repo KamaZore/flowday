@@ -5,6 +5,7 @@ import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import {
   createHashRouter,
+  Navigate,
   RouterProvider,
 } from "react-router";
 import { I18nProvider } from "@/lib/i18n";
@@ -27,6 +28,25 @@ const Habits = lazy(() => import("./pages/Habits.tsx"));
 const Goals = lazy(() => import("./pages/Goals.tsx"));
 const Progress = lazy(() => import("./pages/Progress.tsx"));
 const Settings = lazy(() => import("./pages/Settings.tsx"));
+const SelectSystem = lazy(() => import("./pages/SelectSystem.tsx"));
+const ExpenseDashboard = lazy(() => import("./pages/expense/Dashboard.tsx"));
+const ExpenseTransactions = lazy(() => import("./pages/expense/Transactions.tsx"));
+const ExpenseCategories = lazy(() => import("./pages/expense/Categories.tsx"));
+const ExpenseReports = lazy(() => import("./pages/expense/Reports.tsx"));
+const BusinessDashboard = lazy(() => import("./pages/business/Dashboard.tsx"));
+const BusinessPOS = lazy(() => import("./pages/business/POS.tsx"));
+const BusinessSales = lazy(() => import("./pages/business/Sales.tsx"));
+const BusinessProducts = lazy(() => import("./pages/business/Products.tsx"));
+const BusinessInventory = lazy(() => import("./pages/business/Inventory.tsx"));
+const BusinessCustomers = lazy(() => import("./pages/business/Customers.tsx"));
+const BusinessSuppliers = lazy(() => import("./pages/business/Suppliers.tsx"));
+const BusinessPurchases = lazy(() => import("./pages/business/Purchases.tsx"));
+const BusinessExpenses = lazy(() => import("./pages/business/Expenses.tsx"));
+const BusinessReports = lazy(() => import("./pages/business/Reports.tsx"));
+const BusinessSettings = lazy(() => import("./pages/business/Settings.tsx"));
+
+// The expense system shares the app Settings page (theme/language/data).
+const ExpenseSettings = Settings;
 
 // Simple loading fallback for route transitions
 function RouteLoading() {
@@ -102,7 +122,17 @@ function AppRoutes() {
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route
-        path="/today"
+        path="/select-system"
+        element={
+          <RequireAuth>
+            <SelectSystem />
+          </RequireAuth>
+        }
+      />
+
+      {/* Life Flow Tracking system */}
+      <Route
+        path="/life/today"
         element={
           <RequireAuth>
             <AppLayoutMount view="today" />
@@ -110,7 +140,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/inbox"
+        path="/life/inbox"
         element={
           <RequireAuth>
             <AppLayoutMount view="inbox" />
@@ -118,7 +148,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/tasks"
+        path="/life/tasks"
         element={
           <RequireAuth>
             <AppLayoutMount view="tasks" />
@@ -126,7 +156,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/projects"
+        path="/life/projects"
         element={
           <RequireAuth>
             <AppLayoutMount view="projects" />
@@ -134,7 +164,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/processes"
+        path="/life/processes"
         element={
           <RequireAuth>
             <AppLayoutMount view="processes" />
@@ -142,7 +172,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/calendar"
+        path="/life/calendar"
         element={
           <RequireAuth>
             <AppLayoutMount view="calendar" />
@@ -150,7 +180,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/habits"
+        path="/life/habits"
         element={
           <RequireAuth>
             <AppLayoutMount view="habits" />
@@ -158,7 +188,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/goals"
+        path="/life/goals"
         element={
           <RequireAuth>
             <AppLayoutMount view="goals" />
@@ -166,7 +196,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/progress"
+        path="/life/progress"
         element={
           <RequireAuth>
             <AppLayoutMount view="progress" />
@@ -174,13 +204,50 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/settings"
+        path="/life/settings"
         element={
           <RequireAuth>
             <AppLayoutMount view="settings" />
           </RequireAuth>
         }
       />
+
+      {/* Expense Management system */}
+      <Route path="/expense/dashboard" element={<RequireAuth><ExpenseDashboard /></RequireAuth>} />
+      <Route path="/expense/transactions" element={<RequireAuth><ExpenseTransactions /></RequireAuth>} />
+      <Route path="/expense/categories" element={<RequireAuth><ExpenseCategories /></RequireAuth>} />
+      <Route path="/expense/reports" element={<RequireAuth><ExpenseReports /></RequireAuth>} />
+      <Route path="/expense/settings" element={<RequireAuth><ExpenseSettings /></RequireAuth>} />
+
+      {/* Business Management / POS system */}
+      <Route path="/business/dashboard" element={<RequireAuth><BusinessDashboard /></RequireAuth>} />
+      <Route path="/business/pos" element={<RequireAuth><BusinessPOS /></RequireAuth>} />
+      <Route path="/business/sales" element={<RequireAuth><BusinessSales /></RequireAuth>} />
+      <Route path="/business/products" element={<RequireAuth><BusinessProducts /></RequireAuth>} />
+      <Route path="/business/inventory" element={<RequireAuth><BusinessInventory /></RequireAuth>} />
+      <Route path="/business/customers" element={<RequireAuth><BusinessCustomers /></RequireAuth>} />
+      <Route path="/business/suppliers" element={<RequireAuth><BusinessSuppliers /></RequireAuth>} />
+      <Route path="/business/purchases" element={<RequireAuth><BusinessPurchases /></RequireAuth>} />
+      <Route path="/business/expenses" element={<RequireAuth><BusinessExpenses /></RequireAuth>} />
+      <Route path="/business/reports" element={<RequireAuth><BusinessReports /></RequireAuth>} />
+      <Route path="/business/settings" element={<RequireAuth><BusinessSettings /></RequireAuth>} />
+
+      {/* Legacy paths (bookmarks / installed PWA shortcuts) → new system routes */}
+      {[
+        ["/today", "/life/today"],
+        ["/inbox", "/life/inbox"],
+        ["/tasks", "/life/tasks"],
+        ["/projects", "/life/projects"],
+        ["/processes", "/life/processes"],
+        ["/calendar", "/life/calendar"],
+        ["/habits", "/life/habits"],
+        ["/goals", "/life/goals"],
+        ["/progress", "/life/progress"],
+        ["/settings", "/life/settings"],
+      ].map(([from, to]) => (
+        <Route key={from} path={from} element={<Navigate to={to} replace />} />
+      ))}
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

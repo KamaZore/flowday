@@ -163,7 +163,7 @@ export default function Today() {
               ))}
               {overdue.length > 3 && (
                 <Link
-                  to="/tasks?filter=overdue"
+                  to="/life/tasks?filter=overdue"
                   className="block pt-1 text-xs font-medium text-destructive/80 hover:underline"
                 >
                   {t("today.viewAllOverdue")}

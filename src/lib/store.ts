@@ -1,7 +1,9 @@
 import { useSyncExternalStore } from "react";
 import {
   addDaysKey,
+  parseDateKey,
   recurrenceMatches,
+  toLocalDateKey,
   todayKey,
 } from "./date-utils";
 import { getAppData, saveAppData } from "./db";
@@ -10,19 +12,33 @@ export { recurrenceMatches, recurrenceWeekdays } from "./date-utils";
 import type {
   AppData,
   AppSettings,
+  BusinessData,
+  BusinessExpense,
   CalendarEvent,
+  Customer,
   Goal,
   Habit,
+  ID,
   InboxItem,
   Note,
+  Order,
+  OrderLine,
+  PaymentMethod,
   Priority,
   Process,
   ProcessStep,
+  Product,
   Project,
+  Purchase,
+  PurchaseItem,
   Recurrence,
   Subtask,
+  Supplier,
+  SystemId,
   Task,
   TaskStatus,
+  Transaction,
+  TxType,
 } from "./types";
 
 export const DATA_VERSION = 1;
@@ -408,6 +424,21 @@ function seedData(): AppData {
       },
     ],
     calendarEvents: events,
+    activeSystem: null,
+    transactions: [],
+    business: {
+      products: [],
+      customers: [],
+      suppliers: [],
+      orders: [],
+      heldOrders: [],
+      purchases: [],
+      expenses: [],
+      orderCounter: 0,
+      taxRate: 0,
+      taxEnabled: false,
+      shopName: "",
+    },
   };
 }
 
@@ -418,12 +449,52 @@ function seedData(): AppData {
 let data: AppData = load();
 const listeners = new Set<() => void>();
 
+/**
+ * Fill in fields added after a user's document was first saved (localStorage
+ * or Neon). Keeps version 1 docs forward-compatible instead of discarding
+ * real user data when new systems ship.
+ */
+export function normalizeData(parsed: Partial<AppData> | null | undefined): AppData {
+  const fresh = seedData();
+  if (!parsed || typeof parsed !== "object") return fresh;
+  return {
+    ...fresh,
+    ...parsed,
+    version: DATA_VERSION,
+    settings: { ...fresh.settings, ...(parsed.settings ?? {}) },
+    transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
+    business: {
+      ...fresh.business,
+      ...(parsed.business ?? {}),
+      products: Array.isArray(parsed.business?.products)
+        ? parsed.business!.products
+        : [],
+      customers: Array.isArray(parsed.business?.customers)
+        ? parsed.business!.customers
+        : [],
+      suppliers: Array.isArray(parsed.business?.suppliers)
+        ? parsed.business!.suppliers
+        : [],
+      orders: Array.isArray(parsed.business?.orders) ? parsed.business!.orders : [],
+      heldOrders: Array.isArray(parsed.business?.heldOrders)
+        ? parsed.business!.heldOrders
+        : [],
+      purchases: Array.isArray(parsed.business?.purchases)
+        ? parsed.business!.purchases
+        : [],
+      expenses: Array.isArray(parsed.business?.expenses)
+        ? parsed.business!.expenses
+        : [],
+    },
+  };
+}
+
 function load(): AppData {
   try {
     const raw = localStorage.getItem(storageKey());
     if (raw) {
-      const parsed = JSON.parse(raw) as AppData;
-      if (parsed && parsed.version === DATA_VERSION) return parsed;
+      const parsed = JSON.parse(raw) as Partial<AppData>;
+      if (parsed && parsed.version === DATA_VERSION) return normalizeData(parsed);
     }
   } catch {
     // corrupted storage — fall through to fresh seed
@@ -558,7 +629,7 @@ export async function pullRemote(): Promise<boolean> {
       return true;
     }
     if (remote && typeof remote === "object" && Array.isArray(remote.tasks)) {
-      data = { ...remote, version: DATA_VERSION };
+      data = normalizeData(remote as Partial<AppData>);
       persist();
       dirtySinceSync = false;
       listeners.forEach((l) => l());
@@ -1317,9 +1388,12 @@ export function resetDemoData() {
 
 export function clearAllData() {
   const empty: AppData = {
+    ...seedData(),
     version: DATA_VERSION,
     seeded: false,
     settings: data.settings,
+    transactions: [],
+    business: { ...data.business, products: [], customers: [], suppliers: [], orders: [], heldOrders: [], purchases: [], expenses: [], orderCounter: 0 },
     tasks: [],
     inboxItems: [],
     projects: [],
@@ -1340,11 +1414,11 @@ export function exportData(): string {
 
 export function importData(json: string): boolean {
   try {
-    const parsed = JSON.parse(json) as AppData;
+    const parsed = JSON.parse(json) as Partial<AppData>;
     if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.tasks)) {
       return false;
     }
-    set(() => ({ ...parsed, version: DATA_VERSION }));
+    set(() => normalizeData(parsed));
     return true;
   } catch {
     return false;
@@ -1406,3 +1480,609 @@ export function nextOccurrencePreview(rec: Recurrence | undefined): string {
 }
 
 export type { Task, TaskStatus, Priority, Subtask };
+
+/* ================================================================== */
+/* Systems: one app, three workspaces                                  */
+/* ================================================================== */
+
+export function useActiveSystem(): SystemId | null {
+  return useAppData().activeSystem;
+}
+
+/** Remember the last system used; the selector pre-selects it. */
+export function setActiveSystem(system: SystemId | null) {
+  set((d) => ({ ...d, activeSystem: system }));
+}
+
+/* ================================================================== */
+/* Date-range filtering (shared by expense + business)                 */
+/* ================================================================== */
+
+export type DateFilterKind =
+  | "today"
+  | "yesterday"
+  | "week"
+  | "month"
+  | "lastMonth"
+  | "year"
+  | "all"
+  | "custom";
+
+export type DateFilter = {
+  kind: DateFilterKind;
+  from?: string; // yyyy-MM-dd (custom)
+  to?: string;
+};
+
+export const DATE_FILTER_KINDS: DateFilterKind[] = [
+  "today",
+  "yesterday",
+  "week",
+  "month",
+  "lastMonth",
+  "year",
+  "all",
+  "custom",
+];
+
+function startOfWeekKey(d: Date): string {
+  const dow = d.getDay();
+  return toLocalDateKey(addDaysLocal(d, -((dow + 6) % 7))); // Monday
+}
+
+function addDaysLocal(d: Date, n: number): Date {
+  const copy = new Date(d);
+  copy.setDate(copy.getDate() + n);
+  return copy;
+}
+
+/** Resolve a filter to an inclusive [from, to] yyyy-MM-dd range. */
+export function resolveDateRange(f: DateFilter): { from: string; to: string } {
+  const today = todayKey();
+  const now = parseDateKey(today);
+  switch (f.kind) {
+    case "today":
+      return { from: today, to: today };
+    case "yesterday": {
+      const y = addDaysKey(today, -1);
+      return { from: y, to: y };
+    }
+    case "week":
+      return { from: startOfWeekKey(now), to: today };
+    case "month":
+      return { from: toLocalDateKey(new Date(now.getFullYear(), now.getMonth(), 1)), to: today };
+    case "lastMonth": {
+      const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const last = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { from: toLocalDateKey(first), to: toLocalDateKey(last) };
+    }
+    case "year":
+      return { from: toLocalDateKey(new Date(now.getFullYear(), 0, 1)), to: today };
+    case "custom":
+      return { from: f.from ?? "0000-01-01", to: f.to ?? "9999-12-31" };
+    case "all":
+    default:
+      return { from: "0000-01-01", to: "9999-12-31" };
+  }
+}
+
+function inRange(date: string, from: string, to: string): boolean {
+  return date >= from && date <= to;
+}
+
+/* ================================================================== */
+/* Expense system: transactions                                        */
+/* ================================================================== */
+
+export function useTransactions(): Transaction[] {
+  return useAppData().transactions;
+}
+
+export function addTransaction(
+  input: Omit<Transaction, "id" | "createdAt" | "updatedAt">,
+): Transaction {
+  const ts = nowTs();
+  const tx: Transaction = { ...input, id: uid(), createdAt: ts, updatedAt: ts };
+  set((d) => ({ ...d, transactions: [tx, ...d.transactions] }));
+  return tx;
+}
+
+export function updateTransaction(id: string, patch: Partial<Transaction>) {
+  set((d) => ({
+    ...d,
+    transactions: d.transactions.map((t) =>
+      t.id === id ? { ...t, ...patch, updatedAt: nowTs() } : t,
+    ),
+  }));
+}
+
+export function deleteTransaction(id: string) {
+  set((d) => ({
+    ...d,
+    transactions: d.transactions.filter((t) => t.id !== id),
+  }));
+}
+
+/** Filter + sort transactions by date range, type and category. */
+export function filterTransactions(
+  transactions: Transaction[],
+  filter: DateFilter,
+  opts?: { type?: TxType | "all"; category?: string | "all"; method?: PaymentMethod | "all"; search?: string },
+): Transaction[] {
+  const { from, to } = resolveDateRange(filter);
+  const q = opts?.search?.trim().toLowerCase();
+  return transactions
+    .filter((t) => inRange(t.date, from, to))
+    .filter((t) => !opts?.type || opts.type === "all" || t.type === opts.type)
+    .filter((t) => !opts?.category || opts.category === "all" || t.category === opts.category)
+    .filter((t) => !opts?.method || opts.method === "all" || t.method === opts.method)
+    .filter((t) => !q || t.note?.toLowerCase().includes(q) || t.category.includes(q))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+}
+
+export type ExpenseTotals = {
+  income: number;
+  expense: number;
+  balance: number;
+  count: number;
+};
+
+export function sumTransactions(transactions: Transaction[]): ExpenseTotals {
+  let income = 0;
+  let expense = 0;
+  for (const t of transactions) {
+    if (t.type === "income") income += t.amount;
+    else expense += t.amount;
+  }
+  return { income, expense, balance: income - expense, count: transactions.length };
+}
+
+/** Group transaction amounts by category, largest first. */
+export function byCategory(
+  transactions: Transaction[],
+  type: TxType,
+): { category: string; total: number }[] {
+  const map = new Map<string, number>();
+  for (const t of transactions) {
+    if (t.type !== type) continue;
+    map.set(t.category, (map.get(t.category) ?? 0) + t.amount);
+  }
+  return [...map.entries()]
+    .map(([category, total]) => ({ category, total }))
+    .sort((a, b) => b.total - a.total);
+}
+
+/** Daily net totals across a date range (for charts). */
+export function dailyTotals(
+  transactions: Transaction[],
+  from: string,
+  to: string,
+): { date: string; income: number; expense: number }[] {
+  const map = new Map<string, { income: number; expense: number }>();
+  let cursor = from;
+  let guard = 0;
+  while (cursor <= to && guard < 400) {
+    map.set(cursor, { income: 0, expense: 0 });
+    cursor = addDaysKey(cursor, 1);
+    guard++;
+  }
+  for (const t of transactions) {
+    const bucket = map.get(t.date);
+    if (!bucket) continue;
+    if (t.type === "income") bucket.income += t.amount;
+    else bucket.expense += t.amount;
+  }
+  return [...map.entries()].map(([date, v]) => ({ date, ...v }));
+}
+
+/* ================================================================== */
+/* Business: products / customers / suppliers / purchases / expenses   */
+/* ================================================================== */
+
+export function useBusiness(): BusinessData {
+  return useAppData().business;
+}
+
+export function useProducts(): Product[] {
+  return useAppData().business.products;
+}
+
+export function useCustomers(): Customer[] {
+  return useAppData().business.customers;
+}
+
+export function useSuppliers(): Supplier[] {
+  return useAppData().business.suppliers;
+}
+
+function patchBusiness(patch: Partial<BusinessData>) {
+  set((d) => ({ ...d, business: { ...d.business, ...patch } }));
+}
+
+export function addProduct(input: Omit<Product, "id" | "createdAt" | "updatedAt" | "active"> & { active?: boolean }): Product {
+  const ts = nowTs();
+  const product: Product = { active: true, ...input, id: uid(), createdAt: ts, updatedAt: ts };
+  patchBusiness({ products: [product, ...data.business.products] });
+  return product;
+}
+
+export function updateProduct(id: string, patch: Partial<Product>) {
+  patchBusiness({
+    products: data.business.products.map((p) =>
+      p.id === id ? { ...p, ...patch, updatedAt: nowTs() } : p,
+    ),
+  });
+}
+
+export function deleteProduct(id: string) {
+  patchBusiness({ products: data.business.products.filter((p) => p.id !== id) });
+}
+
+export function addCustomer(input: Omit<Customer, "id" | "createdAt" | "updatedAt">): Customer {
+  const ts = nowTs();
+  const customer: Customer = { ...input, id: uid(), createdAt: ts, updatedAt: ts };
+  patchBusiness({ customers: [customer, ...data.business.customers] });
+  return customer;
+}
+
+export function updateCustomer(id: string, patch: Partial<Customer>) {
+  patchBusiness({
+    customers: data.business.customers.map((c) =>
+      c.id === id ? { ...c, ...patch, updatedAt: nowTs() } : c,
+    ),
+  });
+}
+
+export function deleteCustomer(id: string) {
+  patchBusiness({ customers: data.business.customers.filter((c) => c.id !== id) });
+}
+
+export function addSupplier(input: Omit<Supplier, "id" | "createdAt" | "updatedAt">): Supplier {
+  const ts = nowTs();
+  const supplier: Supplier = { ...input, id: uid(), createdAt: ts, updatedAt: ts };
+  patchBusiness({ suppliers: [supplier, ...data.business.suppliers] });
+  return supplier;
+}
+
+export function deleteSupplier(id: string) {
+  patchBusiness({ suppliers: data.business.suppliers.filter((s) => s.id !== id) });
+}
+
+/** Record a purchase: raises stock and (weighted-average) product cost. */
+export function addPurchase(input: {
+  supplierId?: ID;
+  items: PurchaseItem[];
+  note?: string;
+}): Purchase {
+  const total = input.items.reduce((sum, it) => sum + it.qty * it.cost, 0);
+  const purchase: Purchase = {
+    ...input,
+    total,
+    id: uid(),
+    createdAt: nowTs(),
+    updatedAt: nowTs(),
+  };
+  const products = data.business.products.map((p) => {
+    const item = input.items.find((i) => i.productId === p.id);
+    if (!item || item.qty <= 0) return p;
+    // Weighted-average cost so COGS stays accurate across price changes.
+    const cost = item.qty + p.stock > 0
+      ? (p.cost * p.stock + item.cost * item.qty) / (p.stock + item.qty)
+      : item.cost;
+    return {
+      ...p,
+      stock: p.stock + item.qty,
+      cost: Math.round(cost * 100) / 100,
+      updatedAt: nowTs(),
+    };
+  });
+  patchBusiness({ purchases: [purchase, ...data.business.purchases], products });
+  return purchase;
+}
+
+export function deletePurchase(id: string) {
+  patchBusiness({ purchases: data.business.purchases.filter((p) => p.id !== id) });
+}
+
+export function addBusinessExpense(
+  input: Omit<BusinessExpense, "id" | "createdAt" | "updatedAt">,
+): BusinessExpense {
+  const ts = nowTs();
+  const exp: BusinessExpense = { ...input, id: uid(), createdAt: ts, updatedAt: ts };
+  patchBusiness({ expenses: [exp, ...data.business.expenses] });
+  return exp;
+}
+
+export function updateBusinessExpense(id: string, patch: Partial<BusinessExpense>) {
+  patchBusiness({
+    expenses: data.business.expenses.map((e) =>
+      e.id === id ? { ...e, ...patch, updatedAt: nowTs() } : e,
+    ),
+  });
+}
+
+export function deleteBusinessExpense(id: string) {
+  patchBusiness({ expenses: data.business.expenses.filter((e) => e.id !== id) });
+}
+
+export function updateBusinessSettings(patch: Partial<Pick<BusinessData, "taxRate" | "taxEnabled" | "shopName">>) {
+  patchBusiness(patch);
+}
+
+/* ================================================================== */
+/* POS: cart, checkout, refunds, held orders                           */
+/* ================================================================== */
+
+export type CartLine = OrderLine;
+
+export function lineTotal(line: OrderLine): number {
+  return line.qty * line.price * (1 - line.discount / 100);
+}
+
+export function cartTotals(
+  lines: OrderLine[],
+  opts: { taxRate: number; taxEnabled: boolean },
+) {
+  const subtotal = lines.reduce((s, l) => s + l.qty * l.price, 0);
+  const discountTotal = lines.reduce(
+    (s, l) => s + l.qty * l.price * (l.discount / 100),
+    0,
+  );
+  const costTotal = lines.reduce((s, l) => s + l.qty * l.cost, 0);
+  const net = subtotal - discountTotal;
+  const taxTotal = opts.taxEnabled ? net * (opts.taxRate / 100) : 0;
+  return {
+    subtotal,
+    discountTotal,
+    taxTotal,
+    total: net + taxTotal,
+    costTotal,
+  };
+}
+
+/**
+ * Confirm a POS sale: create the order, decrement stock, bump the receipt
+ * counter. One atomic store update so a crash mid-checkout can't half-apply.
+ */
+export function checkoutOrder(input: {
+  lines: OrderLine[];
+  customerId?: ID;
+  method: PaymentMethod;
+  amountPaid?: number;
+}): Order {
+  const biz = data.business;
+  const totals = cartTotals(input.lines, {
+    taxRate: biz.taxRate,
+    taxEnabled: biz.taxEnabled,
+  });
+  const ts = nowTs();
+  const number = biz.orderCounter + 1;
+  const order: Order = {
+    id: uid(),
+    number,
+    lines: input.lines,
+    subtotal: totals.subtotal,
+    discountTotal: totals.discountTotal,
+    taxTotal: totals.taxTotal,
+    total: totals.total,
+    costTotal: totals.costTotal,
+    status: "completed",
+    customerId: input.customerId,
+    method: input.method,
+    amountPaid: input.amountPaid,
+    change:
+      input.amountPaid !== undefined
+        ? Math.max(0, input.amountPaid - totals.total)
+        : undefined,
+    createdAt: ts,
+    updatedAt: ts,
+  };
+  const products = biz.products.map((p) => {
+    const line = input.lines.find((l) => l.productId === p.id);
+    if (!line) return p;
+    return { ...p, stock: Math.max(0, p.stock - line.qty), updatedAt: ts };
+  });
+  set((d) => ({
+    ...d,
+    business: {
+      ...d.business,
+      orders: [order, ...d.business.orders],
+      products,
+      orderCounter: number,
+    },
+  }));
+  return order;
+}
+
+/** Refund an order: mark refunded and restock the lines. */
+export function refundOrder(id: string) {
+  const order = data.business.orders.find((o) => o.id === id);
+  if (!order || order.status === "refunded") return;
+  const ts = nowTs();
+  const products = data.business.products.map((p) => {
+    const line = order.lines.find((l) => l.productId === p.id);
+    if (!line) return p;
+    return { ...p, stock: p.stock + line.qty, updatedAt: ts };
+  });
+  set((d) => ({
+    ...d,
+    business: {
+      ...d.business,
+      orders: d.business.orders.map((o) =>
+        o.id === id
+          ? { ...o, status: "refunded" as const, refundedAt: ts, updatedAt: ts }
+          : o,
+      ),
+      products,
+    },
+  }));
+}
+
+export function holdOrder(lines: OrderLine[], customerId?: ID) {
+  patchBusiness({
+    heldOrders: [
+      { id: uid(), lines, customerId, createdAt: nowTs() },
+      ...data.business.heldOrders,
+    ],
+  });
+}
+
+/** Resume a held order — removes it from the hold list and returns its lines. */
+export function resumeHeldOrder(id: string): { lines: OrderLine[]; customerId?: ID } | null {
+  const held = data.business.heldOrders.find((h) => h.id === id);
+  if (!held) return null;
+  patchBusiness({
+    heldOrders: data.business.heldOrders.filter((h) => h.id !== id),
+  });
+  return { lines: held.lines, customerId: held.customerId };
+}
+
+export function discardHeldOrder(id: string) {
+  patchBusiness({ heldOrders: data.business.heldOrders.filter((h) => h.id !== id) });
+}
+
+/* ================================================================== */
+/* Business analytics (computed from real orders/expenses/purchases)   */
+/* ================================================================== */
+
+export function filterOrders(orders: Order[], filter: DateFilter): Order[] {
+  const { from, to } = resolveDateRange(filter);
+  const fromTs = parseDateKey(from).getTime();
+  const toTs = parseDateKey(to).getTime() + 864e5 - 1; // inclusive end-of-day
+  return orders
+    .filter((o) => o.createdAt >= fromTs && o.createdAt <= toTs)
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export function filterBusinessExpenses(
+  expenses: BusinessExpense[],
+  filter: DateFilter,
+): BusinessExpense[] {
+  const { from, to } = resolveDateRange(filter);
+  return expenses
+    .filter((e) => inRange(e.date, from, to))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+}
+
+export type BusinessStats = {
+  revenue: number; // completed sales (post-discount, pre-tax... incl. tax)
+  refunds: number;
+  cogs: number; // cost of goods sold for completed orders
+  expenses: number; // business expenses
+  grossProfit: number; // revenue - refunds - cogs
+  netProfit: number; // grossProfit - expenses
+  orderCount: number;
+  avgOrder: number;
+  purchases: number;
+  byMethod: Record<PaymentMethod, number>;
+  byCategory: { category: string; total: number }[]; // business expenses
+  topProducts: { name: string; qty: number; revenue: number }[];
+};
+
+export function businessStats(
+  orders: Order[],
+  expenses: BusinessExpense[],
+  purchases: Purchase[],
+  filter: DateFilter,
+): BusinessStats {
+  const filteredOrders = filterOrders(orders, filter);
+  const filteredExpenses = filterBusinessExpenses(expenses, filter);
+  const { from, to } = resolveDateRange(filter);
+  const fromTs = parseDateKey(from).getTime();
+  const toTs = parseDateKey(to).getTime() + 864e5 - 1;
+  const filteredPurchases = purchases.filter(
+    (p) => p.createdAt >= fromTs && p.createdAt <= toTs,
+  );
+
+  let revenue = 0;
+  let refunds = 0;
+  let cogs = 0;
+  let orderCount = 0;
+  const byMethod: Record<PaymentMethod, number> = {
+    cash: 0,
+    card: 0,
+    bank: 0,
+    other: 0,
+  };
+  const prodMap = new Map<string, { name: string; qty: number; revenue: number }>();
+
+  for (const o of filteredOrders) {
+    if (o.status === "refunded") {
+      refunds += o.total;
+      continue;
+    }
+    orderCount++;
+    revenue += o.total;
+    cogs += o.costTotal;
+    byMethod[o.method] = (byMethod[o.method] ?? 0) + o.total;
+    for (const l of o.lines) {
+      const key = l.productId ?? l.name;
+      const entry = prodMap.get(key) ?? { name: l.name, qty: 0, revenue: 0 };
+      entry.qty += l.qty;
+      entry.revenue += l.qty * l.price * (1 - l.discount / 100);
+      prodMap.set(key, entry);
+    }
+  }
+
+  const expenseTotal = filteredExpenses.reduce((s, e) => s + e.amount, 0);
+  const grossProfit = revenue - refunds - cogs;
+  return {
+    revenue,
+    refunds,
+    cogs,
+    expenses: expenseTotal,
+    grossProfit,
+    netProfit: grossProfit - expenseTotal,
+    orderCount,
+    avgOrder: orderCount ? revenue / orderCount : 0,
+    purchases: filteredPurchases.reduce((s, p) => s + p.total, 0),
+    byMethod,
+    byCategory: [...filteredExpenses.reduce((map, e) => {
+      map.set(e.category, (map.get(e.category) ?? 0) + e.amount);
+      return map;
+    }, new Map<string, number>())]
+      .map(([category, total]) => ({ category, total }))
+      .sort((a, b) => b.total - a.total),
+    topProducts: [...prodMap.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5),
+  };
+}
+
+export function lowStockProducts(products: Product[]): Product[] {
+  return products
+    .filter((p) => p.active && p.stock <= p.lowStockThreshold)
+    .sort((a, b) => a.stock - b.stock);
+}
+
+/** Daily revenue + profit across the range (for dashboard charts). */
+export function dailySales(
+  orders: Order[],
+  expenses: BusinessExpense[],
+  from: string,
+  to: string,
+): { date: string; revenue: number; profit: number }[] {
+  const map = new Map<string, { revenue: number; profit: number }>();
+  let cursor = from;
+  let guard = 0;
+  while (cursor <= to && guard < 400) {
+    map.set(cursor, { revenue: 0, profit: 0 });
+    cursor = addDaysKey(cursor, 1);
+    guard++;
+  }
+  const { } = expenses; // expenses are reported separately
+  void expenses;
+  for (const o of orders) {
+    if (o.status !== "completed") continue;
+    const day = toLocalDateKey(new Date(o.createdAt));
+    const bucket = map.get(day);
+    if (!bucket) continue;
+    bucket.revenue += o.total;
+    bucket.profit += o.total - o.costTotal;
+  }
+  return [...map.entries()].map(([date, v]) => ({ date, ...v }));
+}
+
+export function nextOrderNumber(business: BusinessData): number {
+  return business.orderCounter + 1;
+}
+
+export type { Order, Product, Customer, Supplier, Purchase, BusinessExpense, Transaction, SystemId };

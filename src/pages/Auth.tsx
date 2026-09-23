@@ -9,7 +9,7 @@ import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { hasDb } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
 
-function resolveRedirect(returnTo: string | null, fallback = "/today") {
+function resolveRedirect(returnTo: string | null, fallback = "/select-system") {
   if (returnTo?.startsWith("/") && !returnTo.startsWith("//")) return returnTo;
   return fallback;
 }

@@ -89,7 +89,7 @@ export default function Landing() {
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <Button asChild className="rounded-xl">
-                <Link to="/today">{t("landing.ctaOpen")}</Link>
+                <Link to="/select-system">{t("landing.ctaOpen")}</Link>
               </Button>
             ) : (
               <>
@@ -266,7 +266,7 @@ export default function Landing() {
             {t("landing.ctaSub")}
           </p>
           <Button asChild size="lg" className="mt-6 h-12 rounded-2xl px-8 text-base">
-            <Link to={isAuthenticated ? "/today" : "/register"}>
+            <Link to={isAuthenticated ? "/select-system" : "/register"}>
               {isAuthenticated ? t("landing.ctaOpen") : t("landing.ctaButton")}{" "}
               <ArrowRight className="ml-1 size-4" />
             </Link>

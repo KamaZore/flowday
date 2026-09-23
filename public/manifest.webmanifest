@@ -20,14 +20,20 @@
     {
       "name": "Add a task",
       "short_name": "Add task",
-      "url": "./#/today?quickadd=task",
+      "url": "./#/life/today?quickadd=task",
       "description": "Capture a task in seconds"
     },
     {
-      "name": "Today",
-      "short_name": "Today",
-      "url": "./#/today",
-      "description": "See what needs doing today"
+      "name": "Life Flow",
+      "short_name": "Life",
+      "url": "./#/life/today",
+      "description": "Your daily flow: tasks, habits, goals"
+    },
+    {
+      "name": "POS",
+      "short_name": "POS",
+      "url": "./#/business/pos",
+      "description": "Open the point of sale"
     }
   ]
 }

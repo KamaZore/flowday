@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/lib/i18n";
-import { NAV_ITEMS } from "@/components/app/nav";
+import { SYSTEMS, type SystemDef } from "@/systems";
 import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
@@ -57,11 +57,11 @@ function FlowdayLogo({ className }: { className?: string }) {
   );
 }
 
-function SidebarNav() {
+function SidebarNav({ system }: { system: SystemDef }) {
   const { t } = useI18n();
   return (
     <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => (
+      {system.nav.map((item) => (
         <NavLink
           key={item.path}
           to={item.path}
@@ -77,6 +77,16 @@ function SidebarNav() {
         </NavLink>
       ))}
     </nav>
+  );
+}
+
+function SystemBadge({ system }: { system: SystemDef }) {
+  const { t } = useI18n();
+  return (
+    <div className="flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+      <system.icon className={cn("size-3", system.accent)} />
+      {t(system.labelKey)}
+    </div>
   );
 }
 
@@ -104,6 +114,12 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const location = useLocation();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickAddType, setQuickAddType] = useState<QuickAddType>("task");
+
+  // The active system is derived from the URL: /life/*, /expense/*, /business/*
+  const system =
+    SYSTEMS.find(
+      (s) => location.pathname === s.root || location.pathname.startsWith(s.root + "/"),
+    ) ?? SYSTEMS[0];
 
   const openQuickAdd = (type: QuickAddType = "task") => {
     setQuickAddType(type);
@@ -133,20 +149,32 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           <OfflineBanner />
         </div>
         <button
-          onClick={() => navigate("/today")}
-          className="mb-6 flex items-center gap-2.5 px-2 text-left"
+          onClick={() => navigate(system.root)}
+          className="mb-4 flex w-full items-center gap-2.5 px-2 text-left"
         >
           <FlowdayLogo className="size-9 rounded-xl text-primary" />
-          <span>
+          <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-bold leading-tight">
               Flowday
             </span>
-            <span className="block text-[11px] text-muted-foreground">
-              {t("app.tagline")}
+            <span className="block truncate text-[11px] text-muted-foreground">
+              {t(system.labelKey)}
             </span>
           </span>
         </button>
-        <SidebarNav />
+        <button
+          onClick={() => navigate("/select-system")}
+          className={cn(
+            "mb-5 flex items-center justify-between gap-2 rounded-xl border border-border/70 px-3 py-2 text-left text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <system.icon className={cn("size-4", system.accent)} />
+            {t(system.labelKey)}
+          </span>
+          <LayoutGrid className="size-3.5" />
+        </button>
+        <SidebarNav system={system} />
         <div className="mt-auto flex items-center gap-2 px-2 pt-4">
           <Button
             variant="outline"
@@ -173,7 +201,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         <OfflineBanner />
         <div className="flex h-14 items-center justify-between px-4">
           <button
-            onClick={() => navigate("/today")}
+            onClick={() => navigate(system.root)}
             className="flex items-center gap-2"
           >
             <FlowdayLogo className="size-7 rounded-lg text-primary" />
@@ -206,7 +234,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
       {/* Mobile bottom nav — grows with the home indicator inset */}
       <nav className="safe-nav safe-x fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-border/60 bg-background/90 backdrop-blur md:hidden">
         {[0, 1, 2].map((idx) => {
-          const item = NAV_ITEMS[idx];
+          const item = system.nav[idx];
           return (
             <NavLink
               key={item.path}
@@ -228,19 +256,25 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         <MobileMoreMenu />
       </nav>
 
-      {/* Center FAB (mobile) — lifts above the safe-area nav */}
+      {/* Center FAB (mobile) — lifts above the safe-area nav; Life system quick add */}
       <button
         onClick={() => openQuickAdd("task")}
-        className="card-soft fab-safe fixed left-1/2 z-40 flex size-12 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
+        className={cn(
+          "card-soft fab-safe fixed left-1/2 z-40 flex size-12 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden",
+          system.id !== "life" && "hidden",
+        )}
         aria-label={t("quick.title")}
       >
         <Plus className="size-6" />
       </button>
 
-      {/* Desktop quick add button */}
+      {/* Desktop quick add button (Life system) */}
       <Button
         onClick={() => openQuickAdd("task")}
-        className="card-soft fixed bottom-6 right-6 z-40 hidden h-12 gap-2 rounded-full px-5 shadow-lg md:inline-flex"
+        className={cn(
+          "card-soft fixed bottom-6 right-6 z-40 hidden h-12 gap-2 rounded-full px-5 shadow-lg md:inline-flex",
+          system.id !== "life" && "hidden",
+        )}
       >
         <Plus className="size-5" />
         {t("quick.title")}
@@ -259,7 +293,11 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 function MobileMoreMenu() {
   const { t } = useI18n();
   const location = useLocation();
-  const moreItems = NAV_ITEMS.slice(3);
+  const system =
+    SYSTEMS.find(
+      (s) => location.pathname === s.root || location.pathname.startsWith(s.root + "/"),
+    ) ?? SYSTEMS[0];
+  const moreItems = system.nav.slice(3);
   // useLocation re-renders on every navigation, so the active state is never
   // stale (the old window.location.pathname read was — it didn't update).
   const moreActive = moreItems.some((i) => location.pathname === i.path);

@@ -156,10 +156,200 @@ export type AppSettings = {
   weekStartsMonday: boolean;
 };
 
+/* ------------------------------------------------------------------ */
+/* Systems (one app, three workspaces)                                 */
+/* ------------------------------------------------------------------ */
+
+export type SystemId = "life" | "expense" | "business";
+
+/* ------------------------------------------------------------------ */
+/* Expense system                                                      */
+/* ------------------------------------------------------------------ */
+
+export type TxType = "income" | "expense";
+
+export type PaymentMethod = "cash" | "card" | "bank" | "other";
+
+export const PAYMENT_METHODS: PaymentMethod[] = ["cash", "card", "bank", "other"];
+
+export const EXPENSE_CATEGORIES = [
+  "food",
+  "transportation",
+  "shopping",
+  "bills",
+  "education",
+  "entertainment",
+  "health",
+  "rent",
+  "other",
+] as const;
+
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+
+export const INCOME_CATEGORIES = [
+  "salary",
+  "business",
+  "gift",
+  "investment",
+  "other",
+] as const;
+
+export type IncomeCategory = (typeof INCOME_CATEGORIES)[number];
+
+export type Transaction = {
+  id: ID;
+  type: TxType;
+  amount: number; // positive
+  category: string; // ExpenseCategory | IncomeCategory | custom
+  method: PaymentMethod;
+  date: string; // yyyy-MM-dd
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+/* ------------------------------------------------------------------ */
+/* Business / POS system                                               */
+/* ------------------------------------------------------------------ */
+
+export type Product = {
+  id: ID;
+  name: string;
+  sku?: string;
+  barcode?: string;
+  category: string;
+  price: number; // sale price
+  cost: number; // unit cost (COGS)
+  stock: number;
+  lowStockThreshold: number;
+  active: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type Customer = {
+  id: ID;
+  name: string;
+  phone?: string;
+  email?: string;
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type Supplier = {
+  id: ID;
+  name: string;
+  phone?: string;
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+/** A cart/order line. Cart lines and order lines share this shape. */
+export type OrderLine = {
+  productId?: ID;
+  name: string;
+  qty: number;
+  price: number;
+  cost: number;
+  /** percent 0–100 off this line */
+  discount: number;
+};
+
+export type HeldOrder = {
+  id: ID;
+  lines: OrderLine[];
+  customerId?: ID;
+  createdAt: number;
+};
+
+type OrderStatus = "completed" | "refunded";
+
+export type Order = {
+  id: ID;
+  number: number; // sequential receipt number
+  lines: OrderLine[];
+  subtotal: number;
+  discountTotal: number;
+  taxTotal: number;
+  total: number;
+  costTotal: number; // COGS at sale time
+  status: OrderStatus;
+  customerId?: ID;
+  method: PaymentMethod;
+  amountPaid?: number;
+  change?: number;
+  refundedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export const BUSINESS_EXPENSE_CATEGORIES = [
+  "rent",
+  "electricity",
+  "internet",
+  "salary",
+  "transportation",
+  "supplier",
+  "office",
+  "other",
+] as const;
+
+export type BusinessExpenseCategory = (typeof BUSINESS_EXPENSE_CATEGORIES)[number];
+
+export type PurchaseItem = { productId: ID; qty: number; cost: number };
+
+export type Purchase = {
+  id: ID;
+  supplierId?: ID;
+  items: PurchaseItem[];
+  total: number;
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type BusinessExpense = {
+  id: ID;
+  category: string;
+  amount: number;
+  method: PaymentMethod;
+  date: string; // yyyy-MM-dd
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type BusinessData = {
+  products: Product[];
+  customers: Customer[];
+  suppliers: Supplier[];
+  orders: Order[];
+  heldOrders: HeldOrder[];
+  purchases: Purchase[];
+  expenses: BusinessExpense[];
+  /** receipt number counter */
+  orderCounter: number;
+  /** percent 0–100, applied at POS when tax is enabled */
+  taxRate: number;
+  taxEnabled: boolean;
+  shopName: string;
+};
+
+export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
+  cash: "Cash",
+  card: "Card",
+  bank: "Bank transfer",
+  other: "Other",
+};
+
 export type AppData = {
   version: number;
   seeded: boolean;
   settings: AppSettings;
+  /** last system the user entered (system selector pre-selects it) */
+  activeSystem: SystemId | null;
   tasks: Task[];
   inboxItems: InboxItem[];
   projects: Project[];
@@ -170,6 +360,8 @@ export type AppData = {
   tags: Tag[];
   notes: Note[];
   calendarEvents: CalendarEvent[];
+  transactions: Transaction[];
+  business: BusinessData;
 };
 
 export const PRIORITIES: Priority[] = ["low", "medium", "high"];
