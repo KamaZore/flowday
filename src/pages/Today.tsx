@@ -11,6 +11,7 @@ import {
   toggleHabitDate,
   toggleTask,
   useHabits,
+  useMinuteTick,
   useProcesses,
   useTasks,
 } from "@/lib/store";
@@ -48,6 +49,7 @@ function greetingIcon() {
 }
 
 export default function Today() {
+  useMinuteTick(); // re-render each minute so "today" rolls over at midnight
   const { t } = useI18n();
   const tasks = useTasks();
   const habits = useHabits();

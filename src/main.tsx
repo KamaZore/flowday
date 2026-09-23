@@ -8,7 +8,7 @@ import {
   RouterProvider,
 } from "react-router";
 import { I18nProvider } from "@/lib/i18n";
-import { switchUser } from "@/lib/store";
+import { initOnlineSync, switchUser } from "@/lib/store";
 import { useAuth } from "@/hooks/use-auth";
 import "./index.css";
 
@@ -221,7 +221,10 @@ function AppLayoutMount({ view }: { view: string }) {
   return <AppLayout>{page}</AppLayout>;
 }
 
-/** Register the service worker for offline support (production + preview). */
+/**
+ * Registers the service worker (offline support) and the online/offline
+ * listeners (auto re-sync when connectivity returns).
+ */
 function ServiceWorkerRegistrar() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -230,6 +233,7 @@ function ServiceWorkerRegistrar() {
         console.warn("Service worker registration skipped:", err);
       });
     }
+    return initOnlineSync();
   }, []);
   return null;
 }

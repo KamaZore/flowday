@@ -508,6 +508,41 @@ export function useSyncState(): SyncState {
   return useSyncExternalStore(subscribeSync, getSyncState, getSyncState);
 }
 
+/**
+ * Tick hook: re-renders subscribers once per minute so "today"-derived UI
+ * (Today page, greetings, overdue counts) rolls over at midnight even when
+ * the PWA has been open all night.
+ */
+const tickListeners = new Set<() => void>();
+let tickSnapshot = 0;
+let tickTimer: ReturnType<typeof setInterval> | null = null;
+
+function ensureTickTimer() {
+  if (tickTimer) return;
+  tickTimer = setInterval(() => {
+    const now = Date.now();
+    if (now - tickSnapshot >= 55_000) {
+      tickSnapshot = now;
+      tickListeners.forEach((l) => l());
+    }
+  }, 60_000);
+}
+
+function subscribeTick(listener: () => void): () => void {
+  ensureTickTimer();
+  tickListeners.add(listener);
+  return () => tickListeners.delete(listener);
+}
+
+function getTickSnapshot(): number {
+  return tickSnapshot;
+}
+
+/** Subscribe to the one-per-minute clock tick (safe anywhere in React). */
+export function useMinuteTick(): number {
+  return useSyncExternalStore(subscribeTick, getTickSnapshot, getTickSnapshot);
+}
+
 /** Pull the signed-in user's document from Postgres into local state. */
 export async function pullRemote(): Promise<boolean> {
   const session = getSession();
@@ -536,9 +571,7 @@ export async function pullRemote(): Promise<boolean> {
     syncing = false;
     notifySync();
   }
-}
-
-/** Push the current document to Postgres (debounced). */
+}/** Push the current document to Postgres (debounced). */
 export function queuePush() {
   if (!getSession()) return;
   if (syncTimer) clearTimeout(syncTimer);
@@ -551,13 +584,23 @@ export function queuePush() {
 export async function pushNow(): Promise<boolean> {
   const session = getSession();
   if (!session) return false;
-  if (syncing) return false;
+  if (syncing) {
+    // Another push/pull is in flight — re-queue instead of silently
+    // dropping this one, or offline edits made during a sync would be lost
+    // until the next unrelated change.
+    queuePush();
+    return false;
+  }
   syncing = true;
   lastSyncError = null;
   notifySync();
   try {
     await saveAppData(session.userId, data);
+    // An edit made WHILE this push was in flight re-flips dirtySinceSync
+    // (set() runs during the await) — capture and re-push so it isn't lost.
+    const becameDirtyAgain = dirtySinceSync;
     dirtySinceSync = false;
+    if (becameDirtyAgain) void pushNow();
     return true;
   } catch (err) {
     lastSyncError = err instanceof Error ? err.message : String(err);
@@ -566,6 +609,22 @@ export async function pushNow(): Promise<boolean> {
     syncing = false;
     notifySync();
   }
+}
+
+/** Re-sync when connectivity returns so offline edits reach Neon ASAP. */
+export function initOnlineSync() {
+  if (typeof window === "undefined") return () => {};
+  const onOnline = () => {
+    const session = getSession();
+    if (!session) return;
+    if (dirtySinceSync) {
+      void pushNow();
+    } else {
+      void pullRemote();
+    }
+  };
+  window.addEventListener("online", onOnline);
+  return () => window.removeEventListener("online", onOnline);
 }
 
 /* ------------------------------------------------------------------ */
