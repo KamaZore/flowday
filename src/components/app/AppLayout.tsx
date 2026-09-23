@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/lib/i18n";
 import { NAV_ITEMS } from "@/components/app/nav";
+import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import { Languages, LayoutGrid, Moon, Plus, Sun } from "lucide-react";
@@ -126,8 +127,11 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 
   return (
     <div className="min-h-dvh bg-background">
-      {/* Desktop sidebar */}
+      {/* Desktop offline indicator (inside the fixed sidebar) */}
       <aside className="safe-x fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
+        <div className="fixed left-60 right-0 top-0 hidden md:block">
+          <OfflineBanner />
+        </div>
         <button
           onClick={() => navigate("/today")}
           className="mb-6 flex items-center gap-2.5 px-2 text-left"
@@ -166,6 +170,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 
       {/* Mobile header — safe-area aware */}
       <header className="safe-top sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur md:hidden">
+        <OfflineBanner />
         <div className="flex h-14 items-center justify-between px-4">
           <button
             onClick={() => navigate("/today")}

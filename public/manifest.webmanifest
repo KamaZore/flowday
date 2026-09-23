@@ -6,7 +6,7 @@
   "start_url": "./#/today",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#f7f8fc",
   "theme_color": "#4f46e5",
   "categories": ["productivity", "lifestyle"],

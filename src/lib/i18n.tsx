@@ -202,6 +202,10 @@ const dict: Record<Lang, Record<string, string>> = {
     "auth.errGeneric": "Something went wrong. Please try again.",
     "auth.dbMissing": "Database not connected — add VITE_NEON_DATABASE_URL in Keys/API keys to enable accounts.",
 
+    // Offline
+    "offline.banner": "You're offline — Flowday keeps working, changes are saved on this device.",
+    "offline.bannerAuth": "You're offline — sign-in needs internet, but the app works without it.",
+
     // Landing
     "landing.badge": "Local-first · Installable · Free",
     "landing.heroA": "Your goals, your flow,",
@@ -409,6 +413,10 @@ const dict: Record<Lang, Record<string, string>> = {
     "auth.errExists": "មានគណនីប្រើអ៊ីមែលនេះរួចហើយ — សូមចូលជំនួស",
     "auth.errGeneric": "មានអ្វីមួយខុសប្រក្រតី។ សូមព្យាយាមម្តងទៀត។",
     "auth.dbMissing": "មិនទាន់ភ្ជាប់ database — សូមបញ្ចូល VITE_NEON_DATABASE_URL ក្នុង Keys/API keys ដើម្បីប្រើគណនី។",
+
+    // Offline
+    "offline.banner": "គ្មានអ៊ីនធឺណិត — Flowday នៅតែដំណើរការ ការផ្លាស់ប្តូរត្រូវរក្សាទុកក្នុងឧបករណ៍នេះ។",
+    "offline.bannerAuth": "គ្មានអ៊ីនធឺណិត — ការចូលគណនីត្រូវការអ៊ីនធឺណិត ប៉ុន្តែកម្មវិធីដំណើរការដោយគ្មានវា។",
 
     // Landing
     "landing.badge": "ក្នុងស្រុកជាដំបូង · ដំឡើងបាន · ឥតគិតថ្លៃ",

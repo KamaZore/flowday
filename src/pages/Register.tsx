@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { hasDb } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
 
@@ -64,6 +65,7 @@ function RegisterInner() {
 
   return (
     <div className="safe-top safe-bottom relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-10">
+      <OfflineBanner messageKey="offline.bannerAuth" />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-primary/10 blur-3xl"
