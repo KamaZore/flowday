@@ -485,7 +485,13 @@ let lastSyncError: string | null = null;
 let dirtySinceSync = false;
 const syncListeners = new Set<() => void>();
 
+// Cached snapshot for useSyncExternalStore — it must return the SAME object
+// reference between state changes, otherwise React re-renders forever
+// (production throws "Maximum update depth exceeded", error #185).
+let syncSnapshot: SyncState = { syncing: false, error: null };
+
 function notifySync() {
+  syncSnapshot = { syncing, error: lastSyncError };
   syncListeners.forEach((l) => l());
 }
 
@@ -495,7 +501,7 @@ export function subscribeSync(listener: () => void): () => void {
 }
 
 export function getSyncState(): SyncState {
-  return { syncing, error: lastSyncError };
+  return syncSnapshot;
 }
 
 export function useSyncState(): SyncState {
