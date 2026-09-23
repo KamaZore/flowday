@@ -1,7 +1,7 @@
 /* Flowday service worker — offline-first app shell caching */
 // Bump this version whenever app assets change so clients pick up the new
 // build instead of serving a stale cache (classic "preview looks broken" bug).
-const VERSION = "flowday-v5-neon";
+const VERSION = "flowday-v6-landing-fix";
 const BASE = new URL(self.registration.scope).pathname; // supports subpath hosting
 const APP_SHELL = [
   "",

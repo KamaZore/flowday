@@ -98,7 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     writeSession(null);
     setSession(null);
-    window.location.assign("/");
+    // Reload at the app's base path. BASE_URL is "./" on GitHub Pages
+    // (resolves to /my-life-flow/) and "/" in local dev, so signing out
+    // never escapes the app's subpath (a bare "/" lands on GitHub's 404).
+    window.location.assign(import.meta.env.BASE_URL);
   }, []);
 
   const value = useMemo<AuthContextValue>(

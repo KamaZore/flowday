@@ -62,6 +62,12 @@ export default function Landing() {
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
 
+  // Smooth-scroll to a section. Plain <a href="#features"> would fight the
+  // HashRouter (it treats "#features" as a route → 404), so we scroll manually.
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="min-h-dvh bg-background">
       {/* Nav */}
@@ -77,8 +83,8 @@ export default function Landing() {
             <span className="text-lg font-bold">Flowday</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <a href="#features" className="hover:text-foreground">{t("landing.navFeatures")}</a>
-            <a href="#flow" className="hover:text-foreground">{t("landing.navHow")}</a>
+            <button type="button" onClick={() => scrollTo("features")} className="hover:text-foreground">{t("landing.navFeatures")}</button>
+            <button type="button" onClick={() => scrollTo("flow")} className="hover:text-foreground">{t("landing.navHow")}</button>
           </nav>
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
