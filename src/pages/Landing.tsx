@@ -154,7 +154,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="card-soft mx-auto mt-12 max-w-md rounded-[2rem] border border-border/70 bg-card p-4 text-left"
+            className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left"
           >
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold">Good morning 👋</p>

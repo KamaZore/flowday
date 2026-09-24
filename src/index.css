@@ -5,10 +5,16 @@
 
 /* DO NOT CHANGE */
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Flowday uses a compact 4px radius across cards, dialogs, inputs, and
+     buttons. Keep the named radius utilities consistent for the whole app. */
+  --radius-xs: 4px;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --radius-3xl: 4px;
+  --radius-4xl: 4px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -44,7 +50,7 @@
 
 /* Flowday Modern theme — indigo accent on quiet neutral surfaces */
 :root {
-  --radius: 0.875rem;
+  --radius: 4px;
   --background: oklch(0.988 0.003 264);
   --foreground: oklch(0.21 0.02 265);
   --card: oklch(1 0 0);
@@ -209,7 +215,7 @@
     flex-direction: column;
     align-items: center;
     gap: 3px;
-    border-radius: 14px;
+    border-radius: 4px;
     padding: 6px 10px;
     font-size: 10px;
     font-weight: 700;
