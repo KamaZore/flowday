@@ -110,8 +110,11 @@ export function switchUser(owner: string | null) {
   data = load();
   persist();
   listeners.forEach((l) => l());
-  // Signed in: prefer the remote document so this device catches up.
-  if (owner) void pullRemote();
+  if (owner) {
+    // Render local data first; fetch the cloud document after the current
+    // frame so startup is not blocked by network latency.
+    setTimeout(() => void pullRemote(), 0);
+  }
 }
 
 export function uid(): string {

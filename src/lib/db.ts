@@ -65,6 +65,7 @@ export function ensureSchema(): Promise<void> {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
       `;
+      await s`CREATE INDEX IF NOT EXISTS users_created_at_id_idx ON users (created_at ASC, id ASC)`;
       await s`
         CREATE TABLE IF NOT EXISTS app_config (
           key        TEXT PRIMARY KEY,
@@ -140,27 +141,61 @@ export async function countUsers(): Promise<number> {
   return (rows[0] as { n: number }).n;
 }
 
-/** All accounts for the super-admin panel (no hashes). */
-export async function listUsers(): Promise<
-  (DbUserFull & { created_at: string; hasData: boolean })[]
-> {
+export type DbUserSummary = DbUserFull & {
+  created_at: string;
+  hasData: boolean;
+};
+
+export type UserPage = {
+  users: DbUserSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+/** Paginated account listing for admin screens. LIMIT/OFFSET runs in Postgres. */
+export async function listUsersPage(
+  page = 1,
+  pageSize = 20,
+): Promise<UserPage> {
+  const safePageSize = Math.min(100, Math.max(1, Math.floor(pageSize)));
+  const requestedPage = Math.max(1, Math.floor(page));
   await ensureSchema();
-  const rows = await getSql()`
-    SELECT u.id, u.name, u.email, u.role, u.permissions,
-           u.created_at, (d.user_id IS NOT NULL) AS has_data
-    FROM users u
-    LEFT JOIN app_data d ON d.user_id = u.id
-    ORDER BY u.created_at ASC
-  `;
-  return (rows as (DbUserFull & {
-    created_at: string;
-    has_data: boolean;
-    permissions: SystemPerms | null;
-  })[]).map((r) => ({
-    ...r,
-    permissions: r.permissions ?? DEFAULT_PERMS,
-    hasData: r.has_data,
-  }));
+  const offset = (requestedPage - 1) * safePageSize;
+  const [rows, countRows] = await Promise.all([
+    getSql()`
+      SELECT u.id, u.name, u.email, u.role, u.permissions,
+             u.created_at, (d.user_id IS NOT NULL) AS has_data
+      FROM users u
+      LEFT JOIN app_data d ON d.user_id = u.id
+      ORDER BY u.created_at ASC, u.id ASC
+      LIMIT ${safePageSize} OFFSET ${offset}
+    `,
+    getSql()`SELECT count(*)::int AS n FROM users`,
+  ]);
+  const total = Number((countRows[0] as { n: number }).n) || 0;
+  const totalPages = Math.max(1, Math.ceil(total / safePageSize));
+  return {
+    users: (rows as (DbUserFull & {
+      created_at: string;
+      has_data: boolean;
+      permissions: SystemPerms | null;
+    })[]).map((r) => ({
+      ...r,
+      permissions: r.permissions ?? DEFAULT_PERMS,
+      hasData: r.has_data,
+    })),
+    total,
+    page: Math.min(requestedPage, totalPages),
+    pageSize: safePageSize,
+    totalPages,
+  };
+}
+
+/** Backwards-compatible helper for callers that need the first page. */
+export async function listUsers(): Promise<DbUserSummary[]> {
+  return (await listUsersPage(1, 100)).users;
 }
 
 export async function setUserRole(id: string, role: UserRole): Promise<void> {

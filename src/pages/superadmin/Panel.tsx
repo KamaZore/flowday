@@ -14,7 +14,7 @@ import {
   deleteUser,
   getAppData,
   getAuthRow,
-  listUsers,
+  listUsersPage,
   resetUserPassword,
   setUserPermissions,
   setUserRole,
@@ -56,7 +56,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
-type PanelUser = Awaited<ReturnType<typeof listUsers>>[number];
+type PanelUser = Awaited<ReturnType<typeof listUsersPage>>["users"][number];
+const USERS_PER_PAGE = 20;
 
 const SYSTEMS: { key: keyof SystemPerms; labelKey: string }[] = [
   { key: "life", labelKey: "system.life.name" },
@@ -85,6 +86,9 @@ export default function SuperAdminPanel() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<PanelUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [editFor, setEditFor] = useState<PanelUser | null>(null);
   const [dataFor, setDataFor] = useState<PanelUser | null>(null);
@@ -115,16 +119,20 @@ export default function SuperAdminPanel() {
   const [newPassword, setNewPassword] = useState("");
   const [eBusy, setEBusy] = useState(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (requestedPage = page) => {
     setLoading(true);
     try {
-      setUsers(await listUsers());
+      const result = await listUsersPage(requestedPage, USERS_PER_PAGE);
+      setUsers(result.users);
+      setPage(result.page);
+      setTotal(result.total);
+      setTotalPages(result.totalPages);
     } catch {
       toast.error(t("sa.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [page, t]);
 
   useEffect(() => {
     const session = readSaSession();
@@ -140,7 +148,7 @@ export default function SuperAdminPanel() {
         navigate("/superadmin", { replace: true });
         return;
       }
-      void refresh();
+      void refresh(1);
       void loadModules().then(setModules);
     }).catch(() => {
       writeSaSession(null);
@@ -311,7 +319,7 @@ export default function SuperAdminPanel() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={refresh} className="gap-1.5 rounded-lg">
+            <Button variant="outline" size="sm" onClick={() => void refresh(page)} className="gap-1.5 rounded-lg">
               <RefreshCw className={"size-3.5" + (loading ? " animate-spin" : "")} />
               {t("common.refresh") ?? "Refresh"}
             </Button>
@@ -332,7 +340,7 @@ export default function SuperAdminPanel() {
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             <Users className="mr-1 inline size-4" />
-            {t("sa.count", { n: users.length })}
+            {t("sa.count", { n: total })}
           </p>
           <Button onClick={() => setCreateOpen(true)} className="gap-2 rounded-xl">
             <UserPlus className="size-4" />
@@ -410,6 +418,27 @@ export default function SuperAdminPanel() {
             <div className="rounded-2xl border border-dashed border-border/70 p-10 text-center">
               <Users className="mx-auto mb-2 size-8 text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">{t("sa.empty")}</p>
+            </div>
+          )}
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 pt-3 text-sm">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => void refresh(page - 1)}
+              >
+                Previous
+              </Button>
+              <span className="text-muted-foreground">Page {page} of {totalPages}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => void refresh(page + 1)}
+              >
+                Next
+              </Button>
             </div>
           )}
         </div>
