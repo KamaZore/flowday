@@ -80,8 +80,7 @@ export function InstallPrompt() {
 
   return (
     <aside className="fixed inset-x-3 bottom-3 z-[100] mx-auto flex max-w-lg items-center gap-3 border border-primary/30 bg-card p-3 shadow-2xl ring-1 ring-primary/10 sm:bottom-5 sm:p-4">
-      <img src="./icon-192.png" alt="" className="size-10 shrink-0 rounded-xl border border-primary/20 bg-background object-contain" />
-      <span className="hidden size-10 shrink-0 items-center justify-center bg-primary/10 text-primary sm:flex">
+      <span className="flex size-10 shrink-0 items-center justify-center bg-primary/10 text-primary">
         <Icon className="size-5" />
       </span>
       <div className="min-w-0 flex-1">

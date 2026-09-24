@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ImagePicker } from "@/components/systems/ImagePicker";
 import { IosSpinner } from "@/components/ui/IosSpinner";
 import {
   Dialog,
@@ -573,7 +574,13 @@ export default function SuperAdminPanel() {
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="space-y-1.5 text-xs font-semibold">Logo URL<input value={siteDraft.logoUrl} onChange={(e) => setSiteDraft({ ...siteDraft, logoUrl: e.target.value })} placeholder="https://..." className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-normal" /></label>
+            <div className="space-y-1.5 text-xs font-semibold">
+              Logo
+              <div className="flex flex-wrap items-center gap-2">
+                <ImagePicker value={siteDraft.logoUrl} onChange={(value) => setSiteDraft({ ...siteDraft, logoUrl: value ?? "" })} size="sm" />
+                <input value={siteDraft.logoUrl} onChange={(e) => setSiteDraft({ ...siteDraft, logoUrl: e.target.value })} placeholder="https://..." className="h-9 min-w-0 flex-1 rounded-xl border bg-background px-3 text-sm font-normal" />
+              </div>
+            </div>
             <label className="space-y-1.5 text-xs font-semibold">Website name (EN)<input value={siteDraft.siteName} onChange={(e) => setSiteDraft({ ...siteDraft, siteName: e.target.value })} className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-normal" /></label>
             <label className="space-y-1.5 text-xs font-semibold">Website name (ភាសាខ្មែរ)<input value={siteDraft.siteNameKm} onChange={(e) => setSiteDraft({ ...siteDraft, siteNameKm: e.target.value })} className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-normal" /></label>
             <label className="space-y-1.5 text-xs font-semibold">Header title (EN)<input value={siteDraft.headerTitle} onChange={(e) => setSiteDraft({ ...siteDraft, headerTitle: e.target.value })} className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-normal" /></label>
@@ -589,7 +596,13 @@ export default function SuperAdminPanel() {
                 <label className="text-[11px] font-semibold">Title (ភាសាខ្មែរ)<input value={slide.titleKm} onChange={(e) => updateSiteSlide(index, { titleKm: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
                 <label className="text-[11px] font-semibold">Subtitle (EN)<input value={slide.subtitle} onChange={(e) => updateSiteSlide(index, { subtitle: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
                 <label className="text-[11px] font-semibold">Subtitle (ភាសាខ្មែរ)<input value={slide.subtitleKm} onChange={(e) => updateSiteSlide(index, { subtitleKm: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
-                <label className="text-[11px] font-semibold">Image URL<input value={slide.imageUrl} onChange={(e) => updateSiteSlide(index, { imageUrl: e.target.value })} placeholder="https://..." className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
+                <div className="text-[11px] font-semibold">
+                  Image
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <ImagePicker value={slide.imageUrl} onChange={(value) => updateSiteSlide(index, { imageUrl: value ?? "" })} size="sm" />
+                    <input value={slide.imageUrl} onChange={(e) => updateSiteSlide(index, { imageUrl: e.target.value })} placeholder="https://..." className="h-9 min-w-0 flex-1 rounded-lg border bg-background px-2 text-xs font-normal" />
+                  </div>
+                </div>
                 <div className="flex items-center gap-2 pb-1"><Switch checked={slide.enabled} onCheckedChange={(enabled) => updateSiteSlide(index, { enabled })} /><Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => setSiteDraft({ ...siteDraft, slides: siteDraft.slides.filter((_, i) => i !== index) })} aria-label={t("common.delete")}><Trash2 className="size-3.5" /></Button></div>
               </div>
             ))}
