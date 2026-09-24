@@ -150,10 +150,16 @@ export type CalendarEvent = {
   updatedAt: number;
 };
 
+export type Currency = "USD" | "KHR";
+
 export type AppSettings = {
   theme: "light" | "dark" | "system";
   name: string;
   weekStartsMonday: boolean;
+  /** display currency — amounts are always stored in USD */
+  currency?: Currency;
+  /** exchange rate: 1 USD = X KHR (riel has no subunits) */
+  usdToKhr?: number;
 };
 
 /* ------------------------------------------------------------------ */

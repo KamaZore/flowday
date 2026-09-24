@@ -13,10 +13,12 @@ import {
   useSyncState,
 } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
+import { useCurrency, money } from "@/lib/format";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import {
+  Banknote,
   CloudUpload,
   Download,
   Languages,
@@ -48,6 +50,12 @@ export default function Settings() {
   const sync = useSyncState();
   const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
   const [name, setName] = useState(settings.name);
+  const { currency, usdToKhr } = useCurrency();
+  const [rateDraft, setRateDraft] = useState(String(usdToKhr));
+
+  useEffect(() => {
+    setRateDraft(String(usdToKhr));
+  }, [usdToKhr]);
 
   const syncLabel = !isAuthenticated
     ? t("settings.syncState.local")
@@ -154,6 +162,66 @@ export default function Settings() {
             </button>
           ))}
         </div>
+      </section>
+
+      {/* Currency */}
+      <section className="card-soft rounded-2xl border border-border/70 bg-card p-4">
+        <h2 className="pb-3 flex items-center gap-2 text-sm font-semibold">
+          <Banknote className="size-4 text-primary" />
+          {t("settings.currency")}
+        </h2>
+        <p className="pb-3 text-xs text-muted-foreground">{t("settings.currencyDesc")}</p>
+        <div className="grid grid-cols-2 gap-2">
+          {(
+            [
+              { value: "USD" as const, label: "USD ($)", sample: money(12.5) },
+              { value: "KHR" as const, label: "KHR (៛)", sample: money(12.5) },
+            ]
+          ).map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => updateSettings({ currency: opt.value })}
+              className={cn(
+                "rounded-xl border px-3 py-2.5 text-left transition-colors",
+                currency === opt.value
+                  ? "border-primary bg-primary/10"
+                  : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              <span className="block text-sm font-medium">{opt.label}</span>
+              <span className="block text-xs text-muted-foreground">{opt.sample}</span>
+            </button>
+          ))}
+        </div>
+        {currency === "KHR" && (
+          <div className="mt-3 flex items-end gap-2">
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="fx-rate">{t("settings.exchangeRate")}</Label>
+              <Input
+                id="fx-rate"
+                type="number"
+                min="100"
+                step="50"
+                value={rateDraft}
+                onChange={(e) => setRateDraft(e.target.value)}
+                className="h-10 rounded-xl"
+                inputMode="decimal"
+              />
+            </div>
+            <Button
+              className="rounded-xl"
+              onClick={() => {
+                const rate = Math.round(Number(rateDraft));
+                if (!rate || rate < 100) return;
+                updateSettings({ usdToKhr: rate });
+                toast.success(t("common.saved"));
+              }}
+            >
+              {t("common.save")}
+            </Button>
+          </div>
+        )}
+        <p className="pt-2 text-[11px] text-muted-foreground">{t("settings.currencyNote")}</p>
       </section>
 
       {/* Appearance */}

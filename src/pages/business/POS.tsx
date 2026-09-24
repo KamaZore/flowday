@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
-import { money } from "@/lib/format";
+import { money, moneyKhr, currentCurrency } from "@/lib/format";
 import {
   businessStats,
   cartTotals,
@@ -389,6 +389,11 @@ export default function BusinessPOS() {
             >
               {t("biz.charge")} · {money(totals.total)}
             </Button>
+            {cart.length > 0 && currentCurrency() === "USD" && (
+              <p className="text-center text-xs text-muted-foreground">
+                ≈ {moneyKhr(totals.total)}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -401,6 +406,9 @@ export default function BusinessPOS() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-center text-3xl font-bold text-primary">{money(totals.total)}</p>
+            {currentCurrency() === "USD" && (
+              <p className="text-center text-sm text-muted-foreground">≈ {moneyKhr(totals.total)}</p>
+            )}
             <div className="grid grid-cols-2 gap-2">
               {PAYMENT_METHODS.map((m) => {
                 const Icon = METHOD_ICON[m] ?? Wallet;
