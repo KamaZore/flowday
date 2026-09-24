@@ -46,7 +46,7 @@ export function TransactionDialog({
   editing?: Transaction | null;
   defaultType?: "income" | "expense";
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [type, setType] = useState<"income" | "expense">(defaultType);
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<string>("food");
@@ -115,7 +115,7 @@ export function TransactionDialog({
                 }}
                 className={cnType(type === tx)}
               >
-                {t(tx === "expense" ? "exp.type.expense" : "exp.type.income")}
+                {tx === "expense" ? t("exp.type.expense") : lang === "km" ? "ចំណូលរកបាន" : t("exp.type.income")}
               </button>
             ))}
           </div>

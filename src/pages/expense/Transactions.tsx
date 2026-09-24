@@ -36,7 +36,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 export default function ExpenseTransactions() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const transactions = useTransactions();
   const location = useLocation();
   const navigate = useNavigate();
@@ -134,7 +134,7 @@ export default function ExpenseTransactions() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("filter.all")}</SelectItem>
-            <SelectItem value="income">{t("exp.type.income")}</SelectItem>
+            <SelectItem value="income">{lang === "km" ? "ចំណូលរកបាន" : t("exp.type.income")}</SelectItem>
             <SelectItem value="expense">{t("exp.type.expense")}</SelectItem>
           </SelectContent>
         </Select>

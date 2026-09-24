@@ -44,7 +44,7 @@ function categoriesOf(
 }
 
 export default function ExpenseCategories() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const transactions = useTransactions();
   const appData = useAppData();
   const budgets = appData.budgets;
@@ -120,7 +120,7 @@ export default function ExpenseCategories() {
               (tab === tx ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground")
             }
           >
-            {t(tx === "expense" ? "exp.type.expense" : "exp.type.income")}
+            {tx === "expense" ? t("exp.type.expense") : lang === "km" ? "ចំណូលរកបាន" : t("exp.type.income")}
           </button>
         ))}
       </div>
@@ -261,7 +261,7 @@ export default function ExpenseCategories() {
               )}
               {cats.length > 0 && (
                 <div className="mt-2 flex items-center justify-between border-t border-border/60 pt-3 text-sm">
-                  <span className="font-semibold">{t(tab === "expense" ? "exp.type.expense" : "exp.type.income")}</span>
+                  <span className="font-semibold">{tab === "expense" ? t("exp.type.expense") : lang === "km" ? "ចំណូលរកបាន" : t("exp.type.income")}</span>
                   <span className="font-bold">
                     {money(tab === "expense" ? totals.expense : totals.income)}
                   </span>
