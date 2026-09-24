@@ -133,11 +133,12 @@ export default function Landing() {
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -top-40 mx-auto h-96 max-w-3xl rounded-full bg-primary/15 blur-3xl"
         />
-        <div className="relative mx-auto max-w-3xl text-center">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 text-center md:grid-cols-[1.1fr_.9fr] md:gap-16 md:text-left">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            className="md:col-start-1 md:row-start-1"
           >
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               <Sparkles className="size-3.5" />
@@ -156,7 +157,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
+            className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row md:col-start-1 md:row-start-2 md:justify-start"
           >
             <Button asChild size="lg" className="h-12 rounded-2xl px-7 text-base">
               <Link to="/register">
@@ -173,7 +174,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left"
+            className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
           >
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold">{t("landing.goodMorning")}</p>
