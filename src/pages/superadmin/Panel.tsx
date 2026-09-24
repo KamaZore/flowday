@@ -116,6 +116,7 @@ export default function SuperAdminPanel() {
   const [moduleAccent, setModuleAccent] = useState(ACCENTS[0]);
   const [siteDraft, setSiteDraft] = useState<SiteContent>(defaultSiteContent);
   const [siteBusy, setSiteBusy] = useState(false);
+  const [activeSection, setActiveSection] = useState<"users" | "site" | "modules">("users");
 
   const visibleUsers = users.length;
   const visibleAdmins = users.filter((u) => u.role === "superadmin").length;
@@ -390,6 +391,27 @@ export default function SuperAdminPanel() {
           </div>
         </div>
 
+        <nav className="flex flex-wrap gap-2 rounded-2xl border border-border/60 bg-card p-2" aria-label={t("sa.controlCenter")}>
+          {([
+            ["users", t("sa.menuUsers"), Users],
+            ["site", t("sa.menuSiteContent"), Sparkles],
+            ["modules", t("sa.menuModules"), Blocks],
+          ] as const).map(([id, label, Icon]) => (
+            <Button
+              key={id}
+              type="button"
+              variant={activeSection === id ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveSection(id)}
+              className="flex-1 gap-1.5"
+            >
+              <Icon className="size-3.5" /> {label}
+            </Button>
+          ))}
+        </nav>
+
+        {activeSection === "users" && (
+        <div className="space-y-5">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             <Users className="mr-1 inline size-4" />
@@ -533,7 +555,11 @@ export default function SuperAdminPanel() {
             </div>
           )}
         </div>
+        </div>
+        )}
 
+        {activeSection === "site" && (
+        <div className="space-y-5">
         {/* Public site content */}
         <section className="space-y-4 rounded-3xl border border-border/60 bg-card p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -570,7 +596,11 @@ export default function SuperAdminPanel() {
           </div>
           <p className="text-[11px] text-muted-foreground">{t("sa.siteContentHint")}</p>
         </section>
+        </div>
+        )}
 
+        {activeSection === "modules" && (
+        <div className="space-y-5">
         {/* Module management */}
         <section className="space-y-3 rounded-3xl border border-border/60 bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -608,6 +638,8 @@ export default function SuperAdminPanel() {
           </div>
           <p className="text-[11px] text-muted-foreground">{t("sa.modulesSecurityNote")}</p>
         </section>
+        </div>
+        )}
 
         <div className="text-center">
           <Link to="/" className="text-xs font-medium text-muted-foreground hover:text-foreground">

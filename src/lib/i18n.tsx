@@ -17,6 +17,10 @@ const LANG_KEY = "flowday-lang";
  */
 const dict: Record<Lang, Record<string, string>> = {
   en: {
+    "sa.controlCenter": "Control center",
+    "sa.menuUsers": "Users & permissions",
+    "sa.menuSiteContent": "Website content",
+    "sa.menuModules": "Modules",
     "sa.siteContent": "Website content",
     "sa.siteContentSub": "Dynamically control the public landing page branding, header, and carousel.",
     "sa.addSlide": "Add slide",
@@ -234,6 +238,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "install.menu": "Menu",
     "install.action": "Install",
     "install.later": "Not now",
+    "install.unavailable": "Install is not available in this browser yet. Please try again from the main browser page.",
     "settings.account": "Account",
     "settings.signedInAs": "Signed in as",
     "settings.guestNote": "You're using the app without an account. Sign in to keep this device's data separate per account.",
@@ -778,6 +783,11 @@ const dict: Record<Lang, Record<string, string>> = {
   },
 
   km: {
+    "install.unavailable": "មិនទាន់អាចដំឡើងបាននៅក្នុងកម្មវិធីរុកនេះទេ។ សូមព្យាយាមម្តងទៀតពីទំព័រចម្បងរបស់កម្មវិធីរុក។",
+    "sa.controlCenter": "ម៉ាស៊ីនត្រុងការត្រូវបានគ្រប់គ្រង",
+    "sa.menuUsers": "អ្នកប្រើ និងសិទ្ធិ",
+    "sa.menuSiteContent": "មាតិកាគេហទំព័រ",
+    "sa.menuModules": "ម៉ូឌុល",
     "sa.siteContent": "មាតិកាគេហទំព័រ",
     "sa.siteContentSub": "គ្រប់គ្រងម៉ាក់ ចំណងជើង និងរូបភាពទំព័រការពិតដោយសេរី។",
     "sa.addSlide": "បន្ថែមស្លាក",

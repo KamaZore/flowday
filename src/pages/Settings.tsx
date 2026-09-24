@@ -29,17 +29,11 @@ import {
   Trash2,
   Upload,
   Monitor,
-  Smartphone,
   UserRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
 
 export default function Settings() {
   const { t, lang, setLang } = useI18n();
@@ -48,7 +42,6 @@ export default function Settings() {
   const { user, signOut, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const sync = useSyncState();
-  const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
   const [name, setName] = useState(settings.name);
   const { currency, usdToKhr } = useCurrency();
   const [rateDraft, setRateDraft] = useState(String(usdToKhr));
@@ -64,15 +57,6 @@ export default function Settings() {
       : sync.error
         ? t("settings.syncState.error")
         : t("settings.syncState.saved");
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setInstallEvt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
 
   const doExport = () => {
     const blob = new Blob([exportData()], { type: "application/json" });
@@ -262,28 +246,6 @@ export default function Settings() {
             onCheckedChange={(v) => updateSettings({ weekStartsMonday: v })}
           />
         </div>
-      </section>
-
-      {/* App install */}
-      <section className="card-soft rounded-2xl border border-border/70 bg-card p-4">
-        <h2 className="pb-1 text-sm font-semibold">{t("settings.install")}</h2>
-        <p className="pb-3 text-xs text-muted-foreground">
-          {t("settings.installBtn")} — {t("settings.about3")}
-        </p>
-        <Button
-          className="gap-2 rounded-xl"
-          disabled={!installEvt}
-          onClick={async () => {
-            if (!installEvt) return;
-            await installEvt.prompt();
-            const choice = await installEvt.userChoice;
-            if (choice.outcome === "accepted") toast.success(t("settings.install"));
-            setInstallEvt(null);
-          }}
-        >
-          <Smartphone className="size-4" />
-          {installEvt ? t("settings.installBtn") : t("settings.installNA")}
-        </Button>
       </section>
 
       {/* Account */}

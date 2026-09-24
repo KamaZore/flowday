@@ -33,6 +33,7 @@ export function InstallPrompt() {
     }
   });
   const [installed, setInstalled] = useState(isStandalone);
+  const [installUnavailable, setInstallUnavailable] = useState(false);
 
   useEffect(() => {
     if (isStandalone()) {
@@ -79,13 +80,14 @@ export function InstallPrompt() {
 
   return (
     <aside className="fixed inset-x-3 bottom-3 z-[100] mx-auto flex max-w-lg items-center gap-3 border border-primary/30 bg-card p-3 shadow-2xl ring-1 ring-primary/10 sm:bottom-5 sm:p-4">
-      <span className="flex size-10 shrink-0 items-center justify-center bg-primary/10 text-primary">
+      <img src="./icon-192.png" alt="" className="size-10 shrink-0 rounded-xl border border-primary/20 bg-background object-contain" />
+      <span className="hidden size-10 shrink-0 items-center justify-center bg-primary/10 text-primary sm:flex">
         <Icon className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold">{t("install.title")}</p>
         <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-          {t("install.description")}
+          {installUnavailable ? t("install.unavailable") : t("install.description")}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -98,6 +100,7 @@ export function InstallPrompt() {
               const choice = await installEvent.userChoice;
               if (choice.outcome === "accepted") setInstalled(true);
               setInstallEvent(null);
+              setInstallUnavailable(false);
               dismiss();
             }}
           >
@@ -108,7 +111,7 @@ export function InstallPrompt() {
           <Button
             size="sm"
             className="gap-1.5"
-            onClick={dismiss}
+            onClick={() => setInstallUnavailable(true)}
           >
             <Download className="size-3.5" />
             {t("install.action")}
