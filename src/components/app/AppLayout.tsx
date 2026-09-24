@@ -16,8 +16,10 @@ import {
   useModules,
 } from "@/lib/modules";
 import { OfflineBanner } from "@/components/app/OfflineBanner";
+import { IosSpinner } from "@/components/ui/IosSpinner";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
+import { useSyncState } from "@/lib/store";
 import {
   Check,
   ChevronDown,
@@ -131,6 +133,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const { t, lang } = useI18n();
   const { can } = useAuth();
   const modules = useModules();
+  const sync = useSyncState();
 
   useEffect(() => {
     void loadModules();
@@ -325,7 +328,14 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           No safe-x here: the body already pads by the safe-area inset, so
           adding it again doubled the side margins on notched phones. */}
       <main className="px-4 pb-safe pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
-        <div className="mx-auto max-w-5xl">{children ?? <Outlet />}</div>
+        <div className="mx-auto max-w-5xl">
+          {sync.syncing && (
+            <div className="mb-3 flex items-center justify-center rounded-2xl border border-primary/15 bg-primary/[.04] px-3 py-2" role="status" aria-live="polite">
+              <IosSpinner label={t("settings.syncState.syncing")} className="scale-75 py-0" />
+            </div>
+          )}
+          {children ?? <Outlet />}
+        </div>
       </main>
 
       {/* Mobile bottom nav — grows with the home indicator inset */}
