@@ -12,6 +12,8 @@ import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import {
+  Check,
+  ChevronDown,
   Languages,
   LayoutGrid,
   Moon,
@@ -236,13 +238,38 @@ export function AppLayout({ children }: { children?: ReactNode }) {
       <header className="safe-top sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur md:hidden">
         <OfflineBanner />
         <div className="flex h-14 items-center justify-between px-4">
-          <button
-            onClick={() => navigate(system.root)}
-            className="flex items-center gap-2"
-          >
-            <FlowdayLogo className="size-7 rounded-lg text-primary" />
-            <span className="text-base font-bold">Flowday</span>
-          </button>
+          {/* Logo + system switcher (tap to jump to another system) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="flex min-w-0 items-center gap-2 rounded-xl px-1 py-1 transition-colors hover:bg-accent"
+                aria-label={t("select.choose")}
+              >
+                <FlowdayLogo className="size-7 shrink-0 rounded-lg text-primary" />
+                <span className="min-w-0 truncate text-base font-bold">Flowday</span>
+                <span className={cn("hidden min-[380px]:inline-block truncate text-xs font-semibold", system.accent)}>
+                  · {t(system.labelKey)}
+                </span>
+                <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-60 rounded-2xl p-1.5">
+              {SYSTEMS.map((s) => (
+                <DropdownMenuItem key={s.id} asChild>
+                  <button
+                    onClick={() => navigate(s.root)}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5"
+                  >
+                    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted")}>
+                      <s.icon className={cn("size-4", s.accent)} />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{t(s.labelKey)}</span>
+                    {s.id === system.id && <Check className="size-4 shrink-0 text-primary" />}
+                  </button>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="flex items-center gap-1.5">
             <LangToggle />
             <Button
@@ -262,8 +289,10 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         </div>
       </header>
 
-      {/* Main content — extra bottom padding clears the safe-area nav */}
-      <main className="safe-x px-4 pb-safe pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
+      {/* Main content — extra bottom padding clears the safe-area nav.
+          No safe-x here: the body already pads by the safe-area inset, so
+          adding it again doubled the side margins on notched phones. */}
+      <main className="px-4 pb-safe pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
         <div className="mx-auto max-w-5xl">{children ?? <Outlet />}</div>
       </main>
 
