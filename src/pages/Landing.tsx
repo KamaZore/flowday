@@ -86,6 +86,7 @@ export default function Landing() {
   const dayLetters = lang === "km" ? ["ច", "អ", "ព", "ព", "ព្រ", "ស", "ស"] : ["M", "T", "W", "T", "F", "S", "S"];
   const mockupSlides = [
     {
+      header: t("landing.goodMorning"),
       progress: "80%",
       focus: "2h 40m",
       next: "3:30 PM",
@@ -98,27 +99,29 @@ export default function Landing() {
       ],
     },
     {
+      header: t("system.expense.name"),
       progress: "64%",
       focus: "1h 55m",
       next: "5:00 PM",
       week: "+11%",
       streak: t("landing.habitStreak"),
       rows: [
-        { label: t("landing.personalWebsite"), done: true, chip: t("landing.fitness") },
-        { label: t("landing.runMinutes"), done: false, chip: null },
-        { label: t("landing.readPages"), done: true, chip: t("landing.tapComplete") },
+        { label: t("exp.totalIncome"), done: true, chip: lang === "km" ? "ចំណូលរកបាន" : t("exp.type.income") },
+        { label: t("exp.totalExpense"), done: true, chip: lang === "km" ? "ចំណាយ" : t("exp.type.expense") },
+        { label: t("exp.balance"), done: false, chip: t("exp.chart.categories") },
       ],
     },
     {
+      header: t("system.business.name"),
       progress: "92%",
       focus: "3h 20m",
       next: "Tomorrow",
       week: "+24%",
       streak: t("landing.onTrack"),
       rows: [
-        { label: t("landing.finishOutline"), done: true, chip: t("landing.project") },
-        { label: t("landing.readPages"), done: true, chip: t("landing.progress") },
-        { label: t("landing.runMinutes"), done: false, chip: t("landing.fitness") },
+        { label: t("biz.revenue"), done: true, chip: t("biz.todaySales") },
+        { label: t("biz.totalProducts"), done: true, chip: t("biz.lowStock") },
+        { label: t("biz.profit"), done: false, chip: t("biz.netProfit") },
       ],
     },
   ];
@@ -230,7 +233,7 @@ export default function Landing() {
             className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
           >
             <div className="flex items-center justify-between">
-              <p className="text-sm font-bold">{t("landing.goodMorning")}</p>
+              <p className="text-sm font-bold">{mockup.header}</p>
               <span className="text-xs text-muted-foreground">{t("landing.today")} · {mockup.progress}</span>
             </div>
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
