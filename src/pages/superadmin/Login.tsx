@@ -47,10 +47,13 @@ export default function SuperAdminLogin() {
       toast.success(t("sa.welcome", { name: row.name || row.email }));
       navigate("/superadmin/users", { replace: true });
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       setError(
-        err instanceof Error && err.message === "forbidden"
+        msg === "forbidden"
           ? t("sa.notSuperAdmin")
-          : t("auth.invalid"),
+          : msg === "invalid"
+            ? t("auth.invalid")
+            : t("auth.dbError"),
       );
     } finally {
       setBusy(false);
