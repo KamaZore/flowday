@@ -1,4 +1,3 @@
-import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +17,7 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { money } from "@/lib/format";
 import {
+  businessStats,
   cartTotals,
   checkoutOrder,
   discardHeldOrder,
@@ -42,6 +42,7 @@ import {
   Printer,
   ShoppingBag,
   Trash2,
+  TrendingUp,
   Wallet,
   X,
 } from "lucide-react";
@@ -74,6 +75,14 @@ export default function BusinessPOS() {
     taxRate: business.taxRate,
     taxEnabled: business.taxEnabled,
   });
+
+  const todayStats = useMemo(
+    () =>
+      businessStats(business.orders, business.expenses, business.purchases, {
+        kind: "today",
+      }),
+    [business.orders, business.expenses, business.purchases],
+  );
 
   const filtered = products.filter((p) => {
     if (!p.active) return false;
@@ -184,7 +193,6 @@ export default function BusinessPOS() {
 
   return (
     <div className="space-y-4">
-      <OfflineBanner />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("nav.biz.pos")}</h1>
@@ -192,15 +200,21 @@ export default function BusinessPOS() {
             {t("biz.receiptNum")} {business.orderCounter + 1}
           </p>
         </div>
-        <Button variant="outline" onClick={() => setHeldOpen(true)} className="gap-2 rounded-xl">
-          <Pause className="size-4" />
-          {t("biz.held")}
-          {business.heldOrders.length > 0 && (
-            <span className="rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-              {business.heldOrders.length}
-            </span>
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1.5 text-xs font-medium sm:flex">
+            <TrendingUp className="size-3.5 text-emerald-500" />
+            {t("biz.todaySales")}: {money(todayStats.revenue)}
+          </div>
+          <Button variant="outline" onClick={() => setHeldOpen(true)} className="gap-2 rounded-xl">
+            <Pause className="size-4" />
+            {t("biz.held")}
+            {business.heldOrders.length > 0 && (
+              <span className="rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                {business.heldOrders.length}
+              </span>
+            )}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_380px]">

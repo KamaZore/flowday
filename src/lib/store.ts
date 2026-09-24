@@ -391,6 +391,232 @@ function seedData(): AppData {
     },
   ];
 
+  /* --- Expense system demo data --- */
+  const dayAgo = (n: number) => t - n * 864e5;
+  const methods: PaymentMethod[] = ["cash", "card", "bank", "other"];
+
+  const txSeeds: [number, TxType, number, string, PaymentMethod, string?][] = [
+    [1, "income", 1200, "salary", "bank", "Monthly salary"],
+    [5, "expense", 220, "rent", "bank", "Monthly rent"],
+    [6, "expense", 32.5, "bills", "cash", "Electricity bill"],
+    [6, "expense", 12, "bills", "cash", "Internet"],
+    [9, "expense", 9, "bills", "cash", "Phone top-up"],
+    [4, "expense", 45, "shopping", "card", "New shirt and shoes"],
+    [8, "expense", 7.5, "health", "cash", "Pharmacy"],
+    [14, "expense", 60, "education", "card", "Online course"],
+    [12, "income", 180, "business", "bank", "Freelance design work"],
+    [20, "income", 50, "gift", "cash", "Birthday gift"],
+    [3, "expense", 18, "transportation", "cash", "Tuk-tuk rides"],
+  ];
+  const transactions: Transaction[] = txSeeds.map(
+    ([daysAgo, type, amount, category, method, note], i) => ({
+      id: `tx-seed-${i}`,
+      type,
+      amount,
+      category,
+      method,
+      date: addDaysKey(today, -daysAgo),
+      note,
+      createdAt: dayAgo(daysAgo),
+      updatedAt: dayAgo(daysAgo),
+    }),
+  );
+
+  // Light daily spending so charts and today's stats have life
+  for (let d = 0; d < 21; d++) {
+    const date = addDaysKey(today, -d);
+    const ts = dayAgo(d);
+    transactions.push({
+      id: `tx-daily-food-${d}`,
+      type: "expense",
+      amount: 5 + (d % 5),
+      category: "food",
+      method: methods[d % 2],
+      date,
+      note: d % 2 ? "Lunch" : "Groceries",
+      createdAt: ts,
+      updatedAt: ts,
+    });
+    if (d % 3 === 0) {
+      transactions.push({
+        id: `tx-daily-bus-${d}`,
+        type: "expense",
+        amount: 2.5,
+        category: "transportation",
+        method: "cash",
+        date,
+        note: "Bus fare",
+        createdAt: ts + 36e5,
+        updatedAt: ts + 36e5,
+      });
+    }
+    if (d % 7 === 2) {
+      transactions.push({
+        id: `tx-daily-fun-${d}`,
+        type: "expense",
+        amount: 12 + (d % 3) * 4,
+        category: "entertainment",
+        method: "card",
+        date,
+        note: "Movie night",
+        createdAt: ts + 72e5,
+        updatedAt: ts + 72e5,
+      });
+    }
+  }
+
+  const budgets: Record<string, number> = {
+    food: 200,
+    transportation: 80,
+    bills: 150,
+    shopping: 120,
+  };
+
+  /* --- Business / POS demo data --- */
+  const bizCreated = t - 30 * 864e5;
+  const prod = (
+    id: string,
+    name: string,
+    sku: string,
+    barcode: string,
+    category: string,
+    price: number,
+    cost: number,
+    stock: number,
+    lowStockThreshold: number,
+  ): Product => ({
+    id,
+    name,
+    sku,
+    barcode,
+    category,
+    price,
+    cost,
+    stock,
+    lowStockThreshold,
+    active: true,
+    createdAt: bizCreated,
+    updatedAt: t,
+  });
+  const pBeer = prod("prod-beer", "Angkor Beer 640ml", "DRK-001", "8859133100011", "drinks", 2.5, 1.8, 36, 12);
+  const pCoke = prod("prod-coke", "Coca-Cola 330ml", "DRK-002", "8859133100028", "drinks", 1.2, 0.85, 52, 24);
+  const pWater = prod("prod-water", "Drinking Water 1L", "DRK-003", "8859133100035", "drinks", 0.7, 0.4, 6, 12);
+  const pCoffee = prod("prod-coffee", "Instant Coffee 3-in-1", "DRK-004", "8859133100042", "drinks", 0.9, 0.6, 40, 15);
+  const pNoodles = prod("prod-noodles", "Instant Noodles", "SNK-001", "8859133100059", "snacks", 0.8, 0.5, 10, 10);
+  const pChips = prod("prod-chips", "Potato Chips 90g", "SNK-002", "8859133100066", "snacks", 1.75, 1.2, 18, 8);
+  const pCookie = prod("prod-cookie", "Butter Cookies 200g", "SNK-003", "8859133100073", "snacks", 2.2, 1.5, 14, 6);
+  const pRice = prod("prod-rice", "Rice 5kg", "GEN-001", "8859133100080", "general", 6.5, 5.2, 22, 5);
+  const pOil = prod("prod-oil", "Cooking Oil 1L", "GEN-002", "8859133100097", "general", 3.2, 2.6, 15, 5);
+  const products: Product[] = [
+    pBeer, pCoke, pWater, pCoffee, pNoodles, pChips, pCookie, pRice, pOil,
+  ];
+
+  const customers: Customer[] = [
+    { id: "cust-sokha", name: "Sokha Kim", phone: "+855 12 345 678", note: "Regular — buys drinks weekly", createdAt: bizCreated, updatedAt: t },
+    { id: "cust-dara", name: "Dara Long", phone: "+855 92 887 221", note: "Prefers cash", createdAt: t - 25 * 864e5, updatedAt: t },
+    { id: "cust-chenda", name: "Chenda Pich", phone: "+855 78 450 903", email: "chenda@example.com", createdAt: t - 15 * 864e5, updatedAt: t },
+    { id: "cust-vireak", name: "Vireak Son", phone: "+855 11 234 567", note: "Buys rice in bulk", createdAt: t - 8 * 864e5, updatedAt: t },
+  ];
+
+  const suppliers: Supplier[] = [
+    { id: "sup-heng", name: "Heng Beverage Distributor", phone: "+855 23 999 111", note: "Drinks — delivery Tue & Fri", createdAt: bizCreated, updatedAt: t },
+    { id: "sup-lucky", name: "Lucky Wholesale", phone: "+855 23 888 222", note: "Snacks and dry goods", createdAt: t - 20 * 864e5, updatedAt: t },
+  ];
+
+  const line = (p: Product, qty: number, discount = 0): OrderLine => ({
+    productId: p.id,
+    name: p.name,
+    qty,
+    price: p.price,
+    cost: p.cost,
+    discount,
+  });
+  const mkOrder = (
+    number: number,
+    createdAt: number,
+    lines: OrderLine[],
+    method: PaymentMethod,
+    customerId?: ID,
+    amountPaid?: number,
+  ): Order => {
+    const subtotal = lines.reduce((s, l) => s + l.qty * l.price, 0);
+    const discountTotal = lines.reduce(
+      (s, l) => s + l.qty * l.price * (l.discount / 100),
+      0,
+    );
+    const costTotal = lines.reduce((s, l) => s + l.qty * l.cost, 0);
+    const total = subtotal - discountTotal;
+    return {
+      id: `ord-${number}`,
+      number,
+      lines,
+      subtotal,
+      discountTotal,
+      taxTotal: 0,
+      total,
+      costTotal,
+      status: "completed",
+      customerId,
+      method,
+      amountPaid,
+      change:
+        amountPaid !== undefined ? Math.max(0, amountPaid - total) : undefined,
+      createdAt,
+      updatedAt: createdAt,
+    };
+  };
+
+  const orders: Order[] = [
+    mkOrder(1, dayAgo(10), [line(pCoke, 2), line(pChips, 1)], "cash"),
+    mkOrder(2, dayAgo(9), [line(pWater, 2), line(pNoodles, 3)], "cash"),
+    mkOrder(3, dayAgo(8), [line(pRice, 1), line(pOil, 1)], "bank", "cust-vireak"),
+    mkOrder(4, dayAgo(7), [line(pBeer, 6)], "cash", "cust-dara", 20),
+    mkOrder(5, dayAgo(6), [line(pCoffee, 3), line(pCookie, 2)], "card"),
+    mkOrder(6, dayAgo(5), [line(pOil, 1), line(pNoodles, 2)], "cash"),
+    mkOrder(7, dayAgo(4), [line(pCoke, 12, 5)], "bank", "cust-chenda"),
+    mkOrder(8, dayAgo(3), [line(pChips, 2), line(pWater, 2), line(pCookie, 1)], "cash"),
+    mkOrder(9, t - 26 * 36e5, [line(pBeer, 4), line(pChips, 1)], "cash", "cust-dara", 15),
+    mkOrder(10, t - 3 * 36e5, [line(pCoffee, 1), line(pNoodles, 2), line(pWater, 1)], "card", "cust-sokha"),
+  ];
+  // One refunded order so refund analytics have an example
+  orders[2].status = "refunded";
+  orders[2].refundedAt = orders[2].createdAt + 36e5;
+  orders.reverse(); // newest first, matching checkoutOrder
+  const orderCounter = orders.length;
+
+  const purchases: Purchase[] = [
+    {
+      id: "pur-1",
+      supplierId: "sup-heng",
+      items: [
+        { productId: "prod-coke", qty: 48, cost: 0.85 },
+        { productId: "prod-beer", qty: 24, cost: 1.8 },
+      ],
+      total: 48 * 0.85 + 24 * 1.8,
+      note: "Weekly drinks restock",
+      createdAt: dayAgo(6),
+      updatedAt: dayAgo(6),
+    },
+    {
+      id: "pur-2",
+      supplierId: "sup-lucky",
+      items: [
+        { productId: "prod-noodles", qty: 30, cost: 0.45 },
+        { productId: "prod-chips", qty: 20, cost: 1.1 },
+      ],
+      total: 30 * 0.45 + 20 * 1.1,
+      note: "Snacks delivery",
+      createdAt: dayAgo(2),
+      updatedAt: dayAgo(2),
+    },
+  ];
+
+  const bizExpenses: BusinessExpense[] = [
+    { id: "bizexp-1", category: "rent", amount: 150, method: "cash", date: addDaysKey(today, -5), note: "Shop rent", createdAt: dayAgo(5), updatedAt: dayAgo(5) },
+    { id: "bizexp-2", category: "electricity", amount: 22.5, method: "cash", date: addDaysKey(today, -6), note: "Electricity bill", createdAt: dayAgo(6), updatedAt: dayAgo(6) },
+    { id: "bizexp-3", category: "transportation", amount: 8, method: "card", date: addDaysKey(today, -1), note: "Supply pickup", createdAt: dayAgo(1), updatedAt: dayAgo(1) },
+  ];
+
   return {
     version: DATA_VERSION,
     seeded: true,
@@ -425,20 +651,20 @@ function seedData(): AppData {
     ],
     calendarEvents: events,
     activeSystem: null,
-    budgets: {},
-    transactions: [],
+    budgets,
+    transactions,
     business: {
-      products: [],
-      customers: [],
-      suppliers: [],
-      orders: [],
+      products,
+      customers,
+      suppliers,
+      orders,
       heldOrders: [],
-      purchases: [],
-      expenses: [],
-      orderCounter: 0,
+      purchases,
+      expenses: bizExpenses,
+      orderCounter,
       taxRate: 0,
       taxEnabled: false,
-      shopName: "",
+      shopName: "Flowday Mart",
     },
   };
 }

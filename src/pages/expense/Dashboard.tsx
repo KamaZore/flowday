@@ -1,4 +1,3 @@
-import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { DateFilterBar } from "@/components/systems/DateFilterBar";
 import { StatCard } from "@/components/systems/Shared";
 import { TransactionDialog } from "@/components/systems/TransactionDialog";
@@ -64,7 +63,6 @@ export default function ExpenseDashboard() {
 
   return (
     <div className="space-y-5">
-      <OfflineBanner />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("system.expense.name")}</h1>

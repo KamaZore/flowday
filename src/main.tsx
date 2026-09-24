@@ -212,25 +212,26 @@ function AppRoutes() {
         }
       />
 
-      {/* Expense Management system */}
-      <Route path="/expense/dashboard" element={<RequireAuth><ExpenseDashboard /></RequireAuth>} />
-      <Route path="/expense/transactions" element={<RequireAuth><ExpenseTransactions /></RequireAuth>} />
-      <Route path="/expense/categories" element={<RequireAuth><ExpenseCategories /></RequireAuth>} />
-      <Route path="/expense/reports" element={<RequireAuth><ExpenseReports /></RequireAuth>} />
-      <Route path="/expense/settings" element={<RequireAuth><ExpenseSettings /></RequireAuth>} />
+      {/* Expense Management system — wrapped in AppLayout so it gets the
+          same sidebar / bottom-nav chrome as the Life system. */}
+      <Route path="/expense/dashboard" element={<RequireAuth><AppLayout><ExpenseDashboard /></AppLayout></RequireAuth>} />
+      <Route path="/expense/transactions" element={<RequireAuth><AppLayout><ExpenseTransactions /></AppLayout></RequireAuth>} />
+      <Route path="/expense/categories" element={<RequireAuth><AppLayout><ExpenseCategories /></AppLayout></RequireAuth>} />
+      <Route path="/expense/reports" element={<RequireAuth><AppLayout><ExpenseReports /></AppLayout></RequireAuth>} />
+      <Route path="/expense/settings" element={<RequireAuth><AppLayout><ExpenseSettings /></AppLayout></RequireAuth>} />
 
-      {/* Business Management / POS system */}
-      <Route path="/business/dashboard" element={<RequireAuth><BusinessDashboard /></RequireAuth>} />
-      <Route path="/business/pos" element={<RequireAuth><BusinessPOS /></RequireAuth>} />
-      <Route path="/business/sales" element={<RequireAuth><BusinessSales /></RequireAuth>} />
-      <Route path="/business/products" element={<RequireAuth><BusinessProducts /></RequireAuth>} />
-      <Route path="/business/inventory" element={<RequireAuth><BusinessInventory /></RequireAuth>} />
-      <Route path="/business/customers" element={<RequireAuth><BusinessCustomers /></RequireAuth>} />
-      <Route path="/business/suppliers" element={<RequireAuth><BusinessSuppliers /></RequireAuth>} />
-      <Route path="/business/purchases" element={<RequireAuth><BusinessPurchases /></RequireAuth>} />
-      <Route path="/business/expenses" element={<RequireAuth><BusinessExpenses /></RequireAuth>} />
-      <Route path="/business/reports" element={<RequireAuth><BusinessReports /></RequireAuth>} />
-      <Route path="/business/settings" element={<RequireAuth><BusinessSettings /></RequireAuth>} />
+      {/* Business Management / POS system — same AppLayout chrome as Life. */}
+      <Route path="/business/dashboard" element={<RequireAuth><AppLayout><BusinessDashboard /></AppLayout></RequireAuth>} />
+      <Route path="/business/pos" element={<RequireAuth><AppLayout><BusinessPOS /></AppLayout></RequireAuth>} />
+      <Route path="/business/sales" element={<RequireAuth><AppLayout><BusinessSales /></AppLayout></RequireAuth>} />
+      <Route path="/business/products" element={<RequireAuth><AppLayout><BusinessProducts /></AppLayout></RequireAuth>} />
+      <Route path="/business/inventory" element={<RequireAuth><AppLayout><BusinessInventory /></AppLayout></RequireAuth>} />
+      <Route path="/business/customers" element={<RequireAuth><AppLayout><BusinessCustomers /></AppLayout></RequireAuth>} />
+      <Route path="/business/suppliers" element={<RequireAuth><AppLayout><BusinessSuppliers /></AppLayout></RequireAuth>} />
+      <Route path="/business/purchases" element={<RequireAuth><AppLayout><BusinessPurchases /></AppLayout></RequireAuth>} />
+      <Route path="/business/expenses" element={<RequireAuth><AppLayout><BusinessExpenses /></AppLayout></RequireAuth>} />
+      <Route path="/business/reports" element={<RequireAuth><AppLayout><BusinessReports /></AppLayout></RequireAuth>} />
+      <Route path="/business/settings" element={<RequireAuth><AppLayout><BusinessSettings /></AppLayout></RequireAuth>} />
 
       {/* System roots: SelectSystem and the sidebar logo navigate to these,
           so they must redirect into the system's default page. */}

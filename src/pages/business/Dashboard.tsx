@@ -1,4 +1,3 @@
-import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { DateFilterBar } from "@/components/systems/DateFilterBar";
 import { FadeIn, StatCard } from "@/components/systems/Shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,7 +75,6 @@ export default function BusinessDashboard() {
 
   return (
     <div className="space-y-5">
-      <OfflineBanner />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("system.business.name")}</h1>
         <p className="text-sm text-muted-foreground">{t("biz.profitFormula")}</p>
