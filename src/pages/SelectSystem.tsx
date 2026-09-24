@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { Button } from "@/components/ui/button";
 import { useActiveSystem, setActiveSystem, useSettings } from "@/lib/store";
-import { SYSTEMS } from "@/systems";
+import { loadModules, selectableModules, useModules, ICONS, type AppModule } from "@/lib/modules";
 import { motion } from "framer-motion";
 import { ArrowRight, LogOut } from "lucide-react";
 import { useEffect } from "react";
@@ -24,32 +24,48 @@ function greetingKey(): string {
  * it on the user's document (activeSystem).
  */
 export default function SelectSystem() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user, signOut, can } = useAuth();
   const navigate = useNavigate();
   const activeSystem = useActiveSystem();
   const settings = useSettings();
 
-  // Only systems this account has permission for.
-  const allowed = SYSTEMS.filter((s) => can(s.id));
+  // Dynamic module registry (cloud-configured), filtered by permissions.
+  useEffect(() => {
+    void loadModules();
+  }, []);
+  const allModules = useModules();
+  const allowed = selectableModules(allModules).filter((m) =>
+    m.custom ? true : can((m.permKey ?? m.id) as "life" | "expense" | "business" | "admin"),
+  );
 
-  // Keyboard shortcuts 1/2/3/4 (desktop convenience)
+  function label(m: AppModule): string {
+    if (m.labelKey) return t(m.labelKey);
+    return lang === "km" && m.nameKm ? m.nameKm : m.name ?? m.id;
+  }
+
+  // Keyboard shortcuts 1..9 (desktop convenience)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const idx = Number(e.key) - 1;
       if (idx >= 0 && idx < allowed.length) {
-        enter(allowed[idx].id);
+        enter(allowed[idx]);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [allowed.length]);
 
-  function enter(id: (typeof SYSTEMS)[number]["id"]) {
-    setActiveSystem(id);
-    const def = SYSTEMS.find((s) => s.id === id)!;
-    navigate(def.root, { replace: true });
+  function enter(m: AppModule) {
+    // Custom modules are plain links (in-app hash route or external URL).
+    if (m.custom && m.path) {
+      if (/^https?:/i.test(m.path)) window.location.assign(m.path);
+      else navigate(m.path, { replace: true });
+      return;
+    }
+    setActiveSystem(m.id as "life" | "expense" | "business" | "admin");
+    navigate(m.path ?? `/${m.id}`, { replace: true });
   }
 
   return (
@@ -85,38 +101,35 @@ export default function SelectSystem() {
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {allowed.map((s, i) => {
-            const isLast = activeSystem === s.id;
+          {allowed.map((m, i) => {
+            const isLast = !m.custom && activeSystem === m.id;
+            const Icon = ICONS[m.icon] ?? ICONS.sparkles;
+            const desc = m.descKey
+              ? t(m.descKey)
+              : (lang === "km" && m.descKm ? m.descKm : m.desc) ?? "";
             return (
               <motion.button
-                key={s.id}
+                key={m.id}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06, duration: 0.35, ease: "easeOut" }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => enter(s.id)}
+                onClick={() => enter(m)}
                 className={cn(
                   "card-soft group relative flex flex-col items-start gap-3 rounded-3xl border bg-card p-5 text-left transition-all hover:shadow-md",
-                  isLast ? s.ring : "border-border/70",
+                  isLast ? "border-primary/60 bg-primary/5" : "border-border/70",
                 )}
               >
-                <div
-                  aria-hidden
-                  className={cn(
-                    "pointer-events-none absolute inset-x-0 top-0 h-24 rounded-t-3xl bg-gradient-to-b to-transparent opacity-60",
-                    s.glow,
-                  )}
-                />
                 <span
                   className={cn(
                     "relative flex size-11 items-center justify-center rounded-2xl bg-muted",
                   )}
                 >
-                  <s.icon className={cn("size-5.5", s.accent)} />
+                  <Icon className={cn("size-5", m.accent)} />
                 </span>
                 <span className="relative">
                   <span className="flex items-center gap-2 text-base font-bold">
-                    {t(s.labelKey)}
+                    {label(m)}
                     {isLast && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
                         {t("select.lastUsed")}
@@ -124,13 +137,13 @@ export default function SelectSystem() {
                     )}
                   </span>
                   <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
-                    {t(s.descKey)}
+                    {desc}
                   </span>
                 </span>
                 <span
                   className={cn(
                     "relative mt-auto flex items-center gap-1 text-xs font-semibold",
-                    s.accent,
+                    m.accent,
                   )}
                 >
                   {t("select.enter")}

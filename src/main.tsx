@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RequireSystem } from "@/components/RequireSystem";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -127,6 +128,60 @@ function UserStoreBridge() {
 }
 
 /** App pages share the AppLayout (sidebar / bottom nav / quick add). */
+/**
+ * Lazy chunks are content-hashed; after a deploy the old HTML/JS in a
+ * user's browser may reference chunk files that no longer exist (404 →
+ * "Failed to fetch dynamically imported module"). Catch that case and
+ * reload once so the fresh app shell takes over.
+ */
+function ReloadOnNewChunk({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<RouteLoading />}>
+      <ChunkErrorBoundary>{children}</ChunkErrorBoundary>
+    </Suspense>
+  );
+}
+
+class ChunkErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error) {
+    const msg = String(error?.message ?? "");
+    const isChunkError =
+      msg.includes("dynamically imported module") ||
+      msg.includes("Failed to fetch dynamically imported") ||
+      msg.includes("error loading dynamically imported module") ||
+      msg.includes("Importing a module script failed");
+    const alreadyRetried = sessionStorage.getItem("flowday-chunk-reload");
+    if (isChunkError && !alreadyRetried) {
+      sessionStorage.setItem("flowday-chunk-reload", "1");
+      window.location.reload();
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-background p-6 text-center">
+          <p className="text-sm font-semibold">Something went wrong</p>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            onClick={() => window.location.reload()}
+          >
+            Reload
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -358,11 +413,11 @@ const router = createHashRouter([
   {
     path: "/*",
     element: (
-      <Suspense fallback={<RouteLoading />}>
+      <ReloadOnNewChunk>
         <ServiceWorkerRegistrar />
         <UserStoreBridge />
         <AppRoutes />
-      </Suspense>
+      </ReloadOnNewChunk>
     ),
   },
 ]);

@@ -9,6 +9,12 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { SYSTEMS, type SystemDef } from "@/systems";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  ICONS,
+  loadModules,
+  selectableModules,
+  useModules,
+} from "@/lib/modules";
 import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
@@ -122,8 +128,13 @@ function LangToggle() {
 
 export function AppLayout({ children }: { children?: ReactNode }) {
   const { resolved, toggle } = useTheme();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { can } = useAuth();
+  const modules = useModules();
+
+  useEffect(() => {
+    void loadModules();
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -256,20 +267,39 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-60 rounded-2xl p-1.5">
-              {SYSTEMS.filter((s) => can(s.id)).map((s) => (
-                <DropdownMenuItem key={s.id} asChild>
-                  <button
-                    onClick={() => navigate(s.root)}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5"
-                  >
-                    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted")}>
-                      <s.icon className={cn("size-4", s.accent)} />
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{t(s.labelKey)}</span>
-                    {s.id === system.id && <Check className="size-4 shrink-0 text-primary" />}
-                  </button>
-                </DropdownMenuItem>
-              ))}
+              {selectableModules(modules)
+                .filter((m) =>
+                  m.custom ? true : can((m.permKey ?? m.id) as "life" | "expense" | "business" | "admin"),
+                )
+                .map((m) => {
+                  const Icon = ICONS[m.icon] ?? ICONS.sparkles;
+                  const name = m.labelKey
+                    ? t(m.labelKey)
+                    : (lang === "km" && m.nameKm ? m.nameKm : m.name) ?? m.id;
+                  const target = m.custom && m.path
+                    ? (/^https?:/i.test(m.path) ? undefined : m.path)
+                    : m.path ?? `/${m.id}`;
+                  const external = m.custom && m.path && /^https?:/i.test(m.path);
+                  return (
+                    <DropdownMenuItem key={m.id} asChild>
+                      <button
+                        onClick={() => {
+                          if (external) window.location.assign(m.path!);
+                          else if (target) navigate(target);
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5"
+                      >
+                        <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted")}>
+                          <Icon className={cn("size-4", m.accent)} />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
+                        {!m.custom && m.builtin === system.id && (
+                          <Check className="size-4 shrink-0 text-primary" />
+                        )}
+                      </button>
+                    </DropdownMenuItem>
+                  );
+                })}
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="flex items-center gap-1.5">

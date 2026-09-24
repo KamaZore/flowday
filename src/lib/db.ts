@@ -62,6 +62,13 @@ export function ensureSchema(): Promise<void> {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
       `;
+      await s`
+        CREATE TABLE IF NOT EXISTS app_config (
+          key        TEXT PRIMARY KEY,
+          value      JSONB NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+      `;
     })().catch((err) => {
       schemaPromise = null; // allow retry (e.g. transient offline)
       throw err;
@@ -189,6 +196,29 @@ export async function deleteUser(id: string): Promise<void> {
   await ensureSchema();
   // app_data rows cascade (FK ON DELETE CASCADE)
   await getSql()`DELETE FROM users WHERE id = ${id}`;
+}
+
+/* ------------------------------------------------------------------ */
+/* App config (dynamic modules etc.) — one JSONB row per key           */
+/* ------------------------------------------------------------------ */
+
+export async function getConfig(key: string): Promise<unknown | null> {
+  await ensureSchema();
+  const rows = await getSql()`
+    SELECT value FROM app_config WHERE key = ${key} LIMIT 1
+  `;
+  const row = rows[0] as { value: unknown } | undefined;
+  return row ? row.value : null;
+}
+
+export async function setConfig(key: string, value: unknown): Promise<void> {
+  await ensureSchema();
+  await getSql()`
+    INSERT INTO app_config (key, value, updated_at)
+    VALUES (${key}, ${JSON.stringify(value)}::jsonb, now())
+    ON CONFLICT (key)
+    DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+  `;
 }
 
 export async function getUserHash(email: string): Promise<string | null> {
