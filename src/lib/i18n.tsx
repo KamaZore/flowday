@@ -666,7 +666,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "landing.ctaSub": "Start in seconds. Sample data included so you can feel the flow before adding your own.",
     "landing.ctaButton": "Create your free account",
     "landing.installNote": "Installable on iOS, Android & desktop",
-    "landing.footer": "Flowday — your day, in flow. Made for one: you.",
+    "landing.footer": "Flowday — your day, in flow. Created by Roeung Nak.",
     "progress.title": "Progress",
     "progress.subtitle": "Your momentum this week",
     "progress.doneToday": "Done today",
