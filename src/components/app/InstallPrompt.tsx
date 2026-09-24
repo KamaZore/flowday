@@ -71,10 +71,11 @@ export function InstallPrompt() {
     }
   };
 
-  if (installed || dismissed || (!installEvent && !isIos())) return null;
+  if (installed || dismissed) return null;
 
   const ios = isIos();
-  const Icon = ios ? Smartphone : Monitor;
+  const mobile = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+  const Icon = ios || mobile ? Smartphone : Monitor;
 
   return (
     <aside className="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-lg items-center gap-3 border border-primary/20 bg-card p-3 shadow-xl sm:bottom-5 sm:p-4">
@@ -84,7 +85,11 @@ export function InstallPrompt() {
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold">{t("install.title")}</p>
         <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-          {ios ? t("install.ios") : t("install.description")}
+          {ios
+            ? t("install.ios")
+            : mobile
+              ? t("install.android")
+              : t("install.desktop")}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -104,7 +109,9 @@ export function InstallPrompt() {
             {t("install.action")}
           </Button>
         ) : (
-          <span className="hidden text-xs font-semibold text-primary sm:inline">{t("install.action")}</span>
+          <span className="hidden text-xs font-semibold text-primary sm:inline">
+            {t("install.menu")}
+          </span>
         )}
         <Button variant="ghost" size="icon" className="size-8" onClick={dismiss} aria-label={t("install.later")}>
           <X className="size-4" />
