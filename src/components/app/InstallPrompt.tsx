@@ -62,8 +62,6 @@ export function InstallPrompt() {
     };
   }, []);
 
-  const [showHelp, setShowHelp] = useState(false);
-
   const dismiss = () => {
     setDismissed(true);
     try {
@@ -87,11 +85,7 @@ export function InstallPrompt() {
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold">{t("install.title")}</p>
         <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-          {ios
-            ? t("install.ios")
-            : mobile
-              ? t("install.android")
-              : t("install.desktop")}
+          {t("install.description")}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -114,20 +108,11 @@ export function InstallPrompt() {
           <Button
             size="sm"
             className="gap-1.5"
-            onClick={() => setShowHelp((value) => !value)}
+            onClick={dismiss}
           >
             <Download className="size-3.5" />
             {t("install.action")}
           </Button>
-        )}
-        {showHelp && !installEvent && (
-          <span className="absolute bottom-full right-0 mb-2 max-w-64 border border-border bg-card p-2 text-xs leading-4 text-muted-foreground shadow-lg">
-            {ios
-              ? t("install.ios")
-              : mobile
-                ? t("install.android")
-                : t("install.desktop")}
-          </span>
         )}
         <Button variant="ghost" size="icon" className="size-8" onClick={dismiss} aria-label={t("install.later")}>
           <X className="size-4" />
