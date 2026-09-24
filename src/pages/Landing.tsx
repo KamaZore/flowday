@@ -3,11 +3,14 @@ import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import {
   ArrowRight,
+  BarChart3,
   CalendarDays,
   CheckCircle2,
+  Clock3,
   Flame,
   Inbox,
   ListChecks,
+  TrendingUp,
   Repeat2,
   Smartphone,
   Sparkles,
@@ -84,7 +87,7 @@ export default function Landing() {
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             <button type="button" onClick={() => scrollTo("features")} className="hover:text-foreground">{t("landing.navFeatures")}</button>
-            <button type="button" onClick={() => scrollTo("flow")} className="hover:text-foreground">{t("landing.navHow")}</button>
+            <button type="button" onClick={() => scrollTo("insights")} className="hover:text-foreground">{t("landing.navInsights")}</button>
           </nav>
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
@@ -202,7 +205,62 @@ export default function Landing() {
               </span>
               <span className="text-[10px] text-muted-foreground">Tap to complete</span>
             </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
+                <p className="text-[10px] text-muted-foreground">Focus time</p>
+                <p className="mt-1 text-sm font-bold">2h 40m</p>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
+                <p className="text-[10px] text-muted-foreground">Next up</p>
+                <p className="mt-1 truncate text-sm font-bold">3:30 PM</p>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
+                <p className="text-[10px] text-muted-foreground">This week</p>
+                <p className="mt-1 text-sm font-bold text-emerald-600">+18%</p>
+              </div>
+            </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Insights */}
+      <section id="insights" className="border-t border-border/60 bg-muted/20 px-4 py-16">
+        <div className="mx-auto max-w-5xl">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">See the whole picture</h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+              Your planning, habits, calendar and progress stay connected so the next step is always clear.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <div className="card-soft rounded-2xl border border-border/70 bg-card p-5">
+              <div className="flex items-center justify-between">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600"><BarChart3 className="size-5" /></span>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-600">+18%</span>
+              </div>
+              <p className="mt-4 text-2xl font-extrabold">86%</p>
+              <p className="text-xs text-muted-foreground">Weekly completion</p>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full w-[86%] rounded-full bg-violet-500" /></div>
+            </div>
+            <div className="card-soft rounded-2xl border border-border/70 bg-card p-5">
+              <div className="flex items-center justify-between">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><Clock3 className="size-5" /></span>
+                <span className="text-xs font-semibold text-muted-foreground">Today</span>
+              </div>
+              <p className="mt-4 text-2xl font-extrabold">4h 20m</p>
+              <p className="text-xs text-muted-foreground">Focused time planned</p>
+              <div className="mt-4 flex gap-1">{[40, 65, 45, 80, 55, 90, 70].map((height, i) => <span key={i} className="flex-1 rounded-full bg-amber-500/70" style={{ height: `${height / 4}px` }} />)}</div>
+            </div>
+            <div className="card-soft rounded-2xl border border-border/70 bg-card p-5">
+              <div className="flex items-center justify-between">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><TrendingUp className="size-5" /></span>
+                <span className="text-xs font-semibold text-emerald-600">On track</span>
+              </div>
+              <p className="mt-4 text-2xl font-extrabold">12 days</p>
+              <p className="text-xs text-muted-foreground">Current habit streak</p>
+              <div className="mt-4 flex -space-x-1.5">{["M", "T", "W", "T", "F", "S", "S"].map((day, i) => <span key={i} className="flex size-6 items-center justify-center rounded-full border-2 border-card bg-emerald-500 text-[9px] font-bold text-white">{day}</span>)}</div>
+            </div>
+          </div>
         </div>
       </section>
 

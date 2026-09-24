@@ -588,6 +588,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "landing.ctaOpen": "Open app",
     "landing.navFeatures": "Features",
     "landing.navHow": "How it works",
+    "landing.navInsights": "Insights",
     "landing.heroSub": "Flowday turns goals into projects, projects into routines, and routines into the tasks you actually do — today.",
     "landing.ctaStartFree": "Start planning free",
     "landing.ctaSignIn": "Sign in to Flowday",

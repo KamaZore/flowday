@@ -1,8 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, ShieldOff } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router";
-import { useI18n } from "@/lib/i18n";
 
 /**
  * If the auth backend is unreachable (e.g. the installed PWA opened offline),
@@ -24,7 +23,6 @@ export function RequireSystem({
   children: ReactNode;
 }) {
   const { isLoading, isAuthenticated, can } = useAuth();
-  const { t } = useI18n();
   const location = useLocation();
   const [timedOut, setTimedOut] = useState(false);
 
@@ -53,17 +51,10 @@ export function RequireSystem({
   }
 
   if (!can(system)) {
-    return (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-background p-6 text-center">
-        <span className="flex size-14 items-center justify-center rounded-2xl bg-amber-500/12 text-amber-600 dark:text-amber-400">
-          <ShieldOff className="size-7" />
-        </span>
-        <h1 className="text-lg font-bold">{t("perm.deniedTitle")}</h1>
-        <p className="max-w-xs text-sm text-muted-foreground">
-          {t("perm.deniedSub")}
-        </p>
-      </main>
-    );
+    // Direct URL access is protected too. Do not briefly render the denied
+    // page or the protected component: send the user back to the selector,
+    // where only systems granted by the backend are shown.
+    return <Navigate to="/select-system" replace />;
   }
 
   return children;
