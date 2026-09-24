@@ -19,7 +19,8 @@ import {
   Target,
   WifiOff,
 } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
 const SYSTEMS = [
@@ -73,6 +74,15 @@ export default function Landing() {
   const { lang, setLang, t } = useI18n();
   const { isAuthenticated } = useAuth();
   const reduceMotion = useReducedMotion();
+  const [mockupSlide, setMockupSlide] = useState(0);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const timer = window.setInterval(() => {
+      setMockupSlide((slide) => (slide + 1) % 3);
+    }, 4200);
+    return () => window.clearInterval(timer);
+  }, [reduceMotion]);
   const dayLetters = lang === "km" ? ["ច", "អ", "ព", "ព", "ព្រ", "ស", "ស"] : ["M", "T", "W", "T", "F", "S", "S"];
 
   // Smooth-scroll to a section. Plain <a href="#features"> would fight the
@@ -170,11 +180,14 @@ export default function Landing() {
             </Button>
           </motion.div>
 
-          {/* App mockup */}
+          {/* App mockup carousel */}
+          <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 1, y: [0, -6, 0] }}
-            transition={reduceMotion ? { duration: 0.6 } : { duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            key={mockupSlide}
+            initial={{ opacity: 0, x: reduceMotion ? 0 : 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: reduceMotion ? 0 : -28 }}
+            transition={{ duration: 0.45, ease: "easeInOut" }}
             className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
           >
             <div className="flex items-center justify-between">
@@ -241,6 +254,7 @@ export default function Landing() {
               </div>
             </div>
           </motion.div>
+          </AnimatePresence>
         </div>
       </section>
 
