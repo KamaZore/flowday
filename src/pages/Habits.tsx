@@ -36,6 +36,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 const HABIT_COLORS = ["#10b981", "#0ea5e9", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899"];
@@ -93,6 +94,7 @@ function WeekDots({ habit }: { habit: Habit }) {
 }
 
 export default function Habits() {
+  const { t } = useI18n();
   const habits = useHabits();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Habit | null>(null);
@@ -102,10 +104,8 @@ export default function Habits() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Habits</h1>
-          <p className="text-sm text-muted-foreground">
-            Small daily reps compound
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("habits.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("habits.subtitle")}</p>
         </div>
         <Button
           onClick={() => {
@@ -114,7 +114,7 @@ export default function Habits() {
           }}
           className="gap-1.5 rounded-xl"
         >
-          <Plus className="size-4" /> New habit
+          <Plus className="size-4" /> {t("habits.new")}
         </Button>
       </div>
 
@@ -142,7 +142,7 @@ export default function Habits() {
                       ? "bg-emerald-500 text-white shadow-sm"
                       : "border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 hover:border-emerald-400 hover:text-emerald-500",
                   )}
-                  aria-label={doneToday ? "Mark not done" : "Mark done today"}
+                  aria-label={doneToday ? t("habits.markNotDone") : t("habits.markDone")}
                 >
                   {doneToday ? (
                     <Check className="size-6" />
@@ -161,10 +161,10 @@ export default function Habits() {
                   </div>
                   <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1 font-semibold text-amber-500">
-                      <Flame className="size-3.5" /> {streak}d streak
+                      <Flame className="size-3.5" /> {t("habits.streakShort", { n: streak })}
                     </span>
-                    <span>Best {best}d</span>
-                    <span>{monthPct}% / 30d</span>
+                    <span>{t("habits.bestShort", { n: best })}</span>
+                    <span>{t("habits.monthShort", { n: monthPct })}</span>
                   </div>
                 </div>
 
@@ -183,7 +183,7 @@ export default function Habits() {
                     onClick={() => {
                       if (confirm(`Delete "${habit.name}"?`)) {
                         deleteHabit(habit.id);
-                        toast.success("Habit deleted");
+                        toast.success(t("habits.deleted"));
                       }
                     }}
                     className="p-1 text-muted-foreground/60 hover:text-destructive"
@@ -200,7 +200,7 @@ export default function Habits() {
 
               <div className="mt-3 border-t border-border/60 pt-3">
                 <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Last 12 weeks · tap a day to toggle
+                  {t("habits.last12")}
                 </p>
                 <HabitHeatmap habit={habit} />
               </div>
@@ -210,10 +210,8 @@ export default function Habits() {
         {habits.length === 0 && (
           <div className="card-soft col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed py-14 text-center">
             <CheckCircle2 className="mb-2 size-8 text-muted-foreground/50" />
-            <p className="text-sm font-medium">No habits yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Start with one small daily action.
-            </p>
+            <p className="text-sm font-medium">{t("habits.empty")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("habits.emptySub")}</p>
           </div>
         )}
       </div>

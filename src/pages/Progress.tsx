@@ -33,8 +33,10 @@ import {
   YAxis,
 } from "recharts";
 import { useTheme } from "@/hooks/use-theme";
+import { useI18n } from "@/lib/i18n";
 
 export default function Progress() {
+  const { t } = useI18n();
   const tasks = useTasks();
   const habits = useHabits();
   const projects = useProjects();
@@ -94,30 +96,28 @@ export default function Progress() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Progress</h1>
-        <p className="text-sm text-muted-foreground">
-          Your momentum this week
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("progress.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("progress.subtitle")}</p>
       </div>
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           {
-            label: "Done today",
+            label: t("progress.doneToday"),
             value: doneToday,
             icon: CheckCircle2,
             tint: "text-emerald-500",
           },
-          { label: "Done this week", value: doneWeek, icon: TrendingUp, tint: "text-primary" },
+          { label: t("progress.doneWeek"), value: doneWeek, icon: TrendingUp, tint: "text-primary" },
           {
-            label: "Completion rate",
+            label: t("progress.completion"),
             value: `${completionPct}%`,
             icon: ListChecks,
             tint: "text-sky-500",
           },
           {
-            label: "Processes completed",
+            label: t("progress.processes"),
             value: completedRuns,
             icon: Target,
             tint: "text-violet-500",
@@ -136,7 +136,7 @@ export default function Progress() {
 
       {/* Weekly chart */}
       <div className="card-soft rounded-2xl border border-border/70 bg-card p-4">
-        <p className="pb-3 text-sm font-semibold">Last 7 days</p>
+        <p className="pb-3 text-sm font-semibold">{t("progress.last7")}</p>
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weekData} barGap={2}>
@@ -170,8 +170,8 @@ export default function Progress() {
                   background: resolved === "dark" ? "#26252f" : "#fff",
                 }}
               />
-              <Bar dataKey="done" name="Completed" fill="#6366f1" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="added" name="Created" fill="#c7d2fe" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="done" name={t("progress.completed")} fill="#6366f1" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="added" name={t("progress.created")} fill="#c7d2fe" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -180,7 +180,7 @@ export default function Progress() {
       <div className="grid gap-3 lg:grid-cols-2">
         {/* Habit streaks */}
         <div className="card-soft rounded-2xl border border-border/70 bg-card p-4">
-          <p className="pb-3 text-sm font-semibold">Habit streaks</p>
+          <p className="pb-3 text-sm font-semibold">{t("progress.streaks")}</p>
           <div className="space-y-2.5">
             {topStreaks.map((h) => (
               <div key={h.name} className="flex items-center gap-3">
@@ -190,16 +190,16 @@ export default function Progress() {
               </div>
             ))}
             {topStreaks.length === 0 && (
-              <p className="text-xs text-muted-foreground">No habits yet.</p>
+              <p className="text-xs text-muted-foreground">{t("progress.noHabits")}</p>
             )}
           </div>
         </div>
 
         {/* Time focus */}
         <div className="card-soft rounded-2xl border border-border/70 bg-card p-4">
-          <p className="pb-1 text-sm font-semibold">Time on tasks</p>
+          <p className="pb-1 text-sm font-semibold">{t("progress.timeTasks")}</p>
           <p className="pb-3 text-[11px] text-muted-foreground">
-            ~{(estMinutes / 60).toFixed(1)}h focused this week (estimate)
+            {t("progress.focusedWeek", { hours: (estMinutes / 60).toFixed(1) })}
           </p>
           <div className="space-y-2.5">
             {projects.slice(0, 4).map((p) => (
@@ -214,7 +214,7 @@ export default function Progress() {
               </div>
             ))}
             {projects.length === 0 && (
-              <p className="text-xs text-muted-foreground">No projects yet.</p>
+              <p className="text-xs text-muted-foreground">{t("progress.noProjects")}</p>
             )}
           </div>
         </div>
@@ -222,7 +222,7 @@ export default function Progress() {
 
       {/* Goal progress */}
       <div className="card-soft rounded-2xl border border-border/70 bg-card p-4">
-        <p className="pb-3 text-sm font-semibold">Goal progress</p>
+        <p className="pb-3 text-sm font-semibold">{t("progress.goalProgress")}</p>
         <div className="grid gap-3 sm:grid-cols-2">
           {goals.map((g) => {
             const pct = goalProgress(tasks, projects, g.id);
@@ -257,14 +257,14 @@ export default function Progress() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{g.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {projects.filter((p) => p.goalId === g.id).length} linked projects
+                    {t("progress.linkedProjects", { n: projects.filter((p) => p.goalId === g.id).length })}
                   </p>
                 </div>
               </div>
             );
           })}
           {goals.length === 0 && (
-            <p className="text-xs text-muted-foreground">No goals yet.</p>
+            <p className="text-xs text-muted-foreground">{t("progress.noGoals")}</p>
           )}
         </div>
       </div>

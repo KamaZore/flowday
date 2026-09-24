@@ -33,11 +33,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#0ea5e9", "#ec4899", "#14b8a6"];
 
 export default function Goals() {
+  const { t } = useI18n();
   const goals = useGoals();
   const projects = useProjects();
   const processes = useProcesses();
@@ -50,10 +52,8 @@ export default function Goals() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Goals</h1>
-          <p className="text-sm text-muted-foreground">
-            The why behind your projects
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("goals.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("goals.subtitle")}</p>
         </div>
         <Button
           onClick={() => {
@@ -62,7 +62,7 @@ export default function Goals() {
           }}
           className="gap-1.5 rounded-xl"
         >
-          <Plus className="size-4" /> New goal
+          <Plus className="size-4" /> {t("goals.new")}
         </Button>
       </div>
 
@@ -123,9 +123,9 @@ export default function Goals() {
                     <span className="truncate text-sm font-semibold">{g.title}</span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {gProjects.length} project{gProjects.length === 1 ? "" : "s"} ·{" "}
-                    {doneTasks}/{gTasks.length} tasks done
-                    {g.targetDate && ` · by ${formatDateKey(g.targetDate, "MMM yyyy")}`}
+                    {t("goals.projects", { n: gProjects.length })} ·{" "}
+                    {t("goals.tasksDone", { done: doneTasks, total: gTasks.length })}
+                    {g.targetDate && ` · ${t("goals.by", { date: formatDateKey(g.targetDate, "MMM yyyy") })}`}
                   </p>
                 </button>
 
@@ -174,7 +174,7 @@ export default function Goals() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        <ListChecks className="size-3" /> Tasks
+                        <ListChecks className="size-3" /> {t("goals.tasks")}
                       </p>
                       <div className="space-y-1.5">
                         {gTasks.slice(0, 5).map((t) => (
