@@ -9,6 +9,7 @@ import {
   Clock3,
   Flame,
   Inbox,
+  Languages,
   ListChecks,
   TrendingUp,
   Repeat2,
@@ -21,49 +22,50 @@ import { motion } from "framer-motion";
 import { Link } from "react-router";
 
 const FLOW = [
-  { label: "Goal", icon: Target, color: "text-rose-500" },
-  { label: "Project", icon: ListChecks, color: "text-amber-500" },
-  { label: "Process", icon: Repeat2, color: "text-violet-500" },
-  { label: "Tasks", icon: CheckCircle2, color: "text-primary" },
-  { label: "Progress", icon: Flame, color: "text-emerald-500" },
+  { labelKey: "landing.goal", icon: Target, color: "text-rose-500" },
+  { labelKey: "landing.project", icon: ListChecks, color: "text-amber-500" },
+  { labelKey: "landing.process", icon: Repeat2, color: "text-violet-500" },
+  { labelKey: "landing.tasks", icon: CheckCircle2, color: "text-primary" },
+  { labelKey: "landing.progress", icon: Flame, color: "text-emerald-500" },
 ];
 
 const FEATURES = [
   {
     icon: Inbox,
-    title: "Fast capture inbox",
-    text: "Type “Call John tomorrow 3pm” — Flowday parses the date, time and priority for you.",
+    titleKey: "landing.featureCaptureTitle",
+    textKey: "landing.featureCaptureText",
   },
   {
     icon: Repeat2,
-    title: "Processes",
-    text: "Turn routines into reusable flows. Run “Morning Workout” and each step becomes today's task.",
+    titleKey: "landing.featureProcessesTitle",
+    textKey: "landing.featureProcessesText",
   },
   {
     icon: Flame,
-    title: "Habits & streaks",
-    text: "One-tap daily check-ins with streaks and a 12-week heatmap that keeps you honest.",
+    titleKey: "landing.featureHabitsTitle",
+    textKey: "landing.featureHabitsText",
   },
   {
     icon: Target,
-    title: "Goals that connect",
-    text: "Every task rolls up into projects and goals, so progress is always visible.",
+    titleKey: "landing.featureGoalsTitle",
+    textKey: "landing.featureGoalsText",
   },
   {
     icon: CalendarDays,
-    title: "Everything on one calendar",
-    text: "Tasks, habits, events and deadlines in a clean month view.",
+    titleKey: "landing.featureCalendarTitle",
+    textKey: "landing.featureCalendarText",
   },
   {
     icon: WifiOff,
-    title: "Offline-first & private",
-    text: "Installable PWA. Your data stays on your device, and each account has its own private space.",
+    titleKey: "landing.featureOfflineTitle",
+    textKey: "landing.featureOfflineText",
   },
 ];
 
 export default function Landing() {
-  const { t } = useI18n();
+  const { lang, setLang, t } = useI18n();
   const { isAuthenticated } = useAuth();
+  const dayLetters = lang === "km" ? ["ច", "អ", "ព", "ព", "ព្រ", "ស", "ស"] : ["M", "T", "W", "T", "F", "S", "S"];
 
   // Smooth-scroll to a section. Plain <a href="#features"> would fight the
   // HashRouter (it treats "#features" as a route → 404), so we scroll manually.
@@ -90,6 +92,16 @@ export default function Landing() {
             <button type="button" onClick={() => scrollTo("insights")} className="hover:text-foreground">{t("landing.navInsights")}</button>
           </nav>
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setLang(lang === "en" ? "km" : "en")}
+              aria-label={lang === "en" ? "Switch to Khmer" : "Switch to English"}
+            >
+              <Languages className="size-4" />
+              <span className="hidden sm:inline">{lang === "en" ? "ខ្មែរ" : "EN"}</span>
+            </Button>
             {isAuthenticated ? (
               <Button asChild className="rounded-xl">
                 <Link to="/select-system">{t("landing.ctaOpen")}</Link>
@@ -157,17 +169,17 @@ export default function Landing() {
             className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left"
           >
             <div className="flex items-center justify-between">
-              <p className="text-sm font-bold">Good morning 👋</p>
-              <span className="text-xs text-muted-foreground">Today · 80%</span>
+              <p className="text-sm font-bold">{t("landing.goodMorning")}</p>
+              <span className="text-xs text-muted-foreground">{t("landing.today")} · 80%</span>
             </div>
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
               <div className="h-full w-4/5 rounded-full bg-primary" />
             </div>
             <div className="mt-4 space-y-2">
               {[
-                { t: "Finish project outline", done: false, chip: "Personal Website" },
-                { t: "Run 20 minutes", done: true, chip: "Fitness" },
-                { t: "Read 20 pages", done: false, chip: null },
+                { t: t("landing.finishOutline"), done: false, chip: t("landing.personalWebsite") },
+                { t: t("landing.runMinutes"), done: true, chip: t("landing.fitness") },
+                { t: t("landing.readPages"), done: false, chip: null },
               ].map((row) => (
                 <div
                   key={row.t}
@@ -201,21 +213,21 @@ export default function Landing() {
             </div>
             <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
               <span className="flex items-center gap-1.5 text-xs font-medium">
-                <Flame className="size-3.5 text-amber-500" /> Exercise · 12d streak
+                <Flame className="size-3.5 text-amber-500" /> {t("landing.exerciseStreak")}
               </span>
-              <span className="text-[10px] text-muted-foreground">Tap to complete</span>
+              <span className="text-[10px] text-muted-foreground">{t("landing.tapComplete")}</span>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2">
               <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
-                <p className="text-[10px] text-muted-foreground">Focus time</p>
+                <p className="text-[10px] text-muted-foreground">{t("landing.focusTime")}</p>
                 <p className="mt-1 text-sm font-bold">2h 40m</p>
               </div>
               <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
-                <p className="text-[10px] text-muted-foreground">Next up</p>
+                <p className="text-[10px] text-muted-foreground">{t("landing.nextUp")}</p>
                 <p className="mt-1 truncate text-sm font-bold">3:30 PM</p>
               </div>
               <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
-                <p className="text-[10px] text-muted-foreground">This week</p>
+                <p className="text-[10px] text-muted-foreground">{t("landing.thisWeek")}</p>
                 <p className="mt-1 text-sm font-bold text-emerald-600">+18%</p>
               </div>
             </div>
@@ -227,10 +239,8 @@ export default function Landing() {
       <section id="insights" className="border-t border-border/60 bg-muted/20 px-4 py-16">
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">See the whole picture</h2>
-            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-              Your planning, habits, calendar and progress stay connected so the next step is always clear.
-            </p>
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{t("landing.insightsTitle")}</h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">{t("landing.insightsSub")}</p>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             <div className="card-soft rounded-2xl border border-border/70 bg-card p-5">
@@ -239,26 +249,26 @@ export default function Landing() {
                 <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-600">+18%</span>
               </div>
               <p className="mt-4 text-2xl font-extrabold">86%</p>
-              <p className="text-xs text-muted-foreground">Weekly completion</p>
+              <p className="text-xs text-muted-foreground">{t("landing.completion")}</p>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full w-[86%] rounded-full bg-violet-500" /></div>
             </div>
             <div className="card-soft rounded-2xl border border-border/70 bg-card p-5">
               <div className="flex items-center justify-between">
                 <span className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><Clock3 className="size-5" /></span>
-                <span className="text-xs font-semibold text-muted-foreground">Today</span>
+                <span className="text-xs font-semibold text-muted-foreground">{t("landing.today")}</span>
               </div>
               <p className="mt-4 text-2xl font-extrabold">4h 20m</p>
-              <p className="text-xs text-muted-foreground">Focused time planned</p>
+              <p className="text-xs text-muted-foreground">{t("landing.focusPlanned")}</p>
               <div className="mt-4 flex gap-1">{[40, 65, 45, 80, 55, 90, 70].map((height, i) => <span key={i} className="flex-1 rounded-full bg-amber-500/70" style={{ height: `${height / 4}px` }} />)}</div>
             </div>
             <div className="card-soft rounded-2xl border border-border/70 bg-card p-5">
               <div className="flex items-center justify-between">
                 <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><TrendingUp className="size-5" /></span>
-                <span className="text-xs font-semibold text-emerald-600">On track</span>
+                <span className="text-xs font-semibold text-emerald-600">{t("landing.onTrack")}</span>
               </div>
               <p className="mt-4 text-2xl font-extrabold">12 days</p>
-              <p className="text-xs text-muted-foreground">Current habit streak</p>
-              <div className="mt-4 flex -space-x-1.5">{["M", "T", "W", "T", "F", "S", "S"].map((day, i) => <span key={i} className="flex size-6 items-center justify-center rounded-full border-2 border-card bg-emerald-500 text-[9px] font-bold text-white">{day}</span>)}</div>
+              <p className="text-xs text-muted-foreground">{t("landing.habitStreak")}</p>
+              <div className="mt-4 flex -space-x-1.5">{dayLetters.map((day, i) => <span key={i} className="flex size-6 items-center justify-center rounded-full border-2 border-card bg-emerald-500 text-[9px] font-bold text-white">{day}</span>)}</div>
             </div>
           </div>
         </div>
@@ -275,10 +285,10 @@ export default function Landing() {
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-2 md:gap-3">
             {FLOW.map((f, i) => (
-              <div key={f.label} className="flex items-center gap-2 md:gap-3">
+              <div key={f.labelKey} className="flex items-center gap-2 md:gap-3">
                 <div className="card-soft flex items-center gap-2 rounded-2xl border border-border/70 bg-card px-4 py-3">
                   <f.icon className={`size-5 ${f.color}`} />
-                  <span className="text-sm font-semibold">{f.label}</span>
+                  <span className="text-sm font-semibold">{t(f.labelKey)}</span>
                 </div>
                 {i < FLOW.length - 1 && (
                   <ArrowRight className="size-4 text-muted-foreground/50" />
@@ -298,15 +308,15 @@ export default function Landing() {
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
               <div
-                key={f.title}
+                key={f.titleKey}
                 className="card-soft rounded-2xl border border-border/70 bg-card p-5 transition-transform hover:-translate-y-0.5"
               >
                 <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <f.icon className="size-5" />
                 </div>
-                <h3 className="mt-3 text-sm font-bold">{f.title}</h3>
+                <h3 className="mt-3 text-sm font-bold">{t(f.titleKey)}</h3>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  {f.text}
+                  {t(f.textKey)}
                 </p>
               </div>
             ))}
