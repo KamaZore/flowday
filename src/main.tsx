@@ -33,6 +33,9 @@ const ExpenseDashboard = lazy(() => import("./pages/expense/Dashboard.tsx"));
 const ExpenseTransactions = lazy(() => import("./pages/expense/Transactions.tsx"));
 const ExpenseCategories = lazy(() => import("./pages/expense/Categories.tsx"));
 const ExpenseReports = lazy(() => import("./pages/expense/Reports.tsx"));
+const ExpenseAccounts = lazy(() => import("./pages/expense/Accounts.tsx"));
+const ExpenseRecurring = lazy(() => import("./pages/expense/Recurring.tsx"));
+const ExpenseDebts = lazy(() => import("./pages/expense/Debts.tsx"));
 const BusinessDashboard = lazy(() => import("./pages/business/Dashboard.tsx"));
 const BusinessPOS = lazy(() => import("./pages/business/POS.tsx"));
 const BusinessSales = lazy(() => import("./pages/business/Sales.tsx"));
@@ -43,6 +46,8 @@ const BusinessSuppliers = lazy(() => import("./pages/business/Suppliers.tsx"));
 const BusinessPurchases = lazy(() => import("./pages/business/Purchases.tsx"));
 const BusinessExpenses = lazy(() => import("./pages/business/Expenses.tsx"));
 const BusinessReports = lazy(() => import("./pages/business/Reports.tsx"));
+const BusinessStaff = lazy(() => import("./pages/business/Staff.tsx"));
+const BusinessQuotes = lazy(() => import("./pages/business/Quotes.tsx"));
 const BusinessSettings = lazy(() => import("./pages/business/Settings.tsx"));
 
 // The expense system shares the app Settings page (theme/language/data).
@@ -218,6 +223,9 @@ function AppRoutes() {
       <Route path="/expense/transactions" element={<RequireAuth><AppLayout><ExpenseTransactions /></AppLayout></RequireAuth>} />
       <Route path="/expense/categories" element={<RequireAuth><AppLayout><ExpenseCategories /></AppLayout></RequireAuth>} />
       <Route path="/expense/reports" element={<RequireAuth><AppLayout><ExpenseReports /></AppLayout></RequireAuth>} />
+      <Route path="/expense/accounts" element={<RequireAuth><AppLayout><ExpenseAccounts /></AppLayout></RequireAuth>} />
+      <Route path="/expense/recurring" element={<RequireAuth><AppLayout><ExpenseRecurring /></AppLayout></RequireAuth>} />
+      <Route path="/expense/debts" element={<RequireAuth><AppLayout><ExpenseDebts /></AppLayout></RequireAuth>} />
       <Route path="/expense/settings" element={<RequireAuth><AppLayout><ExpenseSettings /></AppLayout></RequireAuth>} />
 
       {/* Business Management / POS system — same AppLayout chrome as Life. */}
@@ -231,6 +239,8 @@ function AppRoutes() {
       <Route path="/business/purchases" element={<RequireAuth><AppLayout><BusinessPurchases /></AppLayout></RequireAuth>} />
       <Route path="/business/expenses" element={<RequireAuth><AppLayout><BusinessExpenses /></AppLayout></RequireAuth>} />
       <Route path="/business/reports" element={<RequireAuth><AppLayout><BusinessReports /></AppLayout></RequireAuth>} />
+      <Route path="/business/staff" element={<RequireAuth><AppLayout><BusinessStaff /></AppLayout></RequireAuth>} />
+      <Route path="/business/quotes" element={<RequireAuth><AppLayout><BusinessQuotes /></AppLayout></RequireAuth>} />
       <Route path="/business/settings" element={<RequireAuth><AppLayout><BusinessSettings /></AppLayout></RequireAuth>} />
 
       {/* System roots: SelectSystem and the sidebar logo navigate to these,

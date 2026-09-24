@@ -34,6 +34,7 @@ const dict: Record<Lang, Record<string, string>> = {
     // Common
     "common.save": "Save",
     "common.cancel": "Cancel",
+    "common.edit": "Edit",
     "common.delete": "Delete",
     "common.add": "Add",
     "common.signOut": "Sign out",
@@ -358,6 +359,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "biz.noSales": "No sales in this period",
     "biz.addCustomer": "Add customer",
     "biz.editCustomer": "Edit customer",
+    "biz.editQuote": "Edit quote",
     "biz.phone": "Phone",
     "biz.email": "Email",
     "biz.addSupplier": "Add supplier",
@@ -446,6 +448,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "exp.recordPayment": "Record payment",
     "exp.paymentAmount": "Payment amount",
     "exp.debtSettled": "Debt settled",
+    "exp.overdue": "Overdue",
     "exp.debtSaved": "Debt saved",
 
     // Staff / quotes (business extensions)
@@ -505,6 +508,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "img.receiptHint": "ភ្ជាប់រូបភាពបង្កាន់ដៃ ឬទំនិញ (ស្រេចចិត្ត)",
     "img.error": "មិនអាចផ្ទុករូបភាពនេះបានទេ",
     "biz.editCustomer": "កែសម្រួលអតិថិជន",
+    "biz.editQuote": "កែសម្រួលសំណើ",
     "system.life.name": "ការតាមដានជីវិត",
     "system.expense.name": "ការគ្រប់គ្រងចំណាយ",
     "system.business.name": "អាជីវកម្ម / POS",
@@ -592,6 +596,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "exp.recordPayment": "កត់ត្រាការបង់ប្រាក់",
     "exp.paymentAmount": "ចំនួនប្រាក់បង់",
     "exp.debtSettled": "បំណុលបានបញ្ចប់",
+    "exp.overdue": "ហួសកំណត់",
     "exp.debtSaved": "រក្សាទុកបំណុល",
 
     // Staff / quotes (ភាសាខ្មែរ)
@@ -638,6 +643,7 @@ const dict: Record<Lang, Record<string, string>> = {
     // Common
     "common.save": "រក្សាទុក",
     "common.cancel": "បោះបង់",
+    "common.edit": "កែសម្រួល",
     "common.delete": "លុប",
     "common.add": "បន្ថែម",
     "common.signOut": "ចេញពីគណនី",
