@@ -377,6 +377,22 @@ const dict: Record<Lang, Record<string, string>> = {
     "biz.cat.snacks": "Snacks",
     "biz.cat.general": "General",
 
+    // Budgets / stock adjustments / exports / print
+    "biz.budgets": "Monthly budgets",
+    "biz.budgetHint": "Set a monthly limit per category — progress bars appear as you spend.",
+    "biz.editBudget": "Set budget",
+    "biz.budgetAmount": "Monthly limit",
+    "biz.budgetZeroClears": "Enter 0 to remove the budget for this category.",
+    "biz.budgetSaved": "Budget saved",
+    "biz.restockNote": "Restock adds stock and records a purchase so your costs stay accurate.",
+    "biz.restocked": "Restocked {name}",
+    "biz.stockIn": "Add stock",
+    "biz.stockOut": "Remove stock",
+    "biz.stockAdded": "Added stock for {name}",
+    "biz.stockRemoved": "Removed stock for {name}",
+    "biz.adjustNote": "Corrections only — use Restock when you buy inventory so costs stay accurate.",
+    "biz.print": "Print",
+
     // Landing
     "landing.badge": "Local-first · Installable · Free",
     "landing.heroA": "Your goals, your flow,",
@@ -423,6 +439,23 @@ const dict: Record<Lang, Record<string, string>> = {
     "nav.biz.expenses": "ចំណាយ",
     "nav.biz.reports": "របាយការណ៍",
     "nav.biz.settings": "ការកំណត់",
+
+    // Budgets / stock adjustments / exports / print (KM)
+    "biz.budgets": "ថវិកាប្រចាំខែ",
+    "biz.budgetHint": "កំណត់ដែនកំណត់ប្រចាំខែតាមប្រភេទ — របារវឌ្ឍនភាពនឹងបង្ហាញពេលអ្នកចំណាយ។",
+    "biz.editBudget": "កំណត់ថវិកា",
+    "biz.budgetAmount": "ដែនកំណត់ប្រចាំខែ",
+    "biz.budgetZeroClears": "បញ្ចូល ០ ដើម្បីលុបថវិកាប្រភេទនេះ។",
+    "biz.budgetSaved": "រក្សាទុកថវិកាហើយ",
+    "biz.restockNote": "ការបំពេញស្តុកបន្ថែមស្តុក និងកត់ត្រាការទិញចូល ដើម្បីឱ្យចំណាយរបស់អ្នកត្រឹមត្រូវ។",
+    "biz.restocked": "បំពេញស្តុក {name} ហើយ",
+    "biz.stockIn": "បន្ថែមស្តុក",
+    "biz.stockOut": "ដកស្តុក",
+    "biz.stockAdded": "បានបន្ថែមស្តុកសម្រាប់ {name}",
+    "biz.stockRemoved": "បានដកស្តុកសម្រាប់ {name}",
+    "biz.adjustNote": "សម្រាប់កែតម្រូវតែប៉ុណ្ណោះ — ប្រើ «បំពេញស្តុក» ពេលទិញទំនិញ ដើម្បីឱ្យចំណាយត្រឹមត្រូវ។",
+    "biz.print": "បោះពុម្ព",
+
     // Nav
     "nav.today": "ថ្ងៃនេះ",
     "nav.inbox": "ប្រអប់ទទួល",

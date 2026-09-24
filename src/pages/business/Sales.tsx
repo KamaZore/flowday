@@ -1,4 +1,5 @@
 import { DateFilterBar } from "@/components/systems/DateFilterBar";
+import { FadeIn } from "@/components/systems/Shared";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,6 +20,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n";
 import { money, moneyShort } from "@/lib/format";
+import { downloadCsv, printReceipt } from "@/lib/export";
 import {
   businessStats,
   filterOrders,
@@ -27,8 +29,8 @@ import {
   useBusiness,
   type DateFilter,
 } from "@/lib/store";
-import { PAYMENT_METHODS, type Order } from "@/lib/types";
-import { FileText, RotateCcw } from "lucide-react";
+import { type Order } from "@/lib/types";
+import { Download, FileText, Printer, RotateCcw } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -73,18 +75,60 @@ export default function BusinessSales() {
       .map(([date, v]) => ({ date: date.slice(5), sales: v }));
   }, [orders]);
 
+  function exportCsv() {
+    downloadCsv(`sales-${range.from}-to-${range.to}.csv`, [
+      [
+        "Receipt #",
+        "Date",
+        "Customer",
+        "Items",
+        "Subtotal",
+        "Discount",
+        "Tax",
+        "Total",
+        "COGS",
+        "Method",
+        "Status",
+      ],
+      ...orders.map((o) => [
+        o.number,
+        new Date(o.createdAt).toLocaleString(),
+        customerName(o.customerId),
+        o.lines.map((l) => `${l.name} x${l.qty}`).join("; "),
+        o.subtotal.toFixed(2),
+        o.discountTotal.toFixed(2),
+        o.taxTotal.toFixed(2),
+        o.total.toFixed(2),
+        o.costTotal.toFixed(2),
+        t(`pay.${o.method}`),
+        o.status,
+      ]),
+    ]);
+  }
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("nav.biz.sales")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("biz.orders")}: {stats.orderCount} · {t("biz.avgOrder")}: {money(stats.avgOrder)}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t("nav.biz.sales")}</h1>
+          <p className="text-sm text-muted-foreground">
+            {t("biz.orders")}: {stats.orderCount} · {t("biz.avgOrder")}: {money(stats.avgOrder)}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={exportCsv}
+          disabled={orders.length === 0}
+          className="gap-2 rounded-xl"
+        >
+          <Download className="size-4" />
+          CSV
+        </Button>
       </div>
 
       <DateFilterBar value={filter} onChange={setFilter} />
 
-      <Card className="rounded-3xl">
+      <Card className="card-soft rounded-3xl border-border/60">
         <CardHeader className="pb-0">
           <CardTitle className="text-base">{t("biz.todaySales")}</CardTitle>
         </CardHeader>
@@ -110,59 +154,58 @@ export default function BusinessSales() {
       </Card>
 
       <div className="space-y-2">
-        {orders.map((o) => (
-          <div
-            key={o.id}
-            className="card-soft flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3.5"
-          >
-            <span
-              className={
-                "flex size-9 shrink-0 items-center justify-center rounded-xl " +
-                (o.status === "refunded"
-                  ? "bg-muted text-muted-foreground"
-                  : "bg-violet-500/10 text-violet-600 dark:text-violet-400")
-              }
-            >
-              <FileText className="size-4" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">
-                #{o.number} · {customerName(o.customerId)}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {new Date(o.createdAt).toLocaleString()} · {t(`pay.${o.method}`)} ·{" "}
-                {o.lines.reduce((s, l) => s + l.qty, 0)} items
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
+        {orders.map((o, i) => (
+          <FadeIn key={o.id} delay={Math.min(i * 0.03, 0.3)}>
+            <div className="card-soft flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3.5 transition-shadow hover:shadow-md">
               <span
                 className={
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold " +
+                  "flex size-9 shrink-0 items-center justify-center rounded-xl " +
                   (o.status === "refunded"
                     ? "bg-muted text-muted-foreground"
-                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400")
+                    : "bg-violet-500/10 text-violet-600 dark:text-violet-400")
                 }
               >
-                {o.status === "refunded" ? t("biz.refunded") : t("biz.completed")}
+                <FileText className="size-4" />
               </span>
-              <span className="text-sm font-bold">{money(o.total)}</span>
-            </div>
-            <div className="flex shrink-0 gap-0.5">
-              <Button variant="ghost" size="sm" className="h-8 rounded-lg px-2 text-xs" onClick={() => setViewing(o)}>
-                {t("biz.receipt")}
-              </Button>
-              {o.status === "completed" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 rounded-lg text-amber-600 dark:text-amber-400"
-                  onClick={() => setRefunding(o)}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">
+                  #{o.number} · {customerName(o.customerId)}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {new Date(o.createdAt).toLocaleString()} · {t(`pay.${o.method}`)} ·{" "}
+                  {o.lines.reduce((s, l) => s + l.qty, 0)} items
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-2 sm:flex">
+                <span
+                  className={
+                    "rounded-full px-2 py-0.5 text-[10px] font-semibold " +
+                    (o.status === "refunded"
+                      ? "bg-muted text-muted-foreground"
+                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400")
+                  }
                 >
-                  <RotateCcw className="size-3.5" />
+                  {o.status === "refunded" ? t("biz.refunded") : t("biz.completed")}
+                </span>
+                <span className="text-sm font-bold">{money(o.total)}</span>
+              </div>
+              <div className="flex shrink-0 gap-0.5">
+                <Button variant="ghost" size="sm" className="h-8 rounded-lg px-2 text-xs" onClick={() => setViewing(o)}>
+                  {t("biz.receipt")}
                 </Button>
-              )}
+                {o.status === "completed" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-lg text-amber-600 dark:text-amber-400"
+                    onClick={() => setRefunding(o)}
+                  >
+                    <RotateCcw className="size-3.5" />
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+          </FadeIn>
         ))}
         {orders.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 p-10 text-center">
@@ -175,10 +218,35 @@ export default function BusinessSales() {
       {/* Receipt viewer */}
       <Dialog open={Boolean(viewing)} onOpenChange={(v) => !v && setViewing(null)}>
         <DialogContent className="rounded-3xl sm:max-w-sm">
-          <DialogHeader>
+          <DialogHeader className="flex-row items-center justify-between space-y-0 pr-10">
             <DialogTitle>
               {t("biz.receipt")} #{viewing?.number}
             </DialogTitle>
+            {viewing && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-lg text-xs"
+                onClick={() =>
+                  printReceipt({
+                    shopName: business.shopName,
+                    number: viewing.number,
+                    createdAt: viewing.createdAt,
+                    method: viewing.method,
+                    lines: viewing.lines,
+                    subtotal: viewing.subtotal,
+                    discountTotal: viewing.discountTotal,
+                    taxTotal: viewing.taxTotal,
+                    total: viewing.total,
+                    amountPaid: viewing.amountPaid,
+                    change: viewing.change,
+                  })
+                }
+              >
+                <Printer className="size-3.5" />
+                {t("biz.print")}
+              </Button>
+            )}
           </DialogHeader>
           {viewing && (
             <div className="space-y-2 font-mono text-sm">

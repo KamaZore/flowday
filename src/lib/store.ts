@@ -425,6 +425,7 @@ function seedData(): AppData {
     ],
     calendarEvents: events,
     activeSystem: null,
+    budgets: {},
     transactions: [],
     business: {
       products: [],
@@ -462,6 +463,14 @@ export function normalizeData(parsed: Partial<AppData> | null | undefined): AppD
     ...parsed,
     version: DATA_VERSION,
     settings: { ...fresh.settings, ...(parsed.settings ?? {}) },
+    budgets:
+      parsed.budgets && typeof parsed.budgets === "object"
+        ? Object.fromEntries(
+            Object.entries(parsed.budgets).filter(
+              (entry): entry is [string, number] => typeof entry[1] === "number",
+            ),
+          )
+        : {},
     transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
     business: {
       ...fresh.business,
@@ -533,7 +542,7 @@ export function getData(): AppData {
   return data;
 }
 
-function useAppData(): AppData {
+export function useAppData(): AppData {
   return useSyncExternalStore(subscribe, getData, getData);
 }
 
@@ -1807,6 +1816,31 @@ export function deleteBusinessExpense(id: string) {
 
 export function updateBusinessSettings(patch: Partial<Pick<BusinessData, "taxRate" | "taxEnabled" | "shopName">>) {
   patchBusiness(patch);
+}
+
+/**
+ * Manual stock correction (shrinkage, damage, recount). Unlike restock,
+ * this does NOT create a purchase record — it only moves the number.
+ */
+export function adjustStock(productId: ID, delta: number) {
+  const ts = nowTs();
+  patchBusiness({
+    products: data.business.products.map((p) =>
+      p.id === productId
+        ? { ...p, stock: Math.max(0, p.stock + delta), updatedAt: ts }
+        : p,
+    ),
+  });
+}
+
+/** Set (or clear with 0) the monthly budget for an expense category. */
+export function setBudget(category: string, amount: number) {
+  set((d) => {
+    const next = { ...d.budgets };
+    if (amount > 0) next[category] = amount;
+    else delete next[category];
+    return { ...d, budgets: next };
+  });
 }
 
 /* ================================================================== */

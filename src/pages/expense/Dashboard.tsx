@@ -1,5 +1,6 @@
 import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { DateFilterBar } from "@/components/systems/DateFilterBar";
+import { StatCard } from "@/components/systems/Shared";
 import { TransactionDialog } from "@/components/systems/TransactionDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -90,24 +91,28 @@ export default function ExpenseDashboard() {
           value={money(totals.income)}
           icon={ArrowDownLeft}
           tone="text-emerald-600 dark:text-emerald-400"
+          delay={0}
         />
         <StatCard
           label={t("exp.totalExpense")}
           value={money(totals.expense)}
           icon={ArrowUpRight}
           tone="text-rose-600 dark:text-rose-400"
+          delay={0.05}
         />
         <StatCard
           label={t("exp.balance")}
           value={money(totals.balance)}
           icon={Wallet}
           tone={totals.balance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}
+          delay={0.1}
         />
         <StatCard
           label={t("exp.todayExpense")}
           value={money(todayTotals.expense)}
           icon={Coins}
           tone="text-amber-600 dark:text-amber-400"
+          delay={0.15}
         />
       </div>
 
@@ -236,28 +241,3 @@ export default function ExpenseDashboard() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  icon: typeof Wallet;
-  tone: string;
-}) {
-  return (
-    <Card className="rounded-2xl">
-      <CardContent className="flex items-center gap-3 p-4">
-        <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted ${tone}`}>
-          <Icon className="size-4.5" />
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-xs text-muted-foreground">{label}</p>
-          <p className="truncate text-base font-bold leading-tight">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}

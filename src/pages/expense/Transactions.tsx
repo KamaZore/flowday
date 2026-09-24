@@ -1,4 +1,5 @@
 import { DateFilterBar } from "@/components/systems/DateFilterBar";
+import { downloadCsv } from "@/lib/export";
 import { TransactionDialog } from "@/components/systems/TransactionDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import { money } from "@/lib/format";
 import {
   deleteTransaction,
   filterTransactions,
+  resolveDateRange,
   sumTransactions,
   useTransactions,
   type DateFilter,
@@ -23,7 +25,7 @@ import {
   PAYMENT_METHODS,
   type Transaction,
 } from "@/lib/types";
-import { ArrowDownLeft, ArrowUpRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Download, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export default function ExpenseTransactions() {
@@ -59,6 +61,21 @@ export default function ExpenseTransactions() {
     setDialogOpen(true);
   }
 
+  function exportCsv() {
+    const range = resolveDateRange(filter);
+    downloadCsv(`transactions-${range.from}-to-${range.to}.csv`, [
+      ["Date", "Type", "Category", "Method", "Amount", "Note"],
+      ...filtered.map((tx) => [
+        tx.date,
+        tx.type,
+        t(`exp.cat.${tx.category}`),
+        t(`pay.${tx.method}`),
+        tx.amount.toFixed(2),
+        tx.note ?? "",
+      ]),
+    ]);
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -66,10 +83,21 @@ export default function ExpenseTransactions() {
           <h1 className="text-2xl font-bold tracking-tight">{t("nav.exp.transactions")}</h1>
           <p className="text-sm text-muted-foreground">{t("exp.count", { n: filtered.length })}</p>
         </div>
-        <Button onClick={openNew} className="gap-2 rounded-xl">
-          <Plus className="size-4" />
-          {t("exp.new")}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={exportCsv}
+            disabled={filtered.length === 0}
+            className="gap-2 rounded-xl"
+          >
+            <Download className="size-4" />
+            CSV
+          </Button>
+          <Button onClick={openNew} className="gap-2 rounded-xl">
+            <Plus className="size-4" />
+            {t("exp.new")}
+          </Button>
+        </div>
       </div>
 
       <DateFilterBar value={filter} onChange={setFilter} />

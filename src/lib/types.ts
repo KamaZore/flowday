@@ -350,6 +350,8 @@ export type AppData = {
   settings: AppSettings;
   /** last system the user entered (system selector pre-selects it) */
   activeSystem: SystemId | null;
+  /** monthly spending budgets: expense category name → amount per month */
+  budgets: Record<string, number>;
   tasks: Task[];
   inboxItems: InboxItem[];
   projects: Project[];

@@ -1,5 +1,6 @@
 import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { DateFilterBar } from "@/components/systems/DateFilterBar";
+import { FadeIn, StatCard } from "@/components/systems/Shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n";
 import { money, moneyShort } from "@/lib/format";
@@ -85,43 +86,49 @@ export default function BusinessDashboard() {
 
       {/* Filtered KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi
+        <StatCard
           label={t("biz.revenue")}
           value={money(stats.revenue)}
           sub={`${stats.orderCount} ${t("biz.orders")}`}
           icon={Banknote}
           tone="text-violet-600 dark:text-violet-400"
+          delay={0}
         />
-        <Kpi
+        <StatCard
           label={t("biz.cogs")}
           value={money(stats.cogs)}
           sub={`${t("biz.refunds")}: ${money(stats.refunds)}`}
           icon={Receipt}
           tone="text-amber-600 dark:text-amber-400"
+          delay={0.05}
         />
-        <Kpi
+        <StatCard
           label={t("biz.grossProfit")}
           value={money(stats.grossProfit)}
           sub={`${t("biz.expenses")}: ${money(stats.expenses)}`}
           icon={Percent}
           tone="text-sky-600 dark:text-sky-400"
+          delay={0.1}
         />
-        <Kpi
+        <StatCard
           label={t("biz.netProfit")}
           value={money(stats.netProfit)}
           sub={t("biz.profitFormula")}
           icon={TrendingUp}
           tone={stats.netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}
+          delay={0.15}
         />
       </div>
 
       {/* Today / month quick glance */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MiniKpi label={t("biz.todaySales")} value={money(todayStats.revenue)} />
-        <MiniKpi label={t("biz.todayProfit")} value={money(todayStats.grossProfit - todayStats.expenses)} />
-        <MiniKpi label={t("biz.monthSales")} value={money(monthStats.revenue)} />
-        <MiniKpi label={t("biz.monthProfit")} value={money(monthStats.grossProfit - monthStats.expenses)} />
-      </div>
+      <FadeIn delay={0.2}>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <MiniKpi label={t("biz.todaySales")} value={money(todayStats.revenue)} />
+          <MiniKpi label={t("biz.todayProfit")} value={money(todayStats.grossProfit - todayStats.expenses)} />
+          <MiniKpi label={t("biz.monthSales")} value={money(monthStats.revenue)} />
+          <MiniKpi label={t("biz.monthProfit")} value={money(monthStats.grossProfit - monthStats.expenses)} />
+        </div>
+      </FadeIn>
 
       {/* Revenue & profit chart */}
       <Card className="rounded-3xl">
@@ -244,38 +251,9 @@ export default function BusinessDashboard() {
   );
 }
 
-function Kpi({
-  label,
-  value,
-  sub,
-  icon: Icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  icon: typeof Banknote;
-  tone: string;
-}) {
-  return (
-    <Card className="rounded-2xl">
-      <CardContent className="flex items-start gap-3 p-4">
-        <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted ${tone}`}>
-          <Icon className="size-4.5" />
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-xs text-muted-foreground">{label}</p>
-          <p className="truncate text-base font-bold leading-tight">{value}</p>
-          {sub && <p className="truncate text-[11px] text-muted-foreground">{sub}</p>}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function MiniKpi({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-muted/60 p-3.5">
+    <div className="rounded-2xl bg-muted/60 p-3.5 transition-colors hover:bg-muted">
       <p className="truncate text-xs text-muted-foreground">{label}</p>
       <p className="truncate text-base font-bold">{value}</p>
     </div>
