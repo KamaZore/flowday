@@ -118,8 +118,8 @@ export default function BusinessInventory() {
         </FadeIn>
       )}
 
-      <div className="card-soft overflow-hidden rounded-2xl border border-border/60 bg-card">
-        <table className="w-full text-sm">
+      <div className="card-soft overflow-x-auto rounded-2xl border border-border/60 bg-card">
+        <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b border-border/60 text-left text-xs text-muted-foreground">
               <th className="px-4 py-3 font-medium">{t("biz.name")}</th>

@@ -135,7 +135,7 @@ export default function ExpenseDebts() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatCard label={t("exp.youOwe")} value={money(totals.youOwe)} icon={ArrowUpRight} tone="text-rose-600 dark:text-rose-400" tint="bg-rose-500/12" />
         <StatCard label={t("exp.owedToMe")} value={money(totals.owedToYou)} icon={ArrowDownLeft} tone="text-emerald-600 dark:text-emerald-400" tint="bg-emerald-500/12" />
         <StatCard label={t("exp.debts")} value={String(openDebts.length)} icon={HandCoins} tone="text-sky-600 dark:text-sky-400" tint="bg-sky-500/12" />

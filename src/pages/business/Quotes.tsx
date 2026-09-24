@@ -175,7 +175,7 @@ export default function BusinessQuotes() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatCard label={t("biz.quoteValue")} value={money(stats.openValue)} icon={FilePlus2} tone="text-violet-600 dark:text-violet-400" tint="bg-violet-500/12" />
         <StatCard label={t("biz.status.accepted")} value={String(stats.acceptedCount)} icon={Check} tone="text-emerald-600 dark:text-emerald-400" tint="bg-emerald-500/12" />
         <StatCard label={t("biz.revenue")} value={money(stats.acceptedValue)} icon={ShoppingCart} tone="text-sky-600 dark:text-sky-400" tint="bg-sky-500/12" />

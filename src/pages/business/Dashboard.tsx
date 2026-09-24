@@ -74,7 +74,7 @@ export default function BusinessDashboard() {
   const low = lowStockProducts(products);
 
   return (
-    <div className="space-y-5">
+    <div className="pb-safe-xl space-y-5">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("system.business.name")}</h1>
         <p className="text-sm text-muted-foreground">{t("biz.profitFormula")}</p>

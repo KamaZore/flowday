@@ -192,9 +192,29 @@
   }
   .fab-safe {
     bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-  }
-  .strike-soft {
+  }  .strike-soft {
     text-decoration: line-through;
     text-decoration-thickness: 1.5px;
+  }
+
+  /* ---- Mobile fit & keyboard safety ------------------------------------ */
+  /* Clear the fixed mobile bottom nav + home indicator so page content is
+     never hidden behind it; pb-safe-xl for POS-style dense pages. */
+  .pb-safe {
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pb-safe-xl {
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* iOS zooms into inputs with font-size < 16px on focus; keep controls at
+   16px on touch devices so typing doesn't trigger the jarring auto-zoom.
+   (Outside @layer so it always wins.) */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }

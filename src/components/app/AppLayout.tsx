@@ -227,7 +227,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
       </header>
 
       {/* Main content — extra bottom padding clears the safe-area nav */}
-      <main className="safe-x px-4 pb-36 pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
+      <main className="safe-x px-4 pb-safe pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
         <div className="mx-auto max-w-5xl">{children ?? <Outlet />}</div>
       </main>
 
@@ -243,10 +243,10 @@ export function AppLayout({ children }: { children?: ReactNode }) {
                 cn(
                   // Container .safe-nav already covers the home-indicator inset;
                   // adding it here too double-counted it on notched phones.
-                  "flex flex-1 flex-col items-center justify-center gap-0.5 pt-2 text-[10px] font-medium text-muted-foreground transition-colors",
+                  "flex flex-1 flex-col items-center justify-center gap-0.5 pt-2 pb-1 text-[10px] font-medium text-muted-foreground transition-colors",
                   isActive && "text-primary",
                 )
-              }
+            }
             >
               <item.icon className="size-5" />
               {t(item.labelKey)}

@@ -91,13 +91,13 @@ export default function BusinessStaff() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatCard label={t("biz.monthlyPayroll")} value={money(payroll)} icon={UserCog} tone="text-violet-600 dark:text-violet-400" tint="bg-violet-500/12" />
         <StatCard label={t("biz.activeStaff")} value={String(activeCount)} icon={Users} tone="text-emerald-600 dark:text-emerald-400" tint="bg-emerald-500/12" />
         <StatCard label={t("biz.inactiveStaff")} value={String(staff.length - activeCount)} icon={UserCog} tone="text-muted-foreground" tint="bg-muted" />
       </div>
 
-      <div className="grid gap-2.5 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
         {staff.map((s, i) => (
           <FadeIn key={s.id} delay={i * 0.03}>
             <div className="card-soft flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-4">
