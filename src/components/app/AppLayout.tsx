@@ -328,10 +328,10 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           No safe-x here: the body already pads by the safe-area inset, so
           adding it again doubled the side margins on notched phones. */}
       <main className="px-4 pb-safe pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
-        <div className="mx-auto max-w-5xl">
+        <div className="relative mx-auto min-h-[50vh] max-w-5xl">
           {sync.syncing && (
-            <div className="mb-3 flex items-center justify-center rounded-2xl border border-primary/15 bg-primary/[.04] px-3 py-2" role="status" aria-live="polite">
-              <IosSpinner label={t("settings.syncState.syncing")} className="scale-75 py-0" />
+            <div className="absolute inset-0 z-10 flex min-h-[50vh] items-center justify-center rounded-2xl bg-background/70 backdrop-blur-[1px]" role="status" aria-live="polite">
+              <IosSpinner label={t("settings.syncState.syncing")} className="scale-90 py-0" />
             </div>
           )}
           {children ?? <Outlet />}
