@@ -17,6 +17,11 @@ const LANG_KEY = "flowday-lang";
  */
 const dict: Record<Lang, Record<string, string>> = {
   en: {
+    "sa.users": "Users",
+    "sa.visiblePage": "On this page",
+    "sa.withData": "with data",
+    "sa.systemInfoTitle": "System information",
+    "sa.systemInfoText": "Monitor access, enabled modules, and account activity from one place.",
     // Nav
     "nav.today": "Today",
     // Admin / Owner tools
@@ -596,6 +601,12 @@ const dict: Record<Lang, Record<string, string>> = {
     "landing.ctaOpen": "Open app",
     "landing.navFeatures": "Features",
     "landing.navHow": "How it works",
+    "landing.systemIntroTitle": "One home for your whole workflow",
+    "landing.systemIntroSub": "Three focused systems share one simple flow — plan life, understand money, and grow your business.",
+    "landing.systemLifeMetric": "Tasks, habits, goals",
+    "landing.systemExpenseMetric": "Income, expenses, reports",
+    "landing.systemBusinessMetric": "Sales, stock, customers",
+    "landing.systemAdminMetric": "Users, permissions, activity",
     "landing.navInsights": "Insights",
     "landing.goal": "Goal",
     "landing.project": "Project",
@@ -759,6 +770,17 @@ const dict: Record<Lang, Record<string, string>> = {
   },
 
   km: {
+    "landing.systemIntroTitle": "ទំព័រតែមួយសម្រាប់ការងាររបស់អ្នក",
+    "landing.systemIntroSub": "ប្រព័ន្ធផ្តោតបីរប្រព័ន្ធ ដែលចែករំលែកលំហូរតែមួយ — រៀបចំជីវិត យល់យាងលុយ និងបង្កើតអាជីវកម្ម។",
+    "landing.systemLifeMetric": "ភារកិច្ច · ទម្លាប់ · គោលដៅ",
+    "landing.systemExpenseMetric": "ចំណូលរកបាន · ចំណាយ · របាយការណ៍",
+    "landing.systemBusinessMetric": "ការលក់ · ស្តុក · អតិថិជន",
+    "landing.systemAdminMetric": "អ្នកប្រើ · សិទ្ធិ · សកម្មភាព",
+    "sa.users": "អ្នកប្រើប្រាស់",
+    "sa.visiblePage": "ក្នុងទំព័រនេះ",
+    "sa.withData": "ដែលមានទិន្នន័យ",
+    "sa.systemInfoTitle": "ព័ត៌មានប្រព័ន្ធ",
+    "sa.systemInfoText": "ត្រាពិនិត្យសិទ្ធិ ម៉ូឌុល និងសកម្មភាពគណនីនៅកន្លែងតែមួយ។",
     "progress.title": "វឌ្ឍនភាព",
     "progress.subtitle": "កម្រិតឧបញ្ចប់របស់អ្នកក្នុងសប្តាហ៍នេះ",
     "progress.doneToday": "បានបញ្ចប់ថ្ងៃនេះ",

@@ -14,12 +14,20 @@ import {
   TrendingUp,
   Repeat2,
   Smartphone,
+  ShieldCheck,
   Sparkles,
   Target,
   WifiOff,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router";
+
+const SYSTEMS = [
+  { icon: Target, titleKey: "system.life.name", descKey: "system.life.desc", metricKey: "landing.systemLifeMetric", tone: "text-rose-500 bg-rose-500/10" },
+  { icon: BarChart3, titleKey: "system.expense.name", descKey: "system.expense.desc", metricKey: "landing.systemExpenseMetric", tone: "text-emerald-500 bg-emerald-500/10" },
+  { icon: BarChart3, titleKey: "system.business.name", descKey: "system.business.desc", metricKey: "landing.systemBusinessMetric", tone: "text-violet-500 bg-violet-500/10" },
+  { icon: ShieldCheck, titleKey: "system.admin.name", descKey: "system.admin.desc", metricKey: "landing.systemAdminMetric", tone: "text-amber-500 bg-amber-500/10" },
+];
 
 const FLOW = [
   { labelKey: "landing.goal", icon: Target, color: "text-rose-500" },
@@ -270,6 +278,26 @@ export default function Landing() {
               <p className="text-xs text-muted-foreground">{t("landing.habitStreak")}</p>
               <div className="mt-4 flex -space-x-1.5">{dayLetters.map((day, i) => <span key={i} className="flex size-6 items-center justify-center rounded-full border-2 border-card bg-emerald-500 text-[9px] font-bold text-white">{day}</span>)}</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* System introduction */}
+      <section className="border-t border-border/60 bg-card/30 px-4 py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{t("landing.systemIntroTitle")}</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("landing.systemIntroSub")}</p>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {SYSTEMS.map((system) => (
+              <div key={system.titleKey} className="card-soft rounded-2xl border border-border/70 bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/30">
+                <div className={`flex size-10 items-center justify-center rounded-xl ${system.tone}`}><system.icon className="size-5" /></div>
+                <h3 className="mt-4 text-sm font-bold">{t(system.titleKey)}</h3>
+                <p className="mt-1 min-h-10 text-xs leading-5 text-muted-foreground">{t(system.descKey)}</p>
+                <p className="mt-4 border-t border-border/60 pt-3 text-[11px] font-semibold text-primary">{t(system.metricKey)}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

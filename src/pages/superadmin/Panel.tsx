@@ -51,6 +51,8 @@ import {
   ArrowDown,
   ArrowUp,
   Blocks,
+  BarChart3,
+  Activity,
   ExternalLink,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -105,6 +107,12 @@ export default function SuperAdminPanel() {
   const [modulePath, setModulePath] = useState("");
   const [moduleIcon, setModuleIcon] = useState("sparkles");
   const [moduleAccent, setModuleAccent] = useState(ACCENTS[0]);
+
+  const visibleUsers = users.length;
+  const visibleAdmins = users.filter((u) => u.role === "superadmin").length;
+  const visibleStandardUsers = visibleUsers - visibleAdmins;
+  const enabledModules = modules.filter((m) => m.enabled).length;
+  const usersWithData = users.filter((u) => u.hasData).length;
 
   // create form
   const [nName, setNName] = useState("");
@@ -348,6 +356,47 @@ export default function SuperAdminPanel() {
             {t("sa.createUser")}
           </Button>
         </div>
+
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="card-soft rounded-2xl border border-border/60 bg-card p-4">
+            <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{t("sa.count", { n: total })}</span><Users className="size-4 text-primary" /></div>
+            <p className="mt-2 text-2xl font-extrabold">{total}</p>
+            <p className="text-[11px] text-muted-foreground">{t("sa.users")}</p>
+          </div>
+          <div className="card-soft rounded-2xl border border-border/60 bg-card p-4">
+            <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{t("sa.roleUser")}</span><Activity className="size-4 text-emerald-500" /></div>
+            <p className="mt-2 text-2xl font-extrabold">{visibleStandardUsers}</p>
+            <p className="text-[11px] text-muted-foreground">{t("sa.visiblePage")}</p>
+          </div>
+          <div className="card-soft rounded-2xl border border-border/60 bg-card p-4">
+            <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{t("sa.roleSuper")}</span><ShieldCheck className="size-4 text-amber-500" /></div>
+            <p className="mt-2 text-2xl font-extrabold">{visibleAdmins}</p>
+            <p className="text-[11px] text-muted-foreground">{t("sa.visiblePage")}</p>
+          </div>
+          <div className="card-soft rounded-2xl border border-border/60 bg-card p-4">
+            <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{t("sa.modules")}</span><BarChart3 className="size-4 text-violet-500" /></div>
+            <p className="mt-2 text-2xl font-extrabold">{enabledModules}</p>
+            <p className="text-[11px] text-muted-foreground">{usersWithData} {t("sa.withData")}</p>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-primary/15 bg-primary/[.04] p-4">
+          <div className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Database className="size-4" /></span>
+            <div>
+              <h2 className="text-sm font-bold">{t("sa.systemInfoTitle")}</h2>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{t("sa.systemInfoText")}</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-4">
+                {SYSTEMS.map((system) => (
+                  <div key={system.key} className="rounded-xl border border-border/60 bg-background/60 px-3 py-2">
+                    <p className="truncate text-[11px] font-semibold">{t(system.labelKey)}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">{users.filter((u) => u.role === "superadmin" || u.permissions[system.key]).length} {t("sa.users")}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* User list */}
         <div className="space-y-2">
