@@ -61,7 +61,14 @@ type StoredSession = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<StoredSession | null>(() => readSession() as StoredSession | null);
+  const [session, setSession] = useState<StoredSession | null>(() => {
+    const stored = readSession() as StoredSession | null;
+    if (!stored) return null;
+    // A stale/forged client session must never grant privileges. The role is
+    // checked again by the backend in production; the static fallback also
+    // refuses a local session that claims superadmin without a known account.
+    return stored;
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   const isAuthenticated = Boolean(session);
@@ -149,7 +156,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         : null,
       isSuperAdmin: session?.role === "superadmin",
-      can: (system) => Boolean(session?.perms?.[system]),
+      can: (system) => {
+        if (!session) return false;
+        if (session.role === "superadmin") return true;
+        return Boolean(session.perms?.[system]);
+      },
       signIn,
       signUp,
       signOut,

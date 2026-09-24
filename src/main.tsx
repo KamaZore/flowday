@@ -57,6 +57,7 @@ const AdminActivity = lazy(() => import("./pages/admin/Activity.tsx"));
 const AdminData = lazy(() => import("./pages/admin/Data.tsx"));
 const SuperAdminLogin = lazy(() => import("./pages/superadmin/Login.tsx"));
 const SuperAdminPanel = lazy(() => import("./pages/superadmin/Panel.tsx"));
+const Workspace = lazy(() => import("./pages/workspace/Workspace.tsx"));
 
 // The expense system shares the app Settings page (theme/language/data).
 const ExpenseSettings = Settings;
@@ -161,6 +162,10 @@ class ChunkErrorBoundary extends React.Component<
     if (isChunkError && !alreadyRetried) {
       sessionStorage.setItem("flowday-chunk-reload", "1");
       window.location.reload();
+    } else if (!isChunkError) {
+      // A successful boot should not inherit a stale retry marker into a
+      // later, unrelated runtime error.
+      sessionStorage.removeItem("flowday-chunk-reload");
     }
   }
   render() {
@@ -190,6 +195,14 @@ function AppRoutes() {
       <Route path="/superadmin" element={<SuperAdminLogin />} />
       <Route path="/superadmin/users" element={<SuperAdminPanel />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/workspace"
+        element={
+          <RequireSystem system="life">
+            <Workspace />
+          </RequireSystem>
+        }
+      />
       <Route
         path="/select-system"
         element={

@@ -3,12 +3,15 @@ import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 /**
  * Neon Postgres backend (replaces Convex).
  *
- * The browser talks directly to Neon using its HTTP driver — no server
- * needed, which keeps the app deployable as a static site (GitHub Pages).
+ * Neon is the persistence layer. In the current static GitHub Pages build the
+ * browser talks to Neon directly, so a public VITE_NEON_DATABASE_URL is not a
+ * secret and cannot provide server-side authorization. The client uses strict
+ * owner/session checks to prevent accidental cross-account access, but the
+ * production boundary must be a server/edge proxy using a private Neon
+ * credential plus the RLS migration in scripts/security-migration.sql.
  *
- * Required env var (set via Keys/API keys): VITE_NEON_DATABASE_URL
- * A read-only Neon connection string also works (recommended for a public
- * deployment) as long as it can read/write the public tables below.
+ * Do not ship a privileged public connection string. See docs/SECURITY.md for
+ * the required deployment boundary and API contract.
  */
 
 export const DATABASE_URL = import.meta.env.VITE_NEON_DATABASE_URL as
@@ -97,7 +100,8 @@ export const DEFAULT_PERMS: SystemPerms = {
   life: true,
   expense: true,
   business: true,
-  admin: true,
+  // Administrative oversight is opt-in. Only a superadmin gets it by default.
+  admin: false,
 };
 
 export type DbUserFull = DbUser & {

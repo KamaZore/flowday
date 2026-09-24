@@ -13,6 +13,7 @@ import { useI18n } from "@/lib/i18n";
 import {
   deleteUser,
   getAppData,
+  getAuthRow,
   listUsers,
   resetUserPassword,
   setUserPermissions,
@@ -23,6 +24,15 @@ import {
   type SystemPerms,
   type UserRole,
 } from "@/lib/db";
+import {
+  ACCENTS,
+  defaultModules,
+  ICONS,
+  loadModules,
+  saveModules,
+  useModules,
+  type AppModule,
+} from "@/lib/modules";
 import { readSaSession, writeSaSession } from "@/lib/superadmin";
 import bcrypt from "bcryptjs";
 import { uid } from "@/lib/store";
@@ -37,6 +47,10 @@ import {
   Trash2,
   UserPlus,
   Users,
+  ArrowDown,
+  ArrowUp,
+  Blocks,
+  ExternalLink,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -76,6 +90,16 @@ export default function SuperAdminPanel() {
   const [dataFor, setDataFor] = useState<PanelUser | null>(null);
   const [dataSummary, setDataSummary] = useState<ReturnType<typeof summarize>>(null);
   const [dataBusy, setDataBusy] = useState(false);
+  const [modules, setModules] = useState<AppModule[]>([]);
+  const [modulesBusy, setModulesBusy] = useState(false);
+  const [moduleEdit, setModuleEdit] = useState<AppModule | null>(null);
+  const [moduleName, setModuleName] = useState("");
+  const [moduleNameKm, setModuleNameKm] = useState("");
+  const [moduleDesc, setModuleDesc] = useState("");
+  const [moduleDescKm, setModuleDescKm] = useState("");
+  const [modulePath, setModulePath] = useState("");
+  const [moduleIcon, setModuleIcon] = useState("sparkles");
+  const [moduleAccent, setModuleAccent] = useState(ACCENTS[0]);
 
   // create form
   const [nName, setNName] = useState("");
@@ -103,12 +127,93 @@ export default function SuperAdminPanel() {
   }, [t]);
 
   useEffect(() => {
-    if (!readSaSession()) {
+    const session = readSaSession();
+    if (!session) {
       navigate("/superadmin", { replace: true });
       return;
     }
-    void refresh();
+    // Re-check the database role on every panel visit. The local session is
+    // only a convenience; it is never treated as authorization by itself.
+    void getAuthRow(session.email).then((row) => {
+      if (!row || row.id !== session.userId || row.role !== "superadmin") {
+        writeSaSession(null);
+        navigate("/superadmin", { replace: true });
+        return;
+      }
+      void refresh();
+      void loadModules().then(setModules);
+    }).catch(() => {
+      writeSaSession(null);
+      navigate("/superadmin", { replace: true });
+    });
   }, [navigate, refresh]);
+
+  async function persistModules(next: AppModule[]) {
+    setModulesBusy(true);
+    try {
+      setModules(next);
+      await saveModules(next);
+      toast.success(t("sa.modulesSaved"));
+    } catch {
+      toast.error(t("sa.modulesFailed"));
+    } finally {
+      setModulesBusy(false);
+    }
+  }
+
+  function openModule(m: AppModule) {
+    setModuleEdit(m);
+    setModuleName(m.name ?? "");
+    setModuleNameKm(m.nameKm ?? "");
+    setModuleDesc(m.desc ?? "");
+    setModuleDescKm(m.descKm ?? "");
+    setModulePath(m.path ?? "");
+    setModuleIcon(m.icon);
+    setModuleAccent(m.accent);
+  }
+
+  function saveModule() {
+    if (!moduleEdit || !moduleName.trim()) return;
+    const next: AppModule = {
+      ...moduleEdit,
+      name: moduleName.trim(),
+      nameKm: moduleNameKm.trim() || undefined,
+      desc: moduleDesc.trim() || undefined,
+      descKm: moduleDescKm.trim() || undefined,
+      path: modulePath.trim() || undefined,
+      icon: moduleIcon,
+      accent: moduleAccent,
+    };
+    void persistModules(modules.map((m) => m.id === next.id ? next : m));
+    setModuleEdit(null);
+  }
+
+  function addModule() {
+    const next: AppModule = {
+      id: `m-${uid()}`,
+      name: "New module",
+      nameKm: "ម៉ូឌុលថ្មី",
+      desc: "A new Flowday workspace",
+      descKm: "កម្មវិធីថ្មី",
+      icon: "sparkles",
+      accent: ACCENTS[modules.length % ACCENTS.length],
+      path: "#/select-system",
+      enabled: true,
+      order: modules.length,
+      custom: true,
+    };
+    void persistModules([...modules, next]);
+    openModule(next);
+  }
+
+  function moveModule(id: string, direction: -1 | 1) {
+    const ordered = [...modules].sort((a, b) => a.order - b.order);
+    const index = ordered.findIndex((m) => m.id === id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= ordered.length) return;
+    [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+    void persistModules(ordered.map((m, i) => ({ ...m, order: i })));
+  }
 
   async function openData(u: PanelUser) {
     setDataFor(u);
@@ -309,6 +414,44 @@ export default function SuperAdminPanel() {
           )}
         </div>
 
+        {/* Module management */}
+        <section className="space-y-3 rounded-3xl border border-border/60 bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-base font-bold">
+                <Blocks className="size-4 text-primary" />
+                {t("sa.modules")}
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">{t("sa.modulesSub")}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={addModule} disabled={modulesBusy} className="gap-1.5 rounded-lg">
+              <Plus className="size-3.5" /> {t("sa.addModule")}
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {[...modules].sort((a, b) => a.order - b.order).map((m, i, ordered) => {
+              const Icon = ICONS[m.icon] ?? ICONS.sparkles;
+              return (
+                <div key={m.id} className="flex items-center gap-2 rounded-2xl border border-border/50 bg-background/60 p-2.5">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-muted">
+                    <Icon className={`size-4 ${m.accent}`} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{m.labelKey ? t(m.labelKey) : (m.name ?? m.id)}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{m.custom ? m.path || "No destination" : `Built-in · ${m.builtin}`}</p>
+                  </div>
+                  <Switch checked={m.enabled} onCheckedChange={(enabled) => void persistModules(modules.map((x) => x.id === m.id ? { ...x, enabled } : x))} />
+                  <Button variant="ghost" size="icon" className="size-8" disabled={i === 0 || modulesBusy} onClick={() => moveModule(m.id, -1)} aria-label={t("sa.moveUp")}><ArrowUp className="size-3.5" /></Button>
+                  <Button variant="ghost" size="icon" className="size-8" disabled={i === ordered.length - 1 || modulesBusy} onClick={() => moveModule(m.id, 1)} aria-label={t("sa.moveDown")}><ArrowDown className="size-3.5" /></Button>
+                  <Button variant="ghost" size="icon" className="size-8 rounded-lg" onClick={() => openModule(m)} aria-label={t("common.edit")}><Pencil className="size-3.5" /></Button>
+                  {m.custom && <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => void persistModules(modules.filter((x) => x.id !== m.id))} aria-label={t("common.delete")}><Trash2 className="size-3.5" /></Button>}
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-muted-foreground">{t("sa.modulesSecurityNote")}</p>
+        </section>
+
         <div className="text-center">
           <Link to="/" className="text-xs font-medium text-muted-foreground hover:text-foreground">
             {t("sa.backToApp")}
@@ -430,6 +573,31 @@ export default function SuperAdminPanel() {
               {t("common.save")}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Module editor */}
+      <Dialog open={!!moduleEdit} onOpenChange={(v) => !v && setModuleEdit(null)}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Pencil className="size-4 text-primary" />{t("sa.editModule")}</DialogTitle>
+          </DialogHeader>
+          {moduleEdit && <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5"><Label>English name</Label><Input value={moduleName} onChange={(e) => setModuleName(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>ភាសាខ្មែរ</Label><Input value={moduleNameKm} onChange={(e) => setModuleNameKm(e.target.value)} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5"><Label>Description</Label><Input value={moduleDesc} onChange={(e) => setModuleDesc(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>ការពិពណ៌នា</Label><Input value={moduleDescKm} onChange={(e) => setModuleDescKm(e.target.value)} /></div>
+            </div>
+            <div className="space-y-1.5"><Label>Destination</Label><Input value={modulePath} onChange={(e) => setModulePath(e.target.value)} placeholder="#/life/today or https://…" /><p className="text-[11px] text-muted-foreground">Hash paths and external links are supported. This is a link, not a data-sharing grant.</p></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5"><Label>Icon</Label><select value={moduleIcon} onChange={(e) => setModuleIcon(e.target.value)} className="h-10 w-full rounded-xl border bg-background px-3 text-sm">{Object.keys(ICONS).map((key) => <option key={key} value={key}>{key}</option>)}</select></div>
+              <div className="space-y-1.5"><Label>Accent</Label><select value={moduleAccent} onChange={(e) => setModuleAccent(e.target.value)} className="h-10 w-full rounded-xl border bg-background px-3 text-sm">{ACCENTS.map((accent) => <option key={accent} value={accent}>{accent.split(" ")[0]}</option>)}</select></div>
+            </div>
+          </div>}
+          <DialogFooter className="gap-2"><Button variant="outline" onClick={() => setModuleEdit(null)} className="rounded-xl">{t("common.cancel")}</Button><Button onClick={saveModule} disabled={!moduleName.trim()} className="rounded-xl">{t("common.save")}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

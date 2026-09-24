@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useActiveSystem, setActiveSystem, useSettings } from "@/lib/store";
 import { loadModules, selectableModules, useModules, ICONS, type AppModule } from "@/lib/modules";
 import { motion } from "framer-motion";
-import { ArrowRight, LogOut } from "lucide-react";
+import { ArrowRight, LogOut, Sparkles } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
@@ -157,6 +157,11 @@ export default function SelectSystem() {
         <p className="mt-6 text-center text-xs text-muted-foreground">
           {t("select.hint")}
         </p>
+        <div className="mt-5 text-center">
+          <button onClick={() => navigate("/workspace")} className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/5 px-4 py-2 text-xs font-bold text-indigo-600 transition hover:bg-indigo-500/10 dark:text-indigo-300">
+            <Sparkles className="size-3.5" /> Open My Flow workspace <ArrowRight className="size-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );

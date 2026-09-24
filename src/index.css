@@ -161,6 +161,69 @@
       0 1px 2px oklch(0.2 0.02 265 / 0.05),
       0 4px 16px -6px oklch(0.2 0.02 265 / 0.08);
   }
+  /* Alternate workspace shell — a calmer, editorial dashboard inspired by
+     modern personal-flow tools, while the original AppLayout remains intact. */
+  .workspace-shell {
+    --workspace-indigo: oklch(0.53 0.2 274);
+  }
+  .workspace-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 248px;
+    flex-direction: column;
+    border-right: 1px solid oklch(0.92 0.01 274);
+    background: oklch(0.99 0.004 274 / 0.9);
+    padding: 28px 18px;
+    backdrop-filter: blur(18px);
+  }
+  .dark .workspace-sidebar {
+    border-color: oklch(1 0 0 / 0.08);
+    background: oklch(0.15 0.015 274 / 0.9);
+  }
+  .workspace-main {
+    min-height: 100dvh;
+    margin-left: 248px;
+    padding: 34px clamp(20px, 4vw, 64px) 48px;
+  }
+  .workspace-hero {
+    background: linear-gradient(135deg, oklch(0.47 0.2 274), oklch(0.6 0.2 292));
+  }
+  .workspace-mobile-nav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 30;
+    display: flex;
+    justify-content: space-around;
+    border-top: 1px solid oklch(0.92 0.01 274);
+    background: oklch(0.99 0.004 274 / 0.94);
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    backdrop-filter: blur(18px);
+  }
+  .dark .workspace-mobile-nav {
+    border-color: oklch(1 0 0 / 0.08);
+    background: oklch(0.15 0.015 274 / 0.94);
+  }
+  .workspace-mobile-item {
+    display: flex;
+    min-width: 64px;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    border-radius: 14px;
+    padding: 6px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: oklch(0.53 0.015 274);
+  }
+  .workspace-mobile-item.active {
+    color: var(--workspace-indigo);
+    background: oklch(0.95 0.025 274);
+  }
+  .dark .workspace-mobile-item { color: oklch(0.68 0.014 274); }
+  .dark .workspace-mobile-item.active { background: oklch(0.3 0.05 274); }
+  @media (max-width: 1023px) {
+    .workspace-main { margin-left: 0; padding-bottom: 88px; }
+  }
   .dark .card-soft {
     box-shadow:
       0 1px 2px oklch(0 0 0 / 0.3),
