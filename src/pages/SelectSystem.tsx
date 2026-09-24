@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useActiveSystem, setActiveSystem, useSettings } from "@/lib/store";
 import { loadModules, selectableModules, useModules, ICONS, type AppModule } from "@/lib/modules";
 import { motion } from "framer-motion";
-import { ArrowRight, LayoutGrid, LogOut, Sparkles } from "lucide-react";
+import { ArrowRight, LogOut } from "lucide-react";
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 
 function greetingKey(): string {
@@ -100,17 +100,6 @@ export default function SelectSystem() {
           {t("select.subtitle")}
         </p>
 
-        <div className="mb-5 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 text-left">
-            <div className="flex items-center gap-2 text-sm font-bold text-indigo-700 dark:text-indigo-200"><LayoutGrid className="size-4" /> Classic mode</div>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">The original Flowday systems and navigation.</p>
-          </div>
-          <button onClick={() => navigate("/workspace")} className="group rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-indigo-600 to-violet-600 p-4 text-left text-white shadow-lg shadow-indigo-500/15 transition hover:-translate-y-0.5 hover:shadow-xl">
-            <div className="flex items-center gap-2 text-sm font-bold"><Sparkles className="size-4" /> New workspace mode <ArrowRight className="ml-auto size-4 transition group-hover:translate-x-0.5" /></div>
-            <p className="mt-1 text-xs leading-5 text-indigo-100">A focused daily dashboard inspired by your My Flow reference.</p>
-          </button>
-        </div>
-
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {allowed.map((m, i) => {
             const isLast = !m.custom && activeSystem === m.id;
@@ -168,11 +157,6 @@ export default function SelectSystem() {
         <p className="mt-6 text-center text-xs text-muted-foreground">
           {t("select.hint")}
         </p>
-        <div className="mt-5 text-center">
-          <Link to="/select-system" className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-bold text-muted-foreground transition hover:bg-muted hover:text-foreground">
-            <LayoutGrid className="size-3.5" /> Back to mode selection
-          </Link>
-        </div>
       </div>
     </div>
   );
