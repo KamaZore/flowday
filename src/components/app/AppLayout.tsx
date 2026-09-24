@@ -16,10 +16,8 @@ import {
   useModules,
 } from "@/lib/modules";
 import { OfflineBanner } from "@/components/app/OfflineBanner";
-import { IosSpinner } from "@/components/ui/IosSpinner";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
-import { useSyncState } from "@/lib/store";
 import {
   Check,
   ChevronDown,
@@ -133,21 +131,6 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const { t, lang } = useI18n();
   const { can } = useAuth();
   const modules = useModules();
-  const sync = useSyncState();
-  const [online, setOnline] = useState(() =>
-    typeof navigator === "undefined" ? true : navigator.onLine,
-  );
-
-  useEffect(() => {
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
 
   useEffect(() => {
     void loadModules();
@@ -343,11 +326,6 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           adding it again doubled the side margins on notched phones. */}
       <main className="px-4 pb-safe pt-4 md:ml-60 md:px-8 md:pb-16 md:pt-8">
         <div className="relative mx-auto min-h-[50vh] max-w-5xl">
-          {sync.syncing && online && (
-            <div className="absolute inset-0 z-10 flex min-h-[50vh] items-center justify-center rounded-2xl bg-background/70 backdrop-blur-[1px]" role="status" aria-live="polite">
-              <IosSpinner label={t("settings.syncState.syncing")} className="scale-90 py-0" />
-            </div>
-          )}
           {children ?? <Outlet />}
         </div>
       </main>

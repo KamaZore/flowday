@@ -64,10 +64,10 @@ const Workspace = lazy(() => import("./pages/workspace/Workspace.tsx"));
 // The expense system shares the app Settings page (theme/language/data).
 const ExpenseSettings = Settings;
 
-// Simple loading fallback for route transitions
+// The single centered loader used for lazy system/page transitions.
 function RouteLoading() {
   return (
-    <div className="flex min-h-dvh items-center justify-center">
+    <div className="fixed inset-0 z-[80] flex min-h-dvh items-center justify-center bg-background">
       <IosSpinner />
     </div>
   );
