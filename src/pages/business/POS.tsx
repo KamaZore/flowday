@@ -287,7 +287,7 @@ export default function BusinessPOS() {
             )}
           </div>
 
-          <div className="max-h-[38vh] space-y-2 overflow-y-auto p-3 lg:max-h-[42vh]">
+          <div className="max-h-[42vh] space-y-2 overflow-y-auto p-3 lg:max-h-[42vh]">
             {cart.length === 0 && (
               <p className="py-10 text-center text-sm text-muted-foreground">
                 {t("biz.emptyCart")}
@@ -304,12 +304,12 @@ export default function BusinessPOS() {
                     <X className="size-3.5" />
                   </button>
                 </div>
-                <div className="mt-1.5 flex items-center justify-between gap-2">
+                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
                   <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="size-6 rounded-lg"
+                      className="size-7 rounded-lg"
                       onClick={() => setQty(l.productId!, l.qty - 1)}
                     >
                       <Minus className="size-3" />
@@ -318,7 +318,7 @@ export default function BusinessPOS() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="size-6 rounded-lg"
+                      className="size-7 rounded-lg"
                       onClick={() => setQty(l.productId!, l.qty + 1)}
                     >
                       <Plus className="size-3" />

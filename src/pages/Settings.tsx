@@ -250,8 +250,8 @@ export default function Settings() {
             </button>
           ))}
         </div>
-        <div className="mt-4 flex items-center justify-between">
-          <div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <div className="min-w-0">
             <p className="text-sm font-medium">{t("settings.weekMonday")}</p>
             <p className="text-xs text-muted-foreground">
               {t("settings.weekMondayDesc")}

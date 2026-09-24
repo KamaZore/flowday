@@ -392,21 +392,25 @@ function MobileMoreMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="flex flex-1 flex-col items-center justify-center gap-0.5 pt-2 text-[10px] font-medium text-muted-foreground transition-colors data-[active=true]:text-primary"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 pb-1 pt-2 text-[10px] font-medium text-muted-foreground transition-colors data-[active=true]:text-primary"
           data-active={moreActive}
         >
           <LayoutGrid className={cn("size-5", moreActive && "text-primary")} />
           {t("nav.more")}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="end" className="mb-2 grid grid-cols-3 gap-1 rounded-2xl p-2">
+      <DropdownMenuContent
+        side="top"
+        align="end"
+        className="mb-2 grid w-[min(20rem,calc(100vw-2rem))] grid-cols-2 gap-1 rounded-2xl p-2 sm:grid-cols-3"
+      >
         {moreItems.map((item) => (
           <DropdownMenuItem key={item.path} asChild>
             <NavLink
               to={item.path}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center gap-1 rounded-xl px-3 py-2.5 text-[10px] font-medium text-muted-foreground",
+                  "flex flex-col items-center gap-1 rounded-xl px-3 py-2.5 text-xs font-medium text-muted-foreground",
                   isActive && "bg-primary/10 text-primary",
                 )
               }

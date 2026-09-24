@@ -126,8 +126,8 @@ export default function ExpenseTransactions() {
 
       <DateFilterBar value={filter} onChange={setFilter} />
 
-      {/* Filters */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* Filters — stack on narrow phones, 3-up from sm */}
+      <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
         <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
           <SelectTrigger className="h-9 rounded-xl text-xs">
             <SelectValue />
@@ -167,7 +167,7 @@ export default function ExpenseTransactions() {
       </div>
 
       {/* Period summary */}
-      <div className="grid grid-cols-3 gap-2 text-center">
+      <div className="grid grid-cols-3 gap-1.5 min-[420px]:gap-2 text-center">
         <div className="rounded-2xl bg-muted/60 p-3">
           <p className="text-xs text-muted-foreground">{t("exp.totalIncome")}</p>
           <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
