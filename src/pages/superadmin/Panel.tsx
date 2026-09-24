@@ -569,7 +569,6 @@ export default function SuperAdminPanel() {
               <p className="mt-1 text-xs text-muted-foreground">{t("sa.siteContentSub")}</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={addSiteSlide} className="gap-1.5"><Plus className="size-3.5" />{t("sa.addSlide")}</Button>
               <Button size="sm" onClick={() => void persistSiteContent()} disabled={siteBusy} className="gap-1.5">{siteBusy ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}{t("sa.saveSiteContent")}</Button>
             </div>
           </div>
@@ -588,8 +587,14 @@ export default function SuperAdminPanel() {
             <label className="space-y-1.5 text-xs font-semibold">Header subtitle (EN)<textarea value={siteDraft.headerSubtitle} onChange={(e) => setSiteDraft({ ...siteDraft, headerSubtitle: e.target.value })} className="min-h-20 w-full rounded-xl border bg-background px-3 py-2 text-sm font-normal" /></label>
             <label className="space-y-1.5 text-xs font-semibold">Header subtitle (ភាសាខ្មែរ)<textarea value={siteDraft.headerSubtitleKm} onChange={(e) => setSiteDraft({ ...siteDraft, headerSubtitleKm: e.target.value })} className="min-h-20 w-full rounded-xl border bg-background px-3 py-2 text-sm font-normal" /></label>
           </div>
-          <div className="space-y-2 border-t pt-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("sa.carouselSlides")}</p>
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("sa.cardImages")}</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">{t("sa.cardImageHint")}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={addSiteSlide} className="gap-1.5"><Plus className="size-3.5" />{t("sa.addSlide")}</Button>
+            </div>
             {siteDraft.slides.map((slide, index) => (
               <div key={slide.id} className="grid gap-2 rounded-2xl border bg-background/50 p-3 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
                 <label className="text-[11px] font-semibold">Title (EN)<input value={slide.title} onChange={(e) => updateSiteSlide(index, { title: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
@@ -597,7 +602,7 @@ export default function SuperAdminPanel() {
                 <label className="text-[11px] font-semibold">Subtitle (EN)<input value={slide.subtitle} onChange={(e) => updateSiteSlide(index, { subtitle: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
                 <label className="text-[11px] font-semibold">Subtitle (ភាសាខ្មែរ)<input value={slide.subtitleKm} onChange={(e) => updateSiteSlide(index, { subtitleKm: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
                 <div className="text-[11px] font-semibold">
-                  Image
+                  Card image
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <ImagePicker value={slide.imageUrl} onChange={(value) => updateSiteSlide(index, { imageUrl: value ?? "" })} size="sm" />
                     <input value={slide.imageUrl} onChange={(e) => updateSiteSlide(index, { imageUrl: e.target.value })} placeholder="https://..." className="h-9 min-w-0 flex-1 rounded-lg border bg-background px-2 text-xs font-normal" />
