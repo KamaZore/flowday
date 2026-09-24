@@ -596,19 +596,16 @@ export default function SuperAdminPanel() {
               <Button variant="outline" size="sm" onClick={addSiteSlide} className="gap-1.5"><Plus className="size-3.5" />{t("sa.addSlide")}</Button>
             </div>
             {siteDraft.slides.map((slide, index) => (
-              <div key={slide.id} className="grid gap-2 rounded-2xl border bg-background/50 p-3 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
-                <label className="text-[11px] font-semibold">Title (EN)<input value={slide.title} onChange={(e) => updateSiteSlide(index, { title: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
-                <label className="text-[11px] font-semibold">Title (ភាសាខ្មែរ)<input value={slide.titleKm} onChange={(e) => updateSiteSlide(index, { titleKm: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
-                <label className="text-[11px] font-semibold">Subtitle (EN)<input value={slide.subtitle} onChange={(e) => updateSiteSlide(index, { subtitle: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
-                <label className="text-[11px] font-semibold">Subtitle (ភាសាខ្មែរ)<input value={slide.subtitleKm} onChange={(e) => updateSiteSlide(index, { subtitleKm: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
-                <div className="text-[11px] font-semibold">
-                  Card image
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <ImagePicker value={slide.imageUrl} onChange={(value) => updateSiteSlide(index, { imageUrl: value ?? "" })} size="sm" />
-                    <input value={slide.imageUrl} onChange={(e) => updateSiteSlide(index, { imageUrl: e.target.value })} placeholder="https://..." className="h-9 min-w-0 flex-1 rounded-lg border bg-background px-2 text-xs font-normal" />
-                  </div>
+              <div key={slide.id} className="flex flex-wrap items-center gap-3 rounded-2xl border bg-background/50 p-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold">{t("sa.carouselCard", { n: index + 1 })}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{t("sa.cardImageHint")}</p>
                 </div>
-                <div className="flex items-center gap-2 pb-1"><Switch checked={slide.enabled} onCheckedChange={(enabled) => updateSiteSlide(index, { enabled })} /><Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => setSiteDraft({ ...siteDraft, slides: siteDraft.slides.filter((_, i) => i !== index) })} aria-label={t("common.delete")}><Trash2 className="size-3.5" /></Button></div>
+                <ImagePicker value={slide.imageUrl} onChange={(value) => updateSiteSlide(index, { imageUrl: value ?? "" })} size="md" />
+                <div className="flex items-center gap-2">
+                  <Switch checked={slide.enabled} onCheckedChange={(enabled) => updateSiteSlide(index, { enabled })} aria-label={t("sa.cardEnabled")} />
+                  <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => setSiteDraft({ ...siteDraft, slides: siteDraft.slides.filter((_, i) => i !== index) })} aria-label={t("common.delete")}><Trash2 className="size-3.5" /></Button>
+                </div>
               </div>
             ))}
           </div>
