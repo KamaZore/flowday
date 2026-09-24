@@ -166,7 +166,7 @@ export type AppSettings = {
 /* Systems (one app, three workspaces)                                 */
 /* ------------------------------------------------------------------ */
 
-export type SystemId = "life" | "expense" | "business";
+export type SystemId = "life" | "expense" | "business" | "admin";
 
 /* ------------------------------------------------------------------ */
 /* Expense system                                                      */

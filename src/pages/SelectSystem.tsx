@@ -81,7 +81,7 @@ export default function SelectSystem() {
           {t("select.subtitle")}
         </p>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {SYSTEMS.map((s, i) => {
             const isLast = activeSystem === s.id;
             return (

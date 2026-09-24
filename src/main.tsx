@@ -49,6 +49,10 @@ const BusinessReports = lazy(() => import("./pages/business/Reports.tsx"));
 const BusinessStaff = lazy(() => import("./pages/business/Staff.tsx"));
 const BusinessQuotes = lazy(() => import("./pages/business/Quotes.tsx"));
 const BusinessSettings = lazy(() => import("./pages/business/Settings.tsx"));
+const AdminOverview = lazy(() => import("./pages/admin/Overview.tsx"));
+const AdminUsers = lazy(() => import("./pages/admin/Users.tsx"));
+const AdminActivity = lazy(() => import("./pages/admin/Activity.tsx"));
+const AdminData = lazy(() => import("./pages/admin/Data.tsx"));
 
 // The expense system shares the app Settings page (theme/language/data).
 const ExpenseSettings = Settings;
@@ -243,11 +247,19 @@ function AppRoutes() {
       <Route path="/business/quotes" element={<RequireAuth><AppLayout><BusinessQuotes /></AppLayout></RequireAuth>} />
       <Route path="/business/settings" element={<RequireAuth><AppLayout><BusinessSettings /></AppLayout></RequireAuth>} />
 
+      {/* Admin / Owner tools — cross-system oversight (read-only) */}
+      <Route path="/admin/overview" element={<RequireAuth><AppLayout><AdminOverview /></AppLayout></RequireAuth>} />
+      <Route path="/admin/users" element={<RequireAuth><AppLayout><AdminUsers /></AppLayout></RequireAuth>} />
+      <Route path="/admin/activity" element={<RequireAuth><AppLayout><AdminActivity /></AppLayout></RequireAuth>} />
+      <Route path="/admin/data" element={<RequireAuth><AppLayout><AdminData /></AppLayout></RequireAuth>} />
+      <Route path="/admin/settings" element={<RequireAuth><AppLayout><Settings /></AppLayout></RequireAuth>} />
+
       {/* System roots: SelectSystem and the sidebar logo navigate to these,
           so they must redirect into the system's default page. */}
       <Route path="/life" element={<Navigate to="/life/today" replace />} />
       <Route path="/expense" element={<Navigate to="/expense/dashboard" replace />} />
       <Route path="/business" element={<Navigate to="/business/dashboard" replace />} />
+      <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
 
       {/* Legacy paths (bookmarks / installed PWA shortcuts) → new system routes */}
       {[
