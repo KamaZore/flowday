@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router";
+import { IosSpinner } from "@/components/ui/IosSpinner";
 
 /**
  * If the auth backend is unreachable (e.g. the installed PWA opened offline),
@@ -24,7 +24,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   if (isLoading && !timedOut) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <IosSpinner />
       </main>
     );
   }

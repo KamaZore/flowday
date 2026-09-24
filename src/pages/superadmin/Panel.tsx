@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { IosSpinner } from "@/components/ui/IosSpinner";
 import {
   Dialog,
   DialogContent,
@@ -409,10 +410,7 @@ export default function SuperAdminPanel() {
             </div>
           ))}
           {loading && (
-            <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              {t("sa.loading")}
-            </div>
+            <IosSpinner label={t("sa.loading")} className="py-10" />
           )}
           {!loading && users.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border/70 p-10 text-center">

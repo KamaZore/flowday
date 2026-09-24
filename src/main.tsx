@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RequireSystem } from "@/components/RequireSystem";
 import { InstallPrompt } from "@/components/app/InstallPrompt";
+import { IosSpinner } from "@/components/ui/IosSpinner";
 import { AuthProvider } from "@/hooks/use-auth";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
@@ -67,7 +68,7 @@ const ExpenseSettings = Settings;
 function RouteLoading() {
   return (
     <div className="flex min-h-dvh items-center justify-center">
-      <div className="animate-pulse text-muted-foreground">Loading…</div>
+      <IosSpinner />
     </div>
   );
 }

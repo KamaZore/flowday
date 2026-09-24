@@ -266,6 +266,32 @@
     text-decoration-thickness: 1.5px;
   }
 
+  .ios-spinner {
+    position: relative;
+    display: inline-block;
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+  .ios-spinner-segment {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 0.28rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: currentColor;
+    color: var(--muted-foreground);
+    transform-origin: 50% 1.125rem;
+    transform: rotate(calc(var(--ios-spinner-index) * 45deg)) translateY(0.08rem);
+    animation: ios-spinner-fade 0.9s linear infinite;
+    animation-delay: calc(var(--ios-spinner-index) * -0.09s);
+    opacity: 0.25;
+  }
+  @keyframes ios-spinner-fade {
+    0%, 100% { opacity: 0.18; }
+    50% { opacity: 0.95; }
+  }
+
   /* ---- Mobile fit & keyboard safety ------------------------------------ */
   /* Clear the fixed mobile bottom nav + home indicator so page content is
      never hidden behind it; pb-safe-xl for POS-style dense pages. */
