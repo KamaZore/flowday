@@ -39,6 +39,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#0ea5e9", "#ec4899", "#14b8a6"];
@@ -51,6 +52,7 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 };
 
 export default function Projects() {
+  const { t } = useI18n();
   const projects = useProjects();
   const tasks = useTasks();
   const goals = useGoals();
@@ -62,10 +64,8 @@ export default function Projects() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground">
-            {projects.filter((p) => p.status === "active").length} active
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("projects.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("projects.active", { n: projects.filter((p) => p.status === "active").length })}</p>
         </div>
         <Button
           onClick={() => {
@@ -74,7 +74,7 @@ export default function Projects() {
           }}
           className="gap-1.5 rounded-xl"
         >
-          <Plus className="size-4" /> New project
+          <Plus className="size-4" /> {t("projects.new")}
         </Button>
       </div>
 
@@ -133,16 +133,14 @@ export default function Projects() {
               </div>
               <div className="mt-3">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{pct}% complete</span>
-                  <span>
-                    {open} open task{open === 1 ? "" : "s"}
-                  </span>
+                  <span>{t("projects.complete", { n: pct })}</span>
+                  <span>{t("projects.openTasks", { n: open })}</span>
                 </div>
                 <Progress value={pct} className="mt-1.5 h-2" />
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
                 <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
-                  {STATUS_LABELS[p.status]}
+                  {t(`projects.status.${p.status}`)}
                 </span>
                 {goal && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
@@ -162,10 +160,8 @@ export default function Projects() {
         {projects.length === 0 && (
           <div className="card-soft col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed py-14 text-center">
             <FolderKanban className="mb-2 size-8 text-muted-foreground/50" />
-            <p className="text-sm font-medium">No projects yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Group tasks into projects to see progress.
-            </p>
+            <p className="text-sm font-medium">{t("projects.empty")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("projects.emptySub")}</p>
           </div>
         )}
       </div>
@@ -204,9 +200,7 @@ export default function Projects() {
                   <TaskRow key={t.id} task={t} />
                 ))}
               {tasks.filter((t) => t.projectId === openProject?.id).length === 0 && (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  No tasks in this project yet.
-                </p>
+                <p className="py-6 text-center text-sm text-muted-foreground">{t("projects.noTasks")}</p>
               )}
             </div>
           </div>
@@ -227,6 +221,7 @@ function ProjectEditor({
   project: Project | null;
   goals: ReturnType<typeof useGoals>;
 }) {
+  const { t } = useI18n();
   const [name, setName] = useState(project?.name ?? "");
   const [description, setDescription] = useState(project?.description ?? "");
   const [goalId, setGoalId] = useState(project?.goalId ?? "none");
@@ -298,9 +293,9 @@ function ProjectEditor({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(STATUS_LABELS).map(([v, l]) => (
+                  {Object.entries(STATUS_LABELS).map(([v]) => (
                     <SelectItem key={v} value={v}>
-                      {l}
+                      {t(`projects.status.${v}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>

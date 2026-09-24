@@ -43,9 +43,11 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 export default function Processes() {
+  const { t } = useI18n();
   const processes = useProcesses();
   const tasks = useTasks();
   const location = useLocation();
@@ -66,10 +68,8 @@ export default function Processes() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Processes</h1>
-          <p className="text-sm text-muted-foreground">
-            Reusable routines that turn into tasks
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("processes.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("processes.subtitle")}</p>
         </div>
         <Button
           onClick={() => {
@@ -78,7 +78,7 @@ export default function Processes() {
           }}
           className="gap-1.5 rounded-xl"
         >
-          <Plus className="size-4" /> New process
+          <Plus className="size-4" /> {t("processes.new")}
         </Button>
       </div>
 
@@ -110,10 +110,10 @@ export default function Processes() {
                 >
                   <p className="truncate text-sm font-semibold">{proc.name}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {proc.steps.length} step{proc.steps.length === 1 ? "" : "s"}
-                    {totalMin > 0 && ` · ~${totalMin} min`}
+                    {t("processes.steps", { n: proc.steps.length })}
+                    {totalMin > 0 && ` · ${t("processes.minutes", { n: totalMin })}`}
                     {proc.recurrence && ` · ${recurrenceLabel(proc.recurrence)}`}
-                    {todayCount > 0 && ` · ${todayCount} today`}
+                    {todayCount > 0 && ` · ${t("processes.today", { n: todayCount })}`}
                   </p>
                 </button>
                 <div className="flex shrink-0 items-center gap-1">
@@ -127,7 +127,7 @@ export default function Processes() {
                     }}
                   >
                     <Play className="mr-1 size-3.5" />
-                    Run
+                    {t("processes.run")}
                   </Button>
                   <button
                     onClick={() => {
@@ -135,25 +135,25 @@ export default function Processes() {
                       setEditorOpen(true);
                     }}
                     className="p-1 text-muted-foreground/60 hover:text-foreground"
-                    aria-label="Edit process"
+                    aria-label={t("processes.edit")}
                   >
                     <Pencil className="size-4" />
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm(`Delete "${proc.name}"?`)) {
+                      if (confirm(t("processes.deleteConfirm", { name: proc.name }))) {
                         deleteProcess(proc.id);
-                        toast.success("Process deleted");
+                        toast.success(t("processes.deleted"));
                       }
                     }}
                     className="p-1 text-muted-foreground/60 hover:text-destructive"
-                    aria-label="Delete process"
+                    aria-label={t("processes.delete")}
                   >
                     <Trash2 className="size-4" />
                   </button>
                   <button
                     onClick={() => setExpanded(isExpanded ? null : proc.id)}
-                    aria-label="Toggle"
+                    aria-label={t("processes.toggle")}
                   >
                     <ChevronDown
                       className={cn(
@@ -174,7 +174,7 @@ export default function Processes() {
                     </p>
                   )}
                   <div className="mx-auto max-w-xs">
-                    <FlowNode label="START" kind="start" />
+                    <FlowNode label={t("processes.start")} kind="start" />
                     {sorted.map((step, i) => (
                       <div key={step.id}>
                         <FlowArrow />
@@ -193,7 +193,7 @@ export default function Processes() {
                       </div>
                     ))}
                     <FlowArrow />
-                    <FlowNode label="END" kind="end" />
+                    <FlowNode label={t("processes.end")} kind="end" />
 
                     {/* Add step */}
                     <AddStepInput processId={proc.id} />
