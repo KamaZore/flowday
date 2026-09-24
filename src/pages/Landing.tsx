@@ -254,76 +254,16 @@ export default function Landing() {
             transition={{ duration: 0.45, ease: "easeInOut" }}
             className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
           >
-            {mockup?.imageUrl && (
-              <img
-                src={mockup.imageUrl}
-                alt={mockup.title || mockup.header}
-                className="mb-4 h-36 w-full rounded-xl border border-border/60 bg-muted object-cover"
-                loading="lazy"
-                onError={(event) => { event.currentTarget.style.display = "none"; }}
-              />
-            )}
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold">{mockup?.title || mockup?.header}</p>
-                {mockup?.subtitle && <p className="truncate text-[11px] text-muted-foreground">{mockup.subtitle}</p>}
-              </div>
-              <span className="shrink-0 text-xs text-muted-foreground">{t("landing.today")} · {mockup?.progress}</span>
-            </div>
-            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
-              <div className="h-full w-4/5 rounded-full bg-primary" />
-            </div>
-            <div className="mt-4 space-y-2">
-              {mockup?.rows.map((row) => (
-                <div
-                  key={row.label}
-                  className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2.5"
-                >
-                  <span
-                    className={
-                      row.done
-                        ? "flex size-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground"
-                        : "size-5 rounded-full border-2 border-muted-foreground/30"
-                    }
-                  >
-                    {row.done ? "✓" : ""}
-                  </span>
-                  <span
-                    className={
-                      row.done
-                        ? "flex-1 text-sm text-muted-foreground line-through"
-                        : "flex-1 text-sm font-medium"
-                    }
-                  >
-                    {row.label}
-                  </span>
-                  {row.chip && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                      {row.chip}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
-              <span className="flex items-center gap-1.5 text-xs font-medium">
-                <Flame className="size-3.5 text-amber-500" /> {mockup?.streak}
-              </span>
-              <span className="text-[10px] text-muted-foreground">{t("landing.tapComplete")}</span>
-            </div>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
-                <p className="text-[10px] text-muted-foreground">{t("landing.focusTime")}</p>
-                <p className="mt-1 text-sm font-bold">{mockup?.focus}</p>
-              </div>
-              <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
-                <p className="text-[10px] text-muted-foreground">{t("landing.nextUp")}</p>
-                <p className="mt-1 truncate text-sm font-bold">{mockup?.next}</p>
-              </div>
-              <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
-                <p className="text-[10px] text-muted-foreground">{t("landing.thisWeek")}</p>
-                <p className="mt-1 text-sm font-bold text-emerald-600">{mockup?.week}</p>
-              </div>
+            <div className="overflow-hidden rounded-xl border border-border/60 bg-muted">
+              {mockup?.imageUrl ? (
+                <img
+                  src={mockup.imageUrl}
+                  alt={mockup.title || "Flowday carousel slide"}
+                  className="aspect-[4/3] w-full object-cover"
+                  loading="lazy"
+                  onError={(event) => { event.currentTarget.style.display = "none"; }}
+                />
+              ) : null}
             </div>
             <div className="mt-4 flex items-center justify-center gap-1.5" aria-label="Preview slides">
               {mergedSlides.map((slide, index) => (
