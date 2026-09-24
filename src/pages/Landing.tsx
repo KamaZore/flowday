@@ -19,7 +19,7 @@ import {
   Target,
   WifiOff,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router";
 
 const SYSTEMS = [
@@ -72,6 +72,7 @@ const FEATURES = [
 export default function Landing() {
   const { lang, setLang, t } = useI18n();
   const { isAuthenticated } = useAuth();
+  const reduceMotion = useReducedMotion();
   const dayLetters = lang === "km" ? ["ច", "អ", "ព", "ព", "ព្រ", "ស", "ស"] : ["M", "T", "W", "T", "F", "S", "S"];
 
   // Smooth-scroll to a section. Plain <a href="#features"> would fight the
@@ -172,8 +173,8 @@ export default function Landing() {
           {/* App mockup */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            animate={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 1, y: [0, -6, 0] }}
+            transition={reduceMotion ? { duration: 0.6 } : { duration: 5, repeat: Infinity, ease: "easeInOut" }}
             className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
           >
             <div className="flex items-center justify-between">
