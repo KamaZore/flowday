@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/lib/i18n";
 import { SYSTEMS, type SystemDef } from "@/systems";
+import { useAuth } from "@/hooks/use-auth";
 import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
@@ -122,6 +123,7 @@ function LangToggle() {
 export function AppLayout({ children }: { children?: ReactNode }) {
   const { resolved, toggle } = useTheme();
   const { t } = useI18n();
+  const { can } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -254,7 +256,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-60 rounded-2xl p-1.5">
-              {SYSTEMS.map((s) => (
+              {SYSTEMS.filter((s) => can(s.id)).map((s) => (
                 <DropdownMenuItem key={s.id} asChild>
                   <button
                     onClick={() => navigate(s.root)}

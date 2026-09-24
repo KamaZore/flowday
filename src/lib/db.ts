@@ -47,9 +47,14 @@ export function ensureSchema(): Promise<void> {
           name          TEXT NOT NULL DEFAULT '',
           email         TEXT NOT NULL UNIQUE,
           password_hash TEXT NOT NULL,
+          role          TEXT NOT NULL DEFAULT 'user',
+          permissions   JSONB,
           created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
         )
       `;
+      // Migration for tables created before roles existed
+      await s`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user'`;
+      await s`ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB`;
       await s`
         CREATE TABLE IF NOT EXISTS app_data (
           user_id    TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -71,6 +76,28 @@ export function ensureSchema(): Promise<void> {
 
 export type DbUser = { id: string; name: string; email: string };
 
+export type UserRole = "superadmin" | "user";
+
+/** Which systems a user may open; superadmin always has all. */
+export type SystemPerms = {
+  life: boolean;
+  expense: boolean;
+  business: boolean;
+  admin: boolean;
+};
+
+export const DEFAULT_PERMS: SystemPerms = {
+  life: true,
+  expense: true,
+  business: true,
+  admin: true,
+};
+
+export type DbUserFull = DbUser & {
+  role: UserRole;
+  permissions: SystemPerms;
+};
+
 export async function findUserByEmail(email: string): Promise<DbUser | null> {
   await ensureSchema();
   const rows = await getSql()`
@@ -78,6 +105,90 @@ export async function findUserByEmail(email: string): Promise<DbUser | null> {
   `;
   const row = rows[0] as DbUser | undefined;
   return row ?? null;
+}
+
+/** Full auth row (role + permissions) for sign-in. */
+export async function getAuthRow(
+  email: string,
+): Promise<(DbUserFull & { password_hash: string }) | null> {
+  await ensureSchema();
+  const rows = await getSql()`
+    SELECT id, name, email, role, permissions, password_hash
+    FROM users WHERE email = ${email} LIMIT 1
+  `;
+  const row = rows[0] as
+    | (DbUserFull & { password_hash: string; permissions: SystemPerms | null })
+    | undefined;
+  if (!row) return null;
+  return { ...row, permissions: row.permissions ?? DEFAULT_PERMS };
+}
+
+export async function countUsers(): Promise<number> {
+  await ensureSchema();
+  const rows = await getSql()`SELECT count(*)::int AS n FROM users`;
+  return (rows[0] as { n: number }).n;
+}
+
+/** All accounts for the super-admin panel (no hashes). */
+export async function listUsers(): Promise<
+  (DbUserFull & { created_at: string; hasData: boolean })[]
+> {
+  await ensureSchema();
+  const rows = await getSql()`
+    SELECT u.id, u.name, u.email, u.role, u.permissions,
+           u.created_at, (d.user_id IS NOT NULL) AS has_data
+    FROM users u
+    LEFT JOIN app_data d ON d.user_id = u.id
+    ORDER BY u.created_at ASC
+  `;
+  return (rows as (DbUserFull & {
+    created_at: string;
+    has_data: boolean;
+    permissions: SystemPerms | null;
+  })[]).map((r) => ({
+    ...r,
+    permissions: r.permissions ?? DEFAULT_PERMS,
+    hasData: r.has_data,
+  }));
+}
+
+export async function setUserRole(id: string, role: UserRole): Promise<void> {
+  await ensureSchema();
+  await getSql()`UPDATE users SET role = ${role} WHERE id = ${id}`;
+}
+
+export async function setUserPermissions(
+  id: string,
+  permissions: SystemPerms,
+): Promise<void> {
+  await ensureSchema();
+  await getSql()`
+    UPDATE users SET permissions = ${JSON.stringify(permissions)}::jsonb
+    WHERE id = ${id}
+  `;
+}
+
+export async function updateUserProfile(
+  id: string,
+  name: string,
+  email: string,
+): Promise<void> {
+  await ensureSchema();
+  await getSql()`UPDATE users SET name = ${name}, email = ${email} WHERE id = ${id}`;
+}
+
+export async function resetUserPassword(
+  id: string,
+  passwordHash: string,
+): Promise<void> {
+  await ensureSchema();
+  await getSql()`UPDATE users SET password_hash = ${passwordHash} WHERE id = ${id}`;
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await ensureSchema();
+  // app_data rows cascade (FK ON DELETE CASCADE)
+  await getSql()`DELETE FROM users WHERE id = ${id}`;
 }
 
 export async function getUserHash(email: string): Promise<string | null> {
@@ -94,11 +205,14 @@ export async function createUser(
   name: string,
   email: string,
   passwordHash: string,
+  role: UserRole = "user",
+  permissions?: SystemPerms,
 ): Promise<DbUser> {
   await ensureSchema();
   const rows = await getSql()`
-    INSERT INTO users (id, name, email, password_hash)
-    VALUES (${id}, ${name}, ${email}, ${passwordHash})
+    INSERT INTO users (id, name, email, password_hash, role, permissions)
+    VALUES (${id}, ${name}, ${email}, ${passwordHash}, ${role},
+            ${JSON.stringify(permissions ?? DEFAULT_PERMS)}::jsonb)
     RETURNING id, name, email
   `;
   return rows[0] as DbUser;

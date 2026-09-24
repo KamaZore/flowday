@@ -1,6 +1,6 @@
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -155,6 +155,14 @@ function AuthInner() {
 
       <p className="relative mt-4 text-center text-xs text-muted-foreground">
         {t("auth.localNote")}
+      </p>
+      <p className="relative mt-2 text-center">
+        <Link
+          to="/superadmin"
+          className="text-xs font-medium text-muted-foreground/70 transition-colors hover:text-foreground"
+        >
+          {t("auth.superAdminLink")}
+        </Link>
       </p>
     </div>
   );

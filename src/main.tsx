@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
+import { RequireSystem } from "@/components/RequireSystem";
 import { AuthProvider } from "@/hooks/use-auth";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
@@ -53,6 +54,8 @@ const AdminOverview = lazy(() => import("./pages/admin/Overview.tsx"));
 const AdminUsers = lazy(() => import("./pages/admin/Users.tsx"));
 const AdminActivity = lazy(() => import("./pages/admin/Activity.tsx"));
 const AdminData = lazy(() => import("./pages/admin/Data.tsx"));
+const SuperAdminLogin = lazy(() => import("./pages/superadmin/Login.tsx"));
+const SuperAdminPanel = lazy(() => import("./pages/superadmin/Panel.tsx"));
 
 // The expense system shares the app Settings page (theme/language/data).
 const ExpenseSettings = Settings;
@@ -129,6 +132,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/auth" element={<AuthPage />} />
+      <Route path="/superadmin" element={<SuperAdminLogin />} />
+      <Route path="/superadmin/users" element={<SuperAdminPanel />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route
         path="/select-system"
@@ -143,116 +148,116 @@ function AppRoutes() {
       <Route
         path="/life/today"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="today" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
       <Route
         path="/life/inbox"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="inbox" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
       <Route
         path="/life/tasks"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="tasks" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
       <Route
         path="/life/projects"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="projects" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
       <Route
         path="/life/processes"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="processes" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
       <Route
         path="/life/calendar"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="calendar" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
       <Route
         path="/life/habits"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="habits" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
       <Route
         path="/life/goals"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="goals" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
       <Route
         path="/life/progress"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="progress" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
       <Route
         path="/life/settings"
         element={
-          <RequireAuth>
+          <RequireSystem system="life">
             <AppLayoutMount view="settings" />
-          </RequireAuth>
+          </RequireSystem>
         }
       />
 
       {/* Expense Management system — wrapped in AppLayout so it gets the
           same sidebar / bottom-nav chrome as the Life system. */}
-      <Route path="/expense/dashboard" element={<RequireAuth><AppLayout><ExpenseDashboard /></AppLayout></RequireAuth>} />
-      <Route path="/expense/transactions" element={<RequireAuth><AppLayout><ExpenseTransactions /></AppLayout></RequireAuth>} />
-      <Route path="/expense/categories" element={<RequireAuth><AppLayout><ExpenseCategories /></AppLayout></RequireAuth>} />
-      <Route path="/expense/reports" element={<RequireAuth><AppLayout><ExpenseReports /></AppLayout></RequireAuth>} />
-      <Route path="/expense/accounts" element={<RequireAuth><AppLayout><ExpenseAccounts /></AppLayout></RequireAuth>} />
-      <Route path="/expense/recurring" element={<RequireAuth><AppLayout><ExpenseRecurring /></AppLayout></RequireAuth>} />
-      <Route path="/expense/debts" element={<RequireAuth><AppLayout><ExpenseDebts /></AppLayout></RequireAuth>} />
-      <Route path="/expense/settings" element={<RequireAuth><AppLayout><ExpenseSettings /></AppLayout></RequireAuth>} />
+      <Route path="/expense/dashboard" element={<RequireSystem system="expense"><AppLayout><ExpenseDashboard /></AppLayout></RequireSystem>} />
+      <Route path="/expense/transactions" element={<RequireSystem system="expense"><AppLayout><ExpenseTransactions /></AppLayout></RequireSystem>} />
+      <Route path="/expense/categories" element={<RequireSystem system="expense"><AppLayout><ExpenseCategories /></AppLayout></RequireSystem>} />
+      <Route path="/expense/reports" element={<RequireSystem system="expense"><AppLayout><ExpenseReports /></AppLayout></RequireSystem>} />
+      <Route path="/expense/accounts" element={<RequireSystem system="expense"><AppLayout><ExpenseAccounts /></AppLayout></RequireSystem>} />
+      <Route path="/expense/recurring" element={<RequireSystem system="expense"><AppLayout><ExpenseRecurring /></AppLayout></RequireSystem>} />
+      <Route path="/expense/debts" element={<RequireSystem system="expense"><AppLayout><ExpenseDebts /></AppLayout></RequireSystem>} />
+      <Route path="/expense/settings" element={<RequireSystem system="expense"><AppLayout><ExpenseSettings /></AppLayout></RequireSystem>} />
 
       {/* Business Management / POS system — same AppLayout chrome as Life. */}
-      <Route path="/business/dashboard" element={<RequireAuth><AppLayout><BusinessDashboard /></AppLayout></RequireAuth>} />
-      <Route path="/business/pos" element={<RequireAuth><AppLayout><BusinessPOS /></AppLayout></RequireAuth>} />
-      <Route path="/business/sales" element={<RequireAuth><AppLayout><BusinessSales /></AppLayout></RequireAuth>} />
-      <Route path="/business/products" element={<RequireAuth><AppLayout><BusinessProducts /></AppLayout></RequireAuth>} />
-      <Route path="/business/inventory" element={<RequireAuth><AppLayout><BusinessInventory /></AppLayout></RequireAuth>} />
-      <Route path="/business/customers" element={<RequireAuth><AppLayout><BusinessCustomers /></AppLayout></RequireAuth>} />
-      <Route path="/business/suppliers" element={<RequireAuth><AppLayout><BusinessSuppliers /></AppLayout></RequireAuth>} />
-      <Route path="/business/purchases" element={<RequireAuth><AppLayout><BusinessPurchases /></AppLayout></RequireAuth>} />
-      <Route path="/business/expenses" element={<RequireAuth><AppLayout><BusinessExpenses /></AppLayout></RequireAuth>} />
-      <Route path="/business/reports" element={<RequireAuth><AppLayout><BusinessReports /></AppLayout></RequireAuth>} />
-      <Route path="/business/staff" element={<RequireAuth><AppLayout><BusinessStaff /></AppLayout></RequireAuth>} />
-      <Route path="/business/quotes" element={<RequireAuth><AppLayout><BusinessQuotes /></AppLayout></RequireAuth>} />
-      <Route path="/business/settings" element={<RequireAuth><AppLayout><BusinessSettings /></AppLayout></RequireAuth>} />
+      <Route path="/business/dashboard" element={<RequireSystem system="business"><AppLayout><BusinessDashboard /></AppLayout></RequireSystem>} />
+      <Route path="/business/pos" element={<RequireSystem system="business"><AppLayout><BusinessPOS /></AppLayout></RequireSystem>} />
+      <Route path="/business/sales" element={<RequireSystem system="business"><AppLayout><BusinessSales /></AppLayout></RequireSystem>} />
+      <Route path="/business/products" element={<RequireSystem system="business"><AppLayout><BusinessProducts /></AppLayout></RequireSystem>} />
+      <Route path="/business/inventory" element={<RequireSystem system="business"><AppLayout><BusinessInventory /></AppLayout></RequireSystem>} />
+      <Route path="/business/customers" element={<RequireSystem system="business"><AppLayout><BusinessCustomers /></AppLayout></RequireSystem>} />
+      <Route path="/business/suppliers" element={<RequireSystem system="business"><AppLayout><BusinessSuppliers /></AppLayout></RequireSystem>} />
+      <Route path="/business/purchases" element={<RequireSystem system="business"><AppLayout><BusinessPurchases /></AppLayout></RequireSystem>} />
+      <Route path="/business/expenses" element={<RequireSystem system="business"><AppLayout><BusinessExpenses /></AppLayout></RequireSystem>} />
+      <Route path="/business/reports" element={<RequireSystem system="business"><AppLayout><BusinessReports /></AppLayout></RequireSystem>} />
+      <Route path="/business/staff" element={<RequireSystem system="business"><AppLayout><BusinessStaff /></AppLayout></RequireSystem>} />
+      <Route path="/business/quotes" element={<RequireSystem system="business"><AppLayout><BusinessQuotes /></AppLayout></RequireSystem>} />
+      <Route path="/business/settings" element={<RequireSystem system="business"><AppLayout><BusinessSettings /></AppLayout></RequireSystem>} />
 
       {/* Admin / Owner tools — cross-system oversight (read-only) */}
-      <Route path="/admin/overview" element={<RequireAuth><AppLayout><AdminOverview /></AppLayout></RequireAuth>} />
-      <Route path="/admin/users" element={<RequireAuth><AppLayout><AdminUsers /></AppLayout></RequireAuth>} />
-      <Route path="/admin/activity" element={<RequireAuth><AppLayout><AdminActivity /></AppLayout></RequireAuth>} />
-      <Route path="/admin/data" element={<RequireAuth><AppLayout><AdminData /></AppLayout></RequireAuth>} />
-      <Route path="/admin/settings" element={<RequireAuth><AppLayout><Settings /></AppLayout></RequireAuth>} />
+      <Route path="/admin/overview" element={<RequireSystem system="admin"><AppLayout><AdminOverview /></AppLayout></RequireSystem>} />
+      <Route path="/admin/users" element={<RequireSystem system="admin"><AppLayout><AdminUsers /></AppLayout></RequireSystem>} />
+      <Route path="/admin/activity" element={<RequireSystem system="admin"><AppLayout><AdminActivity /></AppLayout></RequireSystem>} />
+      <Route path="/admin/data" element={<RequireSystem system="admin"><AppLayout><AdminData /></AppLayout></RequireSystem>} />
+      <Route path="/admin/settings" element={<RequireSystem system="admin"><AppLayout><Settings /></AppLayout></RequireSystem>} />
 
       {/* System roots: SelectSystem and the sidebar logo navigate to these,
           so they must redirect into the system's default page. */}

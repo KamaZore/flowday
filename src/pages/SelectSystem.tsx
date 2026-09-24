@@ -25,17 +25,20 @@ function greetingKey(): string {
  */
 export default function SelectSystem() {
   const { t } = useI18n();
-  const { user, signOut } = useAuth();
+  const { user, signOut, can } = useAuth();
   const navigate = useNavigate();
   const activeSystem = useActiveSystem();
   const settings = useSettings();
 
-  // Keyboard shortcuts 1/2/3 (desktop convenience)
+  // Only systems this account has permission for.
+  const allowed = SYSTEMS.filter((s) => can(s.id));
+
+  // Keyboard shortcuts 1/2/3/4 (desktop convenience)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const idx = Number(e.key) - 1;
-      if (idx >= 0 && idx < SYSTEMS.length) {
-        enter(SYSTEMS[idx].id);
+      if (idx >= 0 && idx < allowed.length) {
+        enter(allowed[idx].id);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -82,7 +85,7 @@ export default function SelectSystem() {
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {SYSTEMS.map((s, i) => {
+          {allowed.map((s, i) => {
             const isLast = activeSystem === s.id;
             return (
               <motion.button
