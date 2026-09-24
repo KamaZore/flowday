@@ -1,13 +1,16 @@
 /* Flowday service worker — offline-first caching so the app opens with no network */
 // Bump this version whenever app assets change so clients pick up the new
 // build instead of serving a stale cache (classic "preview looks broken" bug).
-const VERSION = "flowday-v13-favicon";
+const VERSION = "flowday-v14-my-logo";
 const BASE = new URL(self.registration.scope).pathname; // supports subpath hosting
 
 // Static app shell (public/ files) — cached at install.
 const APP_SHELL = [
   "",
   "manifest.webmanifest",
+  "logo.svg",
+  "favicon-16.png",
+  "favicon-32.png",
   "icon-192.png",
   "icon-512.png",
   "icon-maskable-192.png",
