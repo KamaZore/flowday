@@ -264,6 +264,11 @@ const dict: Record<Lang, Record<string, string>> = {
     "exp.method": "Payment method",
     "exp.date": "Date",
     "exp.note": "Note",
+    "img.pick": "Add photo",
+    "img.remove": "Remove photo",
+    "img.receipt": "Receipt photo",
+    "img.receiptHint": "Attach a photo of the receipt or item (optional)",
+    "img.error": "Could not load that image",
     "exp.history": "History",
     "exp.empty": "No transactions yet",
     "exp.emptySub": "Add your first income or expense to get started.",
@@ -352,6 +357,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "biz.saleRecorded": "Sale recorded",
     "biz.noSales": "No sales in this period",
     "biz.addCustomer": "Add customer",
+    "biz.editCustomer": "Edit customer",
     "biz.phone": "Phone",
     "biz.email": "Email",
     "biz.addSupplier": "Add supplier",
@@ -492,6 +498,13 @@ const dict: Record<Lang, Record<string, string>> = {
   },
 
   km: {
+    // Images (ភាសាខ្មែរ)
+    "img.pick": "បន្ថែមរូបភាព",
+    "img.remove": "លុបរូបភាព",
+    "img.receipt": "រូបភាពបង្កាន់ដៃ",
+    "img.receiptHint": "ភ្ជាប់រូបភាពបង្កាន់ដៃ ឬទំនិញ (ស្រេចចិត្ត)",
+    "img.error": "មិនអាចផ្ទុករូបភាពនេះបានទេ",
+    "biz.editCustomer": "កែសម្រួលអតិថិជន",
     "system.life.name": "ការតាមដានជីវិត",
     "system.expense.name": "ការគ្រប់គ្រងចំណាយ",
     "system.business.name": "អាជីវកម្ម / POS",

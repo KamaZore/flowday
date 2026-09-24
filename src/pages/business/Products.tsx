@@ -1,3 +1,4 @@
+import { ImagePicker } from "@/components/systems/ImagePicker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +27,7 @@ const emptyForm = {
   stock: "",
   lowStockThreshold: "5",
   active: true,
+  image: undefined as string | undefined,
 };
 
 export default function BusinessProducts() {
@@ -65,6 +67,7 @@ export default function BusinessProducts() {
       stock: String(p.stock),
       lowStockThreshold: String(p.lowStockThreshold),
       active: p.active,
+      image: p.image,
     });
     setOpen(true);
   }
@@ -80,6 +83,7 @@ export default function BusinessProducts() {
       stock: Number(form.stock) || 0,
       lowStockThreshold: Number(form.lowStockThreshold) || 0,
       active: form.active,
+      image: form.image,
     };
     if (!payload.name) return;
     if (editing) updateProduct(editing.id, payload);
@@ -116,49 +120,61 @@ export default function BusinessProducts() {
         {filtered.map((p) => (
           <div
             key={p.id}
-            className="card-soft flex flex-col gap-2 rounded-2xl border border-border/60 bg-card p-4"
+            className="card-soft flex gap-3 rounded-2xl border border-border/60 bg-card p-4"
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{p.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {t(`biz.cat.${p.category}`) !== `biz.cat.${p.category}`
-                    ? t(`biz.cat.${p.category}`)
-                    : p.category}
-                  {p.sku ? ` · ${p.sku}` : ""}
-                </p>
+            {p.image ? (
+              <img
+                src={p.image}
+                alt=""
+                loading="lazy"
+                className="size-14 shrink-0 rounded-xl object-cover ring-1 ring-border/60"
+              />
+            ) : (
+              <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground/60">
+                <Package className="size-6" />
+              </span>
+            )}
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{p.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {t(`biz.cat.${p.category}`) !== `biz.cat.${p.category}`
+                      ? t(`biz.cat.${p.category}`)
+                      : p.category}
+                    {p.sku ? ` · ${p.sku}` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-0.5">
+                  <Button variant="ghost" size="icon" className="size-7 rounded-lg" onClick={() => openEdit(p)}>
+                    <Pencil className="size-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="size-7 rounded-lg text-destructive"
+                    onClick={() => deleteProduct(p.id)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex shrink-0 gap-0.5">
-                <Button variant="ghost" size="icon" className="size-7 rounded-lg" onClick={() => openEdit(p)}>
-                  <Pencil className="size-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 rounded-lg text-destructive"
-                  onClick={() => deleteProduct(p.id)}
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-bold">{money(p.price)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {t("biz.cost")}: {money(p.cost)}
+                </span>
+                <span
+                  className={
+                    "rounded-full px-2 py-0.5 text-[11px] font-semibold " +
+                    (!p.active
+                      ? "bg-muted text-muted-foreground"
+                      : p.stock <= p.lowStockThreshold
+                        ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400")
+                  }
                 >
-                  <Trash2 className="size-3.5" />
-                </Button>
+                  {p.stock} {t("biz.units")}
+                </span>
               </div>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-bold">{money(p.price)}</span>
-              <span className="text-xs text-muted-foreground">
-                {t("biz.cost")}: {money(p.cost)}
-              </span>
-              <span
-                className={
-                  "rounded-full px-2 py-0.5 text-[11px] font-semibold " +
-                  (!p.active
-                    ? "bg-muted text-muted-foreground"
-                    : p.stock <= p.lowStockThreshold
-                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400")
-                }
-              >
-                {p.stock} {t("biz.units")}
-              </span>
             </div>
           </div>
         ))}
@@ -177,15 +193,21 @@ export default function BusinessProducts() {
             <DialogTitle>{editing ? t("biz.editProduct") : t("biz.addProduct")}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2 space-y-1.5">
-              <Label htmlFor="p-name">{t("biz.name")}</Label>
-              <Input
-                id="p-name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="h-10 rounded-xl"
-                autoFocus
+            <div className="col-span-2 flex items-center gap-3">
+              <ImagePicker
+                value={form.image}
+                onChange={(v) => setForm({ ...form, image: v })}
               />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Label htmlFor="p-name">{t("biz.name")}</Label>
+                <Input
+                  id="p-name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="h-10 rounded-xl"
+                  autoFocus
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="p-price">{t("biz.price")}</Label>

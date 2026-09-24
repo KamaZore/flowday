@@ -7,6 +7,7 @@ import {
   todayKey,
 } from "./date-utils";
 import { getAppData, saveAppData } from "./db";
+import { svgEmoji } from "./image";
 
 export { recurrenceMatches, recurrenceWeekdays } from "./date-utils";
 import type {
@@ -517,11 +518,28 @@ function seedData(): AppData {
     pBeer, pCoke, pWater, pCoffee, pNoodles, pChips, pCookie, pRice, pOil,
   ];
 
+  // Demo product photos: tiny inline SVG placeholders (no network needed)
+  const PRODUCT_IMAGES: Record<string, [string, string]> = {
+    "prod-beer": ["🍺", "#fef3c7"],
+    "prod-coke": ["🥤", "#fee2e2"],
+    "prod-water": ["💧", "#e0f2fe"],
+    "prod-coffee": ["☕", "#ede9fe"],
+    "prod-noodles": ["🍜", "#fce7f3"],
+    "prod-chips": ["🍟", "#fef9c3"],
+    "prod-cookie": ["🍪", "#fde68a"],
+    "prod-rice": ["🍚", "#f1f5f9"],
+    "prod-oil": ["🧴", "#dcfce7"],
+  };
+  for (const p of products) {
+    const [emoji, bg] = PRODUCT_IMAGES[p.id] ?? ["📦", "#f1f5f9"];
+    p.image = svgEmoji(emoji, bg);
+  }
+
   const customers: Customer[] = [
-    { id: "cust-sokha", name: "Sokha Kim", phone: "+855 12 345 678", note: "Regular — buys drinks weekly", createdAt: bizCreated, updatedAt: t },
-    { id: "cust-dara", name: "Dara Long", phone: "+855 92 887 221", note: "Prefers cash", createdAt: t - 25 * 864e5, updatedAt: t },
-    { id: "cust-chenda", name: "Chenda Pich", phone: "+855 78 450 903", email: "chenda@example.com", createdAt: t - 15 * 864e5, updatedAt: t },
-    { id: "cust-vireak", name: "Vireak Son", phone: "+855 11 234 567", note: "Buys rice in bulk", createdAt: t - 8 * 864e5, updatedAt: t },
+    { id: "cust-sokha", name: "Sokha Kim", phone: "+855 12 345 678", note: "Regular — buys drinks weekly", image: svgEmoji("👩", "#fce7f3"), createdAt: bizCreated, updatedAt: t },
+    { id: "cust-dara", name: "Dara Long", phone: "+855 92 887 221", note: "Prefers cash", image: svgEmoji("👨", "#e0e7ff"), createdAt: t - 25 * 864e5, updatedAt: t },
+    { id: "cust-chenda", name: "Chenda Pich", phone: "+855 78 450 903", email: "chenda@example.com", image: svgEmoji("👩🏽", "#fef3c7"), createdAt: t - 15 * 864e5, updatedAt: t },
+    { id: "cust-vireak", name: "Vireak Son", phone: "+855 11 234 567", note: "Buys rice in bulk", image: svgEmoji("🧑", "#dcfce7"), createdAt: t - 8 * 864e5, updatedAt: t },
   ];
 
   const suppliers: Supplier[] = [

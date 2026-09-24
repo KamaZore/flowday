@@ -1,3 +1,4 @@
+import { ImagePicker } from "@/components/systems/ImagePicker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,6 +53,7 @@ export function TransactionDialog({
   const [method, setMethod] = useState<string>("cash");
   const [date, setDate] = useState(todayKey());
   const [note, setNote] = useState("");
+  const [image, setImage] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!open) return;
@@ -62,6 +64,7 @@ export function TransactionDialog({
       setMethod(editing.method);
       setDate(editing.date);
       setNote(editing.note ?? "");
+      setImage(editing.image);
     } else {
       setType(defaultType);
       setAmount("");
@@ -69,6 +72,7 @@ export function TransactionDialog({
       setMethod("cash");
       setDate(todayKey());
       setNote("");
+      setImage(undefined);
     }
   }, [open, editing, defaultType]);
 
@@ -84,6 +88,7 @@ export function TransactionDialog({
       method: method as Transaction["method"],
       date,
       note: note.trim() || undefined,
+      image,
     };
     if (editing) updateTransaction(editing.id, input);
     else addTransaction(input);
@@ -186,6 +191,15 @@ export function TransactionDialog({
               className="rounded-xl"
               placeholder="…"
             />
+          </div>
+
+          {/* Receipt / proof photo */}
+          <div className="space-y-1.5">
+            <Label>{t("img.receipt")}</Label>
+            <div className="flex items-center gap-3">
+              <ImagePicker value={image} onChange={setImage} size="sm" />
+              <p className="text-xs text-muted-foreground">{t("img.receiptHint")}</p>
+            </div>
           </div>
         </div>
 

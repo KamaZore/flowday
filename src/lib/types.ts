@@ -204,6 +204,8 @@ export type Transaction = {
   method: PaymentMethod;
   date: string; // yyyy-MM-dd
   note?: string;
+  /** optional receipt/proof photo, stored as a compressed data URL */
+  image?: string;
   createdAt: number;
   updatedAt: number;
 };
@@ -223,6 +225,8 @@ export type Product = {
   stock: number;
   lowStockThreshold: number;
   active: boolean;
+  /** optional product photo, stored as a compressed data URL */
+  image?: string;
   createdAt: number;
   updatedAt: number;
 };
@@ -233,6 +237,8 @@ export type Customer = {
   phone?: string;
   email?: string;
   note?: string;
+  /** optional avatar photo, stored as a compressed data URL */
+  image?: string;
   createdAt: number;
   updatedAt: number;
 };

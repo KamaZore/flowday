@@ -18,11 +18,11 @@ import {
 } from "@/components/ui/select";
 import { money } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
+import { todayKey } from "@/lib/date-utils";
 import {
   addRecurring,
   deleteRecurring,
   postDueRecurring,
-  todayKey,
   updateRecurring,
   useRecurring,
 } from "@/lib/store";

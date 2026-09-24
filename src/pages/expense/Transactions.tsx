@@ -3,6 +3,12 @@ import { downloadCsv } from "@/lib/export";
 import { TransactionDialog } from "@/components/systems/TransactionDialog";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -38,6 +44,7 @@ export default function ExpenseTransactions() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [defaultType, setDefaultType] = useState<"income" | "expense">("expense");
+  const [preview, setPreview] = useState<Transaction | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -169,20 +176,31 @@ export default function ExpenseTransactions() {
             key={tx.id}
             className="card-soft flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3"
           >
-            <span
-              className={
-                "flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted " +
-                (tx.type === "income"
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-rose-600 dark:text-rose-400")
-              }
-            >
-              {tx.type === "income" ? (
-                <ArrowDownLeft className="size-4" />
-              ) : (
-                <ArrowUpRight className="size-4" />
-              )}
-            </span>
+            {tx.image ? (
+              <button
+                type="button"
+                onClick={() => setPreview(tx)}
+                className="shrink-0 rounded-xl ring-1 ring-border/60 transition-opacity hover:opacity-85"
+                aria-label={t("img.receipt")}
+              >
+                <img src={tx.image} alt="" loading="lazy" className="size-9 rounded-xl object-cover" />
+              </button>
+            ) : (
+              <span
+                className={
+                  "flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted " +
+                  (tx.type === "income"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-400")
+                }
+              >
+                {tx.type === "income" ? (
+                  <ArrowDownLeft className="size-4" />
+                ) : (
+                  <ArrowUpRight className="size-4" />
+                )}
+              </span>
+            )}
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">
                 {t(`exp.cat.${tx.category}`)}
@@ -235,6 +253,25 @@ export default function ExpenseTransactions() {
         editing={editing}
         defaultType={defaultType}
       />
+
+      {/* Full-size receipt preview */}
+      <Dialog open={!!preview} onOpenChange={(v) => !v && setPreview(null)}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {preview ? t(`exp.cat.${preview.category}`) : ""}
+              {preview?.date ? ` · ${preview.date}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          {preview?.image && (
+            <img
+              src={preview.image}
+              alt=""
+              className="max-h-[60vh] w-full rounded-2xl object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

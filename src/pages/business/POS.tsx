@@ -238,8 +238,16 @@ export default function BusinessPOS() {
                 key={p.id}
                 onClick={() => addToCart(p.id)}
                 disabled={p.stock <= 0}
-                className="card-soft flex flex-col items-start gap-1 rounded-2xl border border-border/60 bg-card p-3 text-left transition-all hover:border-primary/40 hover:shadow-md disabled:opacity-40"
+                className="card-soft flex flex-col items-start gap-1.5 rounded-2xl border border-border/60 bg-card p-3 text-left transition-all hover:border-primary/40 hover:shadow-md disabled:opacity-40"
               >
+                {p.image && (
+                  <img
+                    src={p.image}
+                    alt=""
+                    loading="lazy"
+                    className="h-16 w-full rounded-xl object-cover ring-1 ring-border/60"
+                  />
+                )}
                 <span className="flex w-full items-start justify-between gap-1">
                   <span className="line-clamp-2 min-h-8 text-sm font-semibold leading-snug">
                     {p.name}

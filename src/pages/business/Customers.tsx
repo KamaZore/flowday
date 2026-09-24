@@ -1,3 +1,4 @@
+import { ImagePicker } from "@/components/systems/ImagePicker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +23,7 @@ import type { Customer } from "@/lib/types";
 import { Contact, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 
-const empty = { name: "", phone: "", email: "", note: "" };
+const empty = { name: "", phone: "", email: "", note: "", image: undefined as string | undefined };
 
 export default function BusinessCustomers() {
   const { t } = useI18n();
@@ -47,7 +48,13 @@ export default function BusinessCustomers() {
 
   function openEdit(c: Customer) {
     setEditing(c);
-    setForm({ name: c.name, phone: c.phone ?? "", email: c.email ?? "", note: c.note ?? "" });
+    setForm({
+      name: c.name,
+      phone: c.phone ?? "",
+      email: c.email ?? "",
+      note: c.note ?? "",
+      image: c.image,
+    });
     setOpen(true);
   }
 
@@ -58,6 +65,7 @@ export default function BusinessCustomers() {
       phone: form.phone.trim() || undefined,
       email: form.email.trim() || undefined,
       note: form.note.trim() || undefined,
+      image: form.image,
     };
     if (editing) updateCustomer(editing.id, payload);
     else addCustomer(payload);
@@ -83,9 +91,18 @@ export default function BusinessCustomers() {
             key={c.id}
             className="card-soft flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-4"
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-              {c.name.slice(0, 2).toUpperCase()}
-            </span>
+            {c.image ? (
+              <img
+                src={c.image}
+                alt=""
+                loading="lazy"
+                className="size-10 shrink-0 rounded-full object-cover ring-1 ring-border/60"
+              />
+            ) : (
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                {c.name.slice(0, 2).toUpperCase()}
+              </span>
+            )}
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{c.name}</p>
               <p className="truncate text-xs text-muted-foreground">
@@ -100,9 +117,7 @@ export default function BusinessCustomers() {
                 <Pencil className="size-3.5" />
               </Button>
               <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 rounded-lg text-destructive"
+                variant="ghost" size="icon" className="size-7 rounded-lg text-destructive"
                 onClick={() => deleteCustomer(c.id)}
               >
                 <Trash2 className="size-3.5" />
@@ -122,18 +137,21 @@ export default function BusinessCustomers() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="rounded-3xl sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{editing ? t("biz.editProduct") : t("biz.addCustomer")}</DialogTitle>
+            <DialogTitle>{editing ? t("biz.editCustomer") : t("biz.addCustomer")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="c-name">{t("biz.name")}</Label>
-              <Input
-                id="c-name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="h-10 rounded-xl"
-                autoFocus
-              />
+            <div className="flex items-center gap-3">
+              <ImagePicker value={form.image} onChange={(v) => setForm({ ...form, image: v })} />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Label htmlFor="c-name">{t("biz.name")}</Label>
+                <Input
+                  id="c-name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="h-10 rounded-xl"
+                  autoFocus
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="c-phone">{t("biz.phone")}</Label>

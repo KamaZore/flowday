@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useI18n } from "@/lib/i18n";
 import { money } from "@/lib/format";
 import { adjustStock, addPurchase, lowStockProducts, updateProduct, useProducts } from "@/lib/store";
-import { AlertTriangle, Boxes, Minus, PackagePlus, Plus, Wallet } from "lucide-react";
+import { AlertTriangle, Boxes, Minus, Package, PackagePlus, Plus, Wallet } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -133,8 +133,24 @@ export default function BusinessInventory() {
             {products.map((p) => (
               <tr key={p.id} className="border-b border-border/40 last:border-0">
                 <td className="px-4 py-2.5">
-                  <p className="font-medium">{p.name}</p>
-                  {p.sku && <p className="text-xs text-muted-foreground">{p.sku}</p>}
+                  <div className="flex items-center gap-2.5">
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt=""
+                        loading="lazy"
+                        className="size-9 shrink-0 rounded-lg object-cover ring-1 ring-border/60"
+                      />
+                    ) : (
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground/60">
+                        <Package className="size-4" />
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{p.name}</p>
+                      {p.sku && <p className="truncate text-xs text-muted-foreground">{p.sku}</p>}
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-2.5 text-right">
                   <span
