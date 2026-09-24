@@ -32,11 +32,14 @@ import {
   type Transaction,
 } from "@/lib/types";
 import { ArrowDownLeft, ArrowUpRight, Download, Pencil, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 export default function ExpenseTransactions() {
   const { t } = useI18n();
   const transactions = useTransactions();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<DateFilter>({ kind: "month" });
   const [type, setType] = useState<"all" | "income" | "expense">("all");
   const [category, setCategory] = useState("all");
@@ -56,6 +59,20 @@ export default function ExpenseTransactions() {
     [transactions, filter, type, category, method],
   );
   const totals = sumTransactions(filtered);
+
+  // Support ?add=1 deep link (FAB on phones)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add")) {
+      setEditing(null);
+      setDefaultType("expense");
+      setDialogOpen(true);
+      params.delete("add");
+      const qs = params.toString();
+      navigate({ pathname: location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function openEdit(tx: Transaction) {
     setEditing(tx);

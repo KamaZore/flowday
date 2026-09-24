@@ -11,7 +11,17 @@ import { SYSTEMS, type SystemDef } from "@/systems";
 import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
-import { Languages, LayoutGrid, Moon, Plus, Sun } from "lucide-react";
+import {
+  Languages,
+  LayoutGrid,
+  Moon,
+  Package,
+  Plus,
+  Receipt,
+  ShoppingCart,
+  Sun,
+  Users,
+} from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 
@@ -114,6 +124,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const location = useLocation();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickAddType, setQuickAddType] = useState<QuickAddType>("task");
+  const [bizMenuOpen, setBizMenuOpen] = useState(false);
 
   // The active system is derived from the URL: /life/*, /expense/*, /business/*
   const system =
@@ -125,6 +136,31 @@ export function AppLayout({ children }: { children?: ReactNode }) {
     setQuickAddType(type);
     setQuickAddOpen(true);
   };
+
+  /**
+   * Per-system quick action: Life opens the capture dialog, Expense jumps to
+   * a new transaction, Business opens an action menu (sale/product/customer).
+   */
+  const primaryAction = (() => {
+    switch (system.id) {
+      case "expense":
+        return { kind: "navigate" as const, to: "/expense/transactions?add=1" };
+      case "business":
+        return { kind: "menu" as const };
+      default:
+        return { kind: "dialog" as const };
+    }
+  })();
+
+  function handlePrimaryClick() {
+    if (primaryAction.kind === "navigate") {
+      navigate(primaryAction.to);
+    } else if (primaryAction.kind === "dialog") {
+      openQuickAdd("task");
+    } else {
+      setBizMenuOpen((v) => !v);
+    }
+  }
 
   // Support ?quickadd=task deep link (PWA shortcuts)
   useEffect(() => {
@@ -256,28 +292,50 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         <MobileMoreMenu />
       </nav>
 
-      {/* Center FAB (mobile) — lifts above the safe-area nav; Life system quick add */}
+      {/* Center FAB (mobile) — per-system quick action: Life captures a task,
+          Expense logs a transaction, Business opens the sale/add menu. */}
       <button
-        onClick={() => openQuickAdd("task")}
-        className={cn(
-          "card-soft fab-safe fixed left-1/2 z-40 flex size-12 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden",
-          system.id !== "life" && "hidden",
-        )}
-        aria-label={t("quick.title")}
+        onClick={handlePrimaryClick}
+        className="card-soft fab-safe fixed left-1/2 z-40 flex size-12 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
+        aria-label={system.id === "expense" ? t("exp.addTx") : t("quick.title")}
       >
-        <Plus className="size-6" />
+        <Plus
+          className={cn(
+            "size-6 transition-transform",
+            primaryAction.kind === "menu" && bizMenuOpen && "rotate-45",
+          )}
+        />
       </button>
 
-      {/* Desktop quick add button (Life system) */}
+      {/* Business quick menu (mobile — anchored above the FAB) */}
+      {system.id === "business" && bizMenuOpen && (
+        <div
+          className="fixed left-1/2 z-40 flex -translate-x-1/2 flex-col gap-1.5 rounded-2xl border border-border/60 bg-popover p-1.5 shadow-xl md:hidden"
+          style={{ bottom: "calc(140px + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <BizMenuItems onPick={() => setBizMenuOpen(false)} />
+        </div>
+      )}
+
+      {/* Business quick menu (desktop — anchored above the button) */}
+      {system.id === "business" && bizMenuOpen && (
+        <div className="fixed bottom-20 right-6 z-40 hidden flex-col gap-1.5 rounded-2xl border border-border/60 bg-popover p-1.5 shadow-xl md:flex">
+          <BizMenuItems onPick={() => setBizMenuOpen(false)} />
+        </div>
+      )}
+
+      {/* Desktop quick add — label follows the active system */}
       <Button
-        onClick={() => openQuickAdd("task")}
-        className={cn(
-          "card-soft fixed bottom-6 right-6 z-40 hidden h-12 gap-2 rounded-full px-5 shadow-lg md:inline-flex",
-          system.id !== "life" && "hidden",
-        )}
+        onClick={handlePrimaryClick}
+        className="card-soft fixed bottom-6 right-6 z-40 hidden h-12 gap-2 rounded-full px-5 shadow-lg md:inline-flex"
       >
-        <Plus className="size-5" />
-        {t("quick.title")}
+        <Plus
+          className={cn(
+            "size-5 transition-transform",
+            primaryAction.kind === "menu" && bizMenuOpen && "rotate-45",
+          )}
+        />
+        {system.id === "expense" ? t("exp.addTx") : t("quick.title")}
       </Button>
 
       <QuickAddDialog
@@ -286,6 +344,35 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         defaultType={quickAddType}
       />
     </div>
+  );
+}
+
+/** Quick actions inside the Business FAB menu. */
+function BizMenuItems({ onPick }: { onPick: () => void }) {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const actions = [
+    { label: t("biz.newSale"), icon: ShoppingCart, onClick: () => navigate("/business/pos") },
+    { label: t("biz.addProduct"), icon: Package, onClick: () => navigate("/business/products?add=1") },
+    { label: t("biz.addCustomer"), icon: Users, onClick: () => navigate("/business/customers?add=1") },
+    { label: t("biz.addBizExpense"), icon: Receipt, onClick: () => navigate("/business/expenses?add=1") },
+  ];
+  return (
+    <>
+      {actions.map((a) => (
+        <button
+          key={a.label}
+          onClick={() => {
+            onPick();
+            a.onClick();
+          }}
+          className="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-medium text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          <a.icon className="size-4 text-primary" />
+          {a.label}
+        </button>
+      ))}
+    </>
   );
 }
 

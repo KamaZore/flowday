@@ -16,6 +16,7 @@ import { addProduct, deleteProduct, updateProduct, useProducts } from "@/lib/sto
 import type { Product } from "@/lib/types";
 import { Package, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 const emptyForm = {
   name: "",
@@ -33,6 +34,8 @@ const emptyForm = {
 export default function BusinessProducts() {
   const { t } = useI18n();
   const products = useProducts();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -54,6 +57,18 @@ export default function BusinessProducts() {
     setForm(emptyForm);
     setOpen(true);
   }
+
+  // Support ?add=1 deep link (FAB on phones)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add")) {
+      openNew();
+      params.delete("add");
+      const qs = params.toString();
+      navigate({ pathname: location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function openEdit(p: Product) {
     setEditing(p);

@@ -21,7 +21,8 @@ import {
 } from "@/lib/store";
 import type { Customer } from "@/lib/types";
 import { Contact, Pencil, Plus, Trash2, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 const empty = { name: "", phone: "", email: "", note: "", image: undefined as string | undefined };
 
@@ -29,6 +30,8 @@ export default function BusinessCustomers() {
   const { t } = useI18n();
   const customers = useCustomers();
   const business = useBusiness();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState(empty);
@@ -45,6 +48,18 @@ export default function BusinessCustomers() {
     setForm(empty);
     setOpen(true);
   }
+
+  // Support ?add=1 deep link (FAB on phones)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add")) {
+      openNew();
+      params.delete("add");
+      const qs = params.toString();
+      navigate({ pathname: location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function openEdit(c: Customer) {
     setEditing(c);

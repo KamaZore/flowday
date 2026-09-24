@@ -30,10 +30,13 @@ import {
 import { BUSINESS_EXPENSE_CATEGORIES, PAYMENT_METHODS, type BusinessExpense } from "@/lib/types";
 import { Pencil, Plus, Receipt, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 export default function BusinessExpenses() {
   const { t } = useI18n();
   const business = useBusiness();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<DateFilter>({ kind: "month" });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<BusinessExpense | null>(null);
@@ -47,6 +50,18 @@ export default function BusinessExpenses() {
 
   const filtered = filterBusinessExpenses(business.expenses, filter);
   const total = filtered.reduce((s, e) => s + e.amount, 0);
+
+  // Support ?add=1 deep link (FAB on phones)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add")) {
+      setOpen(true);
+      params.delete("add");
+      const qs = params.toString();
+      navigate({ pathname: location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!open) return;
