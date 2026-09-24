@@ -10,12 +10,14 @@ import { getAppData, saveAppData } from "./db";
 
 export { recurrenceMatches, recurrenceWeekdays } from "./date-utils";
 import type {
+  Account,
   AppData,
   AppSettings,
   BusinessData,
   BusinessExpense,
   CalendarEvent,
   Customer,
+  Debt,
   Goal,
   Habit,
   ID,
@@ -31,7 +33,11 @@ import type {
   Project,
   Purchase,
   PurchaseItem,
+  Quote,
+  QuoteStatus,
   Recurrence,
+  RecurringTx,
+  StaffMember,
   Subtask,
   Supplier,
   SystemId,
@@ -617,6 +623,62 @@ function seedData(): AppData {
     { id: "bizexp-3", category: "transportation", amount: 8, method: "card", date: addDaysKey(today, -1), note: "Supply pickup", createdAt: dayAgo(1), updatedAt: dayAgo(1) },
   ];
 
+  const staff: StaffMember[] = [
+    { id: "staff-chan", name: "Channy Sok", role: "Shop keeper", phone: "+855 12 111 222", salary: 220, active: true, createdAt: bizCreated, updatedAt: t },
+    { id: "staff-vuth", name: "Vuthy Nou", role: "Stock keeper", phone: "+855 12 333 444", salary: 200, active: true, createdAt: t - 20 * 864e5, updatedAt: t },
+    { id: "staff-malis", name: "Malis Kep", role: "Cashier (part-time)", phone: "+855 12 555 666", salary: 120, active: false, createdAt: t - 40 * 864e5, updatedAt: t },
+  ];
+
+  const quotes: Quote[] = [
+    {
+      id: "quote-1",
+      number: 1,
+      customerName: "Sokha Kim",
+      lines: [line(pCoffee, 10, 5), line(pWater, 12)],
+      subtotal: 17.4,
+      discountTotal: 0.45,
+      total: 16.95,
+      costTotal: 10.8,
+      status: "accepted",
+      convertedOrderId: "ord-10",
+      note: "Office supply bundle",
+      createdAt: t - 4 * 864e5,
+      updatedAt: t - 3 * 864e5,
+    },
+    {
+      id: "quote-2",
+      number: 2,
+      customerName: "Vireak Son",
+      lines: [line(pRice, 2), line(pOil, 2)],
+      subtotal: 19.4,
+      discountTotal: 0,
+      total: 19.4,
+      costTotal: 15.6,
+      status: "sent",
+      note: "Monthly household restock",
+      createdAt: t - 2 * 864e5,
+      updatedAt: t - 2 * 864e5,
+    },
+    {
+      id: "quote-3",
+      number: 3,
+      customerName: "Dara Long",
+      lines: [line(pChips, 5), line(pCoke, 6)],
+      subtotal: 15.95,
+      discountTotal: 0,
+      total: 15.95,
+      costTotal: 11.1,
+      status: "draft",
+      createdAt: t - 36e5,
+      updatedAt: t - 36e5,
+    },
+  ];
+
+  // The seeded salary transaction already covers this month's rule occurrence
+  const recurringSalaryActive = !transactions.some(
+    (tx) => tx.type === "income" && tx.category === "salary" && tx.date >= today,
+  );
+
   return {
     version: DATA_VERSION,
     seeded: true,
@@ -653,6 +715,19 @@ function seedData(): AppData {
     activeSystem: null,
     budgets,
     transactions,
+    accounts: [
+      { id: "acct-cash", name: "Cash Wallet", kind: "cash", balance: 124.5, color: "#10b981", createdAt: t - 30 * 864e5, updatedAt: t },
+      { id: "acct-aba", name: "ABA Bank", kind: "bank", balance: 860, color: "#0ea5e9", createdAt: t - 30 * 864e5, updatedAt: t },
+      { id: "acct-wing", name: "Wing", kind: "mobile", balance: 32.25, color: "#f59e0b", createdAt: t - 12 * 864e5, updatedAt: t },
+    ],
+    recurring: [
+      { id: "rec-rent", type: "expense", amount: 220, category: "rent", method: "bank", startDate: addDaysKey(today, -75), dayOfMonth: 5, note: "Monthly rent", active: true, createdAt: t - 75 * 864e5, updatedAt: t },
+      { id: "rec-salary", type: "income", amount: 1200, category: "salary", method: "bank", startDate: addDaysKey(today, -75), dayOfMonth: 1, note: "Monthly salary", active: recurringSalaryActive, createdAt: t - 75 * 864e5, updatedAt: t },
+    ],
+    debts: [
+      { id: "debt-lending", name: "Sokha (lent)", direction: "receivable", total: 60, paid: 20, dueDate: addDaysKey(today, 10), note: "Lent for fuel", createdAt: t - 9 * 864e5, updatedAt: t },
+      { id: "debt-installment", name: "Laptop installment", direction: "payable", total: 480, paid: 180, dueDate: addDaysKey(today, 20), note: "12-month plan", createdAt: t - 60 * 864e5, updatedAt: t },
+    ],
     business: {
       products,
       customers,
@@ -662,6 +737,9 @@ function seedData(): AppData {
       purchases,
       expenses: bizExpenses,
       orderCounter,
+      quoteCounter: quotes.length,
+      staff,
+      quotes,
       taxRate: 0,
       taxEnabled: false,
       shopName: "Flowday Mart",
@@ -698,6 +776,9 @@ export function normalizeData(parsed: Partial<AppData> | null | undefined): AppD
           )
         : {},
     transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
+    accounts: Array.isArray(parsed.accounts) ? parsed.accounts : [],
+    recurring: Array.isArray(parsed.recurring) ? parsed.recurring : [],
+    debts: Array.isArray(parsed.debts) ? parsed.debts : [],
     business: {
       ...fresh.business,
       ...(parsed.business ?? {}),
@@ -720,6 +801,12 @@ export function normalizeData(parsed: Partial<AppData> | null | undefined): AppD
       expenses: Array.isArray(parsed.business?.expenses)
         ? parsed.business!.expenses
         : [],
+      staff: Array.isArray(parsed.business?.staff) ? parsed.business!.staff : [],
+      quotes: Array.isArray(parsed.business?.quotes) ? parsed.business!.quotes : [],
+      quoteCounter:
+        typeof parsed.business?.quoteCounter === "number"
+          ? parsed.business.quoteCounter
+          : 0,
     },
   };
 }
@@ -1628,7 +1715,10 @@ export function clearAllData() {
     seeded: false,
     settings: data.settings,
     transactions: [],
-    business: { ...data.business, products: [], customers: [], suppliers: [], orders: [], heldOrders: [], purchases: [], expenses: [], orderCounter: 0 },
+    accounts: [],
+    recurring: [],
+    debts: [],
+    business: { ...data.business, products: [], customers: [], suppliers: [], orders: [], heldOrders: [], purchases: [], expenses: [], staff: [], quotes: [], orderCounter: 0, quoteCounter: 0 },
     tasks: [],
     inboxItems: [],
     projects: [],
@@ -1813,6 +1903,34 @@ export function useTransactions(): Transaction[] {
   return useAppData().transactions;
 }
 
+/* ------------------------------------------------------------------ */
+/* Accounts (expense wallets)                                          */
+/* ------------------------------------------------------------------ */
+
+export function useAccounts(): Account[] {
+  return useAppData().accounts;
+}
+
+export function addAccount(input: Omit<Account, "id" | "createdAt" | "updatedAt" | "archived">): Account {
+  const ts = nowTs();
+  const account: Account = { ...input, id: uid(), createdAt: ts, updatedAt: ts };
+  set((d) => ({ ...d, accounts: [account, ...d.accounts] }));
+  return account;
+}
+
+export function updateAccount(id: string, patch: Partial<Account>) {
+  set((d) => ({
+    ...d,
+    accounts: d.accounts.map((a) =>
+      a.id === id ? { ...a, ...patch, updatedAt: nowTs() } : a,
+    ),
+  }));
+}
+
+export function deleteAccount(id: string) {
+  set((d) => ({ ...d, accounts: d.accounts.filter((a) => a.id !== id) }));
+}
+
 export function addTransaction(
   input: Omit<Transaction, "id" | "createdAt" | "updatedAt">,
 ): Transaction {
@@ -1836,6 +1954,258 @@ export function deleteTransaction(id: string) {
     ...d,
     transactions: d.transactions.filter((t) => t.id !== id),
   }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Recurring transactions (monthly bills / salary)                     */
+/* ------------------------------------------------------------------ */
+
+export function useRecurring(): RecurringTx[] {
+  return useAppData().recurring;
+}
+
+export function addRecurring(
+  input: Omit<RecurringTx, "id" | "createdAt" | "updatedAt" | "lastRun">,
+): RecurringTx {
+  const ts = nowTs();
+  const rule: RecurringTx = { ...input, id: uid(), createdAt: ts, updatedAt: ts };
+  set((d) => ({ ...d, recurring: [rule, ...d.recurring] }));
+  return rule;
+}
+
+export function updateRecurring(id: string, patch: Partial<RecurringTx>) {
+  set((d) => ({
+    ...d,
+    recurring: d.recurring.map((r) =>
+      r.id === id ? { ...r, ...patch, updatedAt: nowTs() } : r,
+    ),
+  }));
+}
+
+export function deleteRecurring(id: string) {
+  set((d) => ({ ...d, recurring: d.recurring.filter((r) => r.id !== id) }));
+}
+
+/** Occurrence date for a rule in a given month (clamped to the month end). */
+function monthlyOccurrence(ym: string, dayOfMonth: number): string {
+  const [y, m] = ym.split("-").map(Number);
+  const lastDay = new Date(y, m, 0).getDate();
+  const day = Math.min(Math.max(1, dayOfMonth), lastDay);
+  return `${ym}-${String(day).padStart(2, "0")}`;
+}
+
+/**
+ * Post every due occurrence of every active rule as a real transaction.
+ * Idempotent: `lastRun` marks the latest posted date, so calling twice
+ * in the same month never double-posts. Returns the number posted.
+ */
+export function postDueRecurring(): number {
+  const today = todayKey();
+  const ym = today.slice(0, 7);
+  let posted = 0;
+  set((d) => {
+    const newTx = [...d.transactions];
+    let changed = false;
+    const recurring = d.recurring.map((rule) => {
+      if (!rule.active) return rule;
+      const occ = monthlyOccurrence(ym, rule.dayOfMonth);
+      if (occ > today) return rule; // not due yet this month
+      const from = rule.lastRun
+        ? addDaysKey(rule.lastRun, 1)
+        : rule.startDate <= occ
+          ? occ
+          : rule.startDate;
+      if (from > occ) return rule;
+      const tx: Transaction = {
+        id: uid(),
+        type: rule.type,
+        amount: rule.amount,
+        category: rule.category,
+        method: rule.method,
+        date: occ,
+        note: rule.note,
+        createdAt: nowTs(),
+        updatedAt: nowTs(),
+      };
+      newTx.unshift(tx);
+      posted++;
+      changed = true;
+      return { ...rule, lastRun: occ, updatedAt: nowTs() };
+    });
+    if (!changed) return d;
+    return { ...d, recurring, transactions: newTx };
+  });
+  return posted;
+}
+
+/* ------------------------------------------------------------------ */
+/* Debts (payables / receivables)                                      */
+/* ------------------------------------------------------------------ */
+
+export function useDebts(): Debt[] {
+  return useAppData().debts;
+}
+
+export function addDebt(input: Omit<Debt, "id" | "createdAt" | "updatedAt" | "paid" | "settledAt">): Debt {
+  const ts = nowTs();
+  const debt: Debt = { ...input, paid: 0, id: uid(), createdAt: ts, updatedAt: ts };
+  set((d) => ({ ...d, debts: [debt, ...d.debts] }));
+  return debt;
+}
+
+export function updateDebt(id: string, patch: Partial<Debt>) {
+  set((d) => ({
+    ...d,
+    debts: d.debts.map((x) =>
+      x.id === id ? { ...x, ...patch, updatedAt: nowTs() } : x,
+    ),
+  }));
+}
+
+/** Record a payment against a debt; auto-settles when fully paid. */
+export function payDebt(id: string, amount: number): number {
+  const debt = data.debts.find((x) => x.id === id);
+  if (!debt) return 0;
+  const paid = Math.min(debt.total, Math.max(0, debt.paid + amount));
+  const ts = nowTs();
+  set((d) => ({
+    ...d,
+    debts: d.debts.map((x) =>
+      x.id === id
+        ? {
+            ...x,
+            paid,
+            settledAt: paid >= x.total ? ts : x.settledAt,
+            updatedAt: ts,
+          }
+        : x,
+    ),
+  }));
+  return paid - debt.paid;
+}
+
+export function useStaff(): StaffMember[] {
+  return useAppData().business.staff;
+}
+
+export function addStaff(input: Omit<StaffMember, "id" | "createdAt" | "updatedAt">): StaffMember {
+  const ts = nowTs();
+  const member: StaffMember = { ...input, id: uid(), createdAt: ts, updatedAt: ts };
+  patchBusiness({ staff: [member, ...data.business.staff] });
+  return member;
+}
+
+export function updateStaff(id: string, patch: Partial<StaffMember>) {
+  patchBusiness({
+    staff: data.business.staff.map((s) =>
+      s.id === id ? { ...s, ...patch, updatedAt: nowTs() } : s,
+    ),
+  });
+}
+
+export function deleteStaff(id: string) {
+  patchBusiness({ staff: data.business.staff.filter((s) => s.id !== id) });
+}
+
+export function useQuotes(): Quote[] {
+  return useAppData().business.quotes;
+}
+
+/** Compute quote totals exactly like cartTotals (no tax on quotes). */
+function quoteTotals(lines: OrderLine[]) {
+  const subtotal = lines.reduce((s, l) => s + l.qty * l.price, 0);
+  const discountTotal = lines.reduce(
+    (s, l) => s + l.qty * l.price * (l.discount / 100),
+    0,
+  );
+  const costTotal = lines.reduce((s, l) => s + l.qty * l.cost, 0);
+  return { subtotal, discountTotal, total: subtotal - discountTotal, costTotal };
+}
+
+export function addQuote(input: {
+  customerName: string;
+  lines: OrderLine[];
+  note?: string;
+}): Quote {
+  const ts = nowTs();
+  const biz = data.business;
+  const number = biz.quoteCounter + 1;
+  const totals = quoteTotals(input.lines);
+  const quote: Quote = {
+    id: uid(),
+    number,
+    customerName: input.customerName,
+    lines: input.lines,
+    subtotal: totals.subtotal,
+    discountTotal: totals.discountTotal,
+    total: totals.total,
+    costTotal: totals.costTotal,
+    status: "draft",
+    note: input.note,
+    createdAt: ts,
+    updatedAt: ts,
+  };
+  patchBusiness({ quotes: [quote, ...biz.quotes], quoteCounter: number });
+  return quote;
+}
+
+export function updateQuoteStatus(id: string, status: QuoteStatus) {
+  patchBusiness({
+    quotes: data.business.quotes.map((q) =>
+      q.id === id ? { ...q, status, updatedAt: nowTs() } : q,
+    ),
+  });
+}
+
+export function deleteQuote(id: string) {
+  patchBusiness({ quotes: data.business.quotes.filter((q) => q.id !== id) });
+}
+
+/**
+ * Accept a quote: create a completed order from its lines, decrement
+ * stock, and link the order back to the quote. Returns the new order.
+ */
+export function acceptQuote(id: string): Order | null {
+  const quote = data.business.quotes.find((q) => q.id === id);
+  if (!quote || quote.status === "accepted") return null;
+  const ts = nowTs();
+  const biz = data.business;
+  const number = biz.orderCounter + 1;
+  const totals = quoteTotals(quote.lines);
+  const order: Order = {
+    id: uid(),
+    number,
+    lines: quote.lines,
+    subtotal: totals.subtotal,
+    discountTotal: totals.discountTotal,
+    taxTotal: 0,
+    total: totals.total,
+    costTotal: totals.costTotal,
+    status: "completed",
+    method: "other",
+    createdAt: ts,
+    updatedAt: ts,
+  };
+  const products = biz.products.map((p) => {
+    const line = quote.lines.find((l) => l.productId === p.id);
+    if (!line) return p;
+    return { ...p, stock: Math.max(0, p.stock - line.qty), updatedAt: ts };
+  });
+  patchBusiness({
+    orders: [order, ...biz.orders],
+    products,
+    orderCounter: number,
+    quotes: biz.quotes.map((q) =>
+      q.id === id
+        ? { ...q, status: "accepted" as const, convertedOrderId: order.id, updatedAt: ts }
+        : q,
+    ),
+  });
+  return order;
+}
+/** Staff & quotes live after the debt helpers. */
+export function deleteDebt(id: string) {
+  set((d) => ({ ...d, debts: d.debts.filter((x) => x.id !== id) }));
 }
 
 /** Filter + sort transactions by date range, type and category. */

@@ -331,10 +331,106 @@ export type BusinessData = {
   expenses: BusinessExpense[];
   /** receipt number counter */
   orderCounter: number;
+  /** quote number counter */
+  quoteCounter: number;
+  staff: StaffMember[];
+  quotes: Quote[];
   /** percent 0–100, applied at POS when tax is enabled */
   taxRate: number;
   taxEnabled: boolean;
   shopName: string;
+};
+
+/* ------------------------------------------------------------------ */
+/* Expense extensions: accounts, recurring transactions, debts         */
+/* ------------------------------------------------------------------ */
+
+export const ACCOUNT_KINDS = ["cash", "bank", "card", "mobile", "other"] as const;
+export type AccountKind = (typeof ACCOUNT_KINDS)[number];
+
+/** A wallet / bank / mobile-money account with a manually tracked balance. */
+export type Account = {
+  id: ID;
+  name: string;
+  kind: AccountKind;
+  balance: number;
+  color?: string;
+  archived?: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+/**
+ * A monthly repeating transaction (rent, bills, salary). Occurrences are
+ * posted as real transactions when the Recurring page (or app) notices
+ * they are due — `lastRun` stamps the most recent posted occurrence.
+ */
+export type RecurringTx = {
+  id: ID;
+  type: TxType;
+  amount: number;
+  category: string;
+  method: PaymentMethod;
+  /** first month this rule applies (yyyy-MM-dd) */
+  startDate: string;
+  /** 1–31; shorter months clamp to their last day */
+  dayOfMonth: number;
+  note?: string;
+  /** last posted occurrence (yyyy-MM-dd); absent until first run */
+  lastRun?: string;
+  active: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+/** Money you owe (payable) or money owed to you (receivable). */
+export type Debt = {
+  id: ID;
+  name: string;
+  direction: "payable" | "receivable";
+  total: number;
+  paid: number;
+  dueDate?: string;
+  note?: string;
+  settledAt?: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+/* ------------------------------------------------------------------ */
+/* Business extensions: staff, quotes                                  */
+/* ------------------------------------------------------------------ */
+
+export type StaffMember = {
+  id: ID;
+  name: string;
+  role?: string;
+  phone?: string;
+  /** monthly salary; 0 = not salaried */
+  salary: number;
+  active: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type QuoteStatus = "draft" | "sent" | "accepted" | "declined";
+
+/** A price estimate for a custom order; accepted quotes convert to sales. */
+export type Quote = {
+  id: ID;
+  number: number;
+  customerName: string;
+  lines: OrderLine[];
+  subtotal: number;
+  discountTotal: number;
+  total: number;
+  costTotal: number;
+  status: QuoteStatus;
+  /** id of the order created when the quote was accepted */
+  convertedOrderId?: ID;
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
 };
 
 export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -363,6 +459,9 @@ export type AppData = {
   notes: Note[];
   calendarEvents: CalendarEvent[];
   transactions: Transaction[];
+  accounts: Account[];
+  recurring: RecurringTx[];
+  debts: Debt[];
   business: BusinessData;
 };
 
