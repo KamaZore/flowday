@@ -599,7 +599,7 @@ export default function SuperAdminPanel() {
               <div key={slide.id} className="flex flex-wrap items-center gap-3 rounded-2xl border bg-background/50 p-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold">{t("sa.carouselCard", { n: index + 1 })}</p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">{t("sa.cardImageHint")}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{t("sa.cardImageOnlyHint")}</p>
                 </div>
                 <ImagePicker value={slide.imageUrl} onChange={(value) => updateSiteSlide(index, { imageUrl: value ?? "" })} size="md" />
                 <div className="flex items-center gap-2">
