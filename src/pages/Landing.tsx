@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
+import { loadSiteContent, useSiteContent, type CarouselSlide } from "@/lib/site-content";
 import {
   ArrowRight,
   BarChart3,
@@ -74,15 +75,16 @@ export default function Landing() {
   const { lang, setLang, t } = useI18n();
   const { isAuthenticated } = useAuth();
   const reduceMotion = useReducedMotion();
+  const siteContent = useSiteContent();
   const [mockupSlide, setMockupSlide] = useState(0);
 
   useEffect(() => {
-    if (reduceMotion) return;
-    const timer = window.setInterval(() => {
-      setMockupSlide((slide) => (slide + 1) % 3);
-    }, 4200);
-    return () => window.clearInterval(timer);
-  }, [reduceMotion]);
+    void loadSiteContent();
+  }, []);
+
+  const localizedSiteName = lang === "km" ? siteContent.siteNameKm : siteContent.siteName;
+  const localizedHeaderTitle = lang === "km" ? siteContent.headerTitleKm : siteContent.headerTitle;
+  const localizedHeaderSubtitle = lang === "km" ? siteContent.headerSubtitleKm : siteContent.headerSubtitle;
   const dayLetters = lang === "km" ? ["ច", "អ", "ព", "ព", "ព្រ", "ស", "ស"] : ["M", "T", "W", "T", "F", "S", "S"];
   const mockupSlides = [
     {
@@ -125,7 +127,25 @@ export default function Landing() {
       ],
     },
   ];
-  const mockup = mockupSlides[mockupSlide];
+  const activeSlides: CarouselSlide[] = siteContent.slides.filter((slide) => slide.enabled);
+  const publicSlides = activeSlides.length > 0 ? activeSlides : siteContent.slides;
+  const mergedSlides = publicSlides.map((slide, index) => ({
+    ...mockupSlides[index % mockupSlides.length],
+    ...slide,
+    id: slide.id,
+    title: lang === "km" ? slide.titleKm || slide.title : slide.title,
+    subtitle: lang === "km" ? slide.subtitleKm || slide.subtitle : slide.subtitle,
+  }));
+  const safeSlideIndex = publicSlides.length > 0 ? mockupSlide % publicSlides.length : 0;
+  const mockup = mergedSlides[safeSlideIndex] ?? mergedSlides[0];
+
+  useEffect(() => {
+    if (reduceMotion || publicSlides.length < 2) return;
+    const timer = window.setInterval(() => {
+      setMockupSlide((slide) => (slide + 1) % publicSlides.length);
+    }, 4200);
+    return () => window.clearInterval(timer);
+  }, [publicSlides.length, reduceMotion]);
 
   // Smooth-scroll to a section. Plain <a href="#features"> would fight the
   // HashRouter (it treats "#features" as a route → 404), so we scroll manually.
@@ -139,13 +159,17 @@ export default function Landing() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <svg viewBox="0 0 512 512" className="size-8 text-primary" aria-hidden>
-              <rect width="512" height="512" rx="112" fill="currentColor" />
-              <path d="M150 176 L236 256 L150 336" stroke="#fff" strokeWidth="46" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.55" />
-              <path d="M250 176 L336 256 L250 336" stroke="#fff" strokeWidth="46" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.8" />
-              <path d="M350 176 L436 256 L350 336" stroke="#fff" strokeWidth="46" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </svg>
-            <span className="text-lg font-bold">Flowday</span>
+            {siteContent.logoUrl ? (
+              <img src={siteContent.logoUrl} alt={localizedSiteName || "Flowday"} className="size-9 rounded-xl object-contain" />
+            ) : (
+              <svg viewBox="0 0 512 512" className="size-8 text-primary" aria-hidden>
+                <rect width="512" height="512" rx="112" fill="currentColor" />
+                <path d="M150 176 L236 256 L150 336" stroke="#fff" strokeWidth="46" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.55" />
+                <path d="M250 176 L336 256 L250 336" stroke="#fff" strokeWidth="46" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.8" />
+                <path d="M350 176 L436 256 L350 336" stroke="#fff" strokeWidth="46" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </svg>
+            )}
+            <span className="text-lg font-bold">{localizedSiteName || "Flowday"}</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             <button type="button" onClick={() => scrollTo("features")} className="hover:text-foreground">{t("landing.navFeatures")}</button>
@@ -198,12 +222,10 @@ export default function Landing() {
               {t("landing.badge")}
             </span>
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl">
-              {t("landing.heroA")}
-              <br />
-              <span className="text-primary">{t("landing.heroB")}</span>
+              {localizedHeaderTitle || t("landing.heroA")}
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-              {t("landing.heroSub")}
+              {localizedHeaderSubtitle || t("landing.heroSub")}
             </p>
           </motion.div>
           <motion.div
@@ -225,22 +247,34 @@ export default function Landing() {
           {/* App mockup carousel */}
           <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={mockupSlide}
+            key={mockup?.id ?? safeSlideIndex}
             initial={{ opacity: 0, x: reduceMotion ? 0 : 28 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: reduceMotion ? 0 : -28 }}
             transition={{ duration: 0.45, ease: "easeInOut" }}
             className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
           >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-bold">{mockup.header}</p>
-              <span className="text-xs text-muted-foreground">{t("landing.today")} · {mockup.progress}</span>
+            {mockup?.imageUrl && (
+              <img
+                src={mockup.imageUrl}
+                alt={mockup.title || mockup.header}
+                className="mb-4 h-36 w-full rounded-xl border border-border/60 bg-muted object-cover"
+                loading="lazy"
+                onError={(event) => { event.currentTarget.style.display = "none"; }}
+              />
+            )}
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold">{mockup?.title || mockup?.header}</p>
+                {mockup?.subtitle && <p className="truncate text-[11px] text-muted-foreground">{mockup.subtitle}</p>}
+              </div>
+              <span className="shrink-0 text-xs text-muted-foreground">{t("landing.today")} · {mockup?.progress}</span>
             </div>
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
               <div className="h-full w-4/5 rounded-full bg-primary" />
             </div>
             <div className="mt-4 space-y-2">
-              {mockup.rows.map((row) => (
+              {mockup?.rows.map((row) => (
                 <div
                   key={row.label}
                   className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2.5"
@@ -273,33 +307,33 @@ export default function Landing() {
             </div>
             <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
               <span className="flex items-center gap-1.5 text-xs font-medium">
-                <Flame className="size-3.5 text-amber-500" /> {mockup.streak}
+                <Flame className="size-3.5 text-amber-500" /> {mockup?.streak}
               </span>
               <span className="text-[10px] text-muted-foreground">{t("landing.tapComplete")}</span>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2">
               <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
                 <p className="text-[10px] text-muted-foreground">{t("landing.focusTime")}</p>
-                <p className="mt-1 text-sm font-bold">{mockup.focus}</p>
+                <p className="mt-1 text-sm font-bold">{mockup?.focus}</p>
               </div>
               <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
                 <p className="text-[10px] text-muted-foreground">{t("landing.nextUp")}</p>
-                <p className="mt-1 truncate text-sm font-bold">{mockup.next}</p>
+                <p className="mt-1 truncate text-sm font-bold">{mockup?.next}</p>
               </div>
               <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
                 <p className="text-[10px] text-muted-foreground">{t("landing.thisWeek")}</p>
-                <p className="mt-1 text-sm font-bold text-emerald-600">{mockup.week}</p>
+                <p className="mt-1 text-sm font-bold text-emerald-600">{mockup?.week}</p>
               </div>
             </div>
             <div className="mt-4 flex items-center justify-center gap-1.5" aria-label="Preview slides">
-              {mockupSlides.map((_, index) => (
+              {mergedSlides.map((slide, index) => (
                 <button
-                  key={index}
+                  key={slide.id}
                   type="button"
                   aria-label={`Show preview slide ${index + 1}`}
-                  aria-current={mockupSlide === index}
+                  aria-current={safeSlideIndex === index}
                   onClick={() => setMockupSlide(index)}
-                  className={mockupSlide === index ? "h-1.5 w-6 rounded-full bg-primary" : "h-1.5 w-1.5 rounded-full bg-muted-foreground/30 transition hover:bg-primary/60"}
+                  className={safeSlideIndex === index ? "h-1.5 w-6 rounded-full bg-primary" : "h-1.5 w-1.5 rounded-full bg-muted-foreground/30 transition hover:bg-primary/60"}
                 />
               ))}
             </div>

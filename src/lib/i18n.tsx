@@ -17,6 +17,14 @@ const LANG_KEY = "flowday-lang";
  */
 const dict: Record<Lang, Record<string, string>> = {
   en: {
+    "sa.siteContent": "Website content",
+    "sa.siteContentSub": "Dynamically control the public landing page branding, header, and carousel.",
+    "sa.addSlide": "Add slide",
+    "sa.saveSiteContent": "Save website content",
+    "sa.siteContentSaved": "Website content saved",
+    "sa.siteContentFailed": "Could not save website content",
+    "sa.carouselSlides": "Carousel slides",
+    "sa.siteContentHint": "Use HTTPS image URLs for reliable image loading. Disabled slides are hidden from the public carousel.",
     "sa.users": "Users",
     "sa.visiblePage": "On this page",
     "sa.withData": "with data",
@@ -770,6 +778,14 @@ const dict: Record<Lang, Record<string, string>> = {
   },
 
   km: {
+    "sa.siteContent": "មាតិកាគេហទំព័រ",
+    "sa.siteContentSub": "គ្រប់គ្រងម៉ាក់ ចំណងជើង និងរូបភាពទំព័រការពិតដោយសេរី។",
+    "sa.addSlide": "បន្ថែមស្លាក",
+    "sa.saveSiteContent": "រក្សាទុកមាតិកាគេហទំព័រ",
+    "sa.siteContentSaved": "បានរក្សាទុកមាតិកាគេហទំព័រ",
+    "sa.siteContentFailed": "មិនអាចរក្សាទុកមាតិកាគេហទំព័របានទេ",
+    "sa.carouselSlides": "ស្លាករង្វិល",
+    "sa.siteContentHint": "ប្រើ URL រូបភាព HTTPS ដើម្បីផ្ទុករូបភាពបានត្រឹមត្រូវ។ ស្លាកដែលបានបិទនឹងមិនបង្ហាញនៅទំព័រការពិត។",
     "landing.systemIntroTitle": "ទំព័រតែមួយសម្រាប់ការងាររបស់អ្នក",
     "landing.systemIntroSub": "ប្រព័ន្ធផ្តោតបីរប្រព័ន្ធ ដែលចែករំលែកលំហូរតែមួយ — រៀបចំជីវិត យល់យាងលុយ និងបង្កើតអាជីវកម្ម។",
     "landing.systemLifeMetric": "ភារកិច្ច · ទម្លាប់ · គោលដៅ",

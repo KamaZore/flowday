@@ -35,6 +35,12 @@ import {
   type AppModule,
 } from "@/lib/modules";
 import { readSaSession, writeSaSession } from "@/lib/superadmin";
+import {
+  defaultSiteContent,
+  loadSiteContent,
+  saveSiteContent,
+  type SiteContent,
+} from "@/lib/site-content";
 import bcrypt from "bcryptjs";
 import { uid } from "@/lib/store";
 import {
@@ -54,6 +60,7 @@ import {
   BarChart3,
   Activity,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -107,6 +114,8 @@ export default function SuperAdminPanel() {
   const [modulePath, setModulePath] = useState("");
   const [moduleIcon, setModuleIcon] = useState("sparkles");
   const [moduleAccent, setModuleAccent] = useState(ACCENTS[0]);
+  const [siteDraft, setSiteDraft] = useState<SiteContent>(defaultSiteContent);
+  const [siteBusy, setSiteBusy] = useState(false);
 
   const visibleUsers = users.length;
   const visibleAdmins = users.filter((u) => u.role === "superadmin").length;
@@ -159,11 +168,46 @@ export default function SuperAdminPanel() {
       }
       void refresh(1);
       void loadModules().then(setModules);
+      void loadSiteContent().then((loadedContent) => setSiteDraft(loadedContent));
     }).catch(() => {
       writeSaSession(null);
       navigate("/superadmin", { replace: true });
     });
   }, [navigate, refresh]);
+
+  async function persistSiteContent() {
+    setSiteBusy(true);
+    try {
+      await saveSiteContent(siteDraft);
+      toast.success(t("sa.siteContentSaved"));
+    } catch {
+      toast.error(t("sa.siteContentFailed"));
+    } finally {
+      setSiteBusy(false);
+    }
+  }
+
+  function updateSiteSlide(index: number, patch: Partial<SiteContent["slides"][number]>) {
+    setSiteDraft((current) => ({
+      ...current,
+      slides: current.slides.map((slide, i) => i === index ? { ...slide, ...patch } : slide),
+    }));
+  }
+
+  function addSiteSlide() {
+    setSiteDraft((current) => ({
+      ...current,
+      slides: [...current.slides, {
+        id: `slide-${Date.now()}`,
+        title: "New slide",
+        titleKm: "ស្លាកថ្មី",
+        subtitle: "Add a short description",
+        subtitleKm: "បន្ថែមការពិពណ៌នាសង្ខេប",
+        imageUrl: "",
+        enabled: true,
+      }],
+    }));
+  }
 
   async function persistModules(next: AppModule[]) {
     setModulesBusy(true);
@@ -489,6 +533,43 @@ export default function SuperAdminPanel() {
             </div>
           )}
         </div>
+
+        {/* Public site content */}
+        <section className="space-y-4 rounded-3xl border border-border/60 bg-card p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-base font-bold"><Sparkles className="size-4 text-primary" />{t("sa.siteContent")}</h2>
+              <p className="mt-1 text-xs text-muted-foreground">{t("sa.siteContentSub")}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={addSiteSlide} className="gap-1.5"><Plus className="size-3.5" />{t("sa.addSlide")}</Button>
+              <Button size="sm" onClick={() => void persistSiteContent()} disabled={siteBusy} className="gap-1.5">{siteBusy ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}{t("sa.saveSiteContent")}</Button>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="space-y-1.5 text-xs font-semibold">Logo URL<input value={siteDraft.logoUrl} onChange={(e) => setSiteDraft({ ...siteDraft, logoUrl: e.target.value })} placeholder="https://..." className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-normal" /></label>
+            <label className="space-y-1.5 text-xs font-semibold">Website name (EN)<input value={siteDraft.siteName} onChange={(e) => setSiteDraft({ ...siteDraft, siteName: e.target.value })} className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-normal" /></label>
+            <label className="space-y-1.5 text-xs font-semibold">Website name (ភាសាខ្មែរ)<input value={siteDraft.siteNameKm} onChange={(e) => setSiteDraft({ ...siteDraft, siteNameKm: e.target.value })} className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-normal" /></label>
+            <label className="space-y-1.5 text-xs font-semibold">Header title (EN)<input value={siteDraft.headerTitle} onChange={(e) => setSiteDraft({ ...siteDraft, headerTitle: e.target.value })} className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-normal" /></label>
+            <label className="space-y-1.5 text-xs font-semibold">Header title (ភាសាខ្មែរ)<input value={siteDraft.headerTitleKm} onChange={(e) => setSiteDraft({ ...siteDraft, headerTitleKm: e.target.value })} className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-normal" /></label>
+            <label className="space-y-1.5 text-xs font-semibold">Header subtitle (EN)<textarea value={siteDraft.headerSubtitle} onChange={(e) => setSiteDraft({ ...siteDraft, headerSubtitle: e.target.value })} className="min-h-20 w-full rounded-xl border bg-background px-3 py-2 text-sm font-normal" /></label>
+            <label className="space-y-1.5 text-xs font-semibold">Header subtitle (ភាសាខ្មែរ)<textarea value={siteDraft.headerSubtitleKm} onChange={(e) => setSiteDraft({ ...siteDraft, headerSubtitleKm: e.target.value })} className="min-h-20 w-full rounded-xl border bg-background px-3 py-2 text-sm font-normal" /></label>
+          </div>
+          <div className="space-y-2 border-t pt-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("sa.carouselSlides")}</p>
+            {siteDraft.slides.map((slide, index) => (
+              <div key={slide.id} className="grid gap-2 rounded-2xl border bg-background/50 p-3 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+                <label className="text-[11px] font-semibold">Title (EN)<input value={slide.title} onChange={(e) => updateSiteSlide(index, { title: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
+                <label className="text-[11px] font-semibold">Title (ភាសាខ្មែរ)<input value={slide.titleKm} onChange={(e) => updateSiteSlide(index, { titleKm: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
+                <label className="text-[11px] font-semibold">Subtitle (EN)<input value={slide.subtitle} onChange={(e) => updateSiteSlide(index, { subtitle: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
+                <label className="text-[11px] font-semibold">Subtitle (ភាសាខ្មែរ)<input value={slide.subtitleKm} onChange={(e) => updateSiteSlide(index, { subtitleKm: e.target.value })} className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
+                <label className="text-[11px] font-semibold">Image URL<input value={slide.imageUrl} onChange={(e) => updateSiteSlide(index, { imageUrl: e.target.value })} placeholder="https://..." className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs font-normal" /></label>
+                <div className="flex items-center gap-2 pb-1"><Switch checked={slide.enabled} onCheckedChange={(enabled) => updateSiteSlide(index, { enabled })} /><Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => setSiteDraft({ ...siteDraft, slides: siteDraft.slides.filter((_, i) => i !== index) })} aria-label={t("common.delete")}><Trash2 className="size-3.5" /></Button></div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">{t("sa.siteContentHint")}</p>
+        </section>
 
         {/* Module management */}
         <section className="space-y-3 rounded-3xl border border-border/60 bg-card p-5">
