@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RequireSystem } from "@/components/RequireSystem";
+import { InstallPrompt } from "@/components/app/InstallPrompt";
 import { AuthProvider } from "@/hooks/use-auth";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
@@ -429,6 +430,7 @@ const router = createHashRouter([
       <ReloadOnNewChunk>
         <ServiceWorkerRegistrar />
         <UserStoreBridge />
+        <InstallPrompt />
         <AppRoutes />
       </ReloadOnNewChunk>
     ),
