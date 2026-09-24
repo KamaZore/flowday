@@ -153,10 +153,7 @@ function AuthInner() {
         </p>
       </div>
 
-      <p className="relative mt-4 text-center text-xs text-muted-foreground">
-        {t("auth.localNote")}
-      </p>
-      <p className="relative mt-2 text-center">
+      <p className="relative mt-4 text-center">
         <Link
           to="/superadmin"
           className="text-xs font-medium text-muted-foreground/70 transition-colors hover:text-foreground"
