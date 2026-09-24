@@ -232,6 +232,12 @@ function AppRoutes() {
       <Route path="/business/reports" element={<RequireAuth><BusinessReports /></RequireAuth>} />
       <Route path="/business/settings" element={<RequireAuth><BusinessSettings /></RequireAuth>} />
 
+      {/* System roots: SelectSystem and the sidebar logo navigate to these,
+          so they must redirect into the system's default page. */}
+      <Route path="/life" element={<Navigate to="/life/today" replace />} />
+      <Route path="/expense" element={<Navigate to="/expense/dashboard" replace />} />
+      <Route path="/business" element={<Navigate to="/business/dashboard" replace />} />
+
       {/* Legacy paths (bookmarks / installed PWA shortcuts) → new system routes */}
       {[
         ["/today", "/life/today"],
