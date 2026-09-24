@@ -84,6 +84,45 @@ export default function Landing() {
     return () => window.clearInterval(timer);
   }, [reduceMotion]);
   const dayLetters = lang === "km" ? ["ច", "អ", "ព", "ព", "ព្រ", "ស", "ស"] : ["M", "T", "W", "T", "F", "S", "S"];
+  const mockupSlides = [
+    {
+      progress: "80%",
+      focus: "2h 40m",
+      next: "3:30 PM",
+      week: "+18%",
+      streak: t("landing.exerciseStreak"),
+      rows: [
+        { label: t("landing.finishOutline"), done: false, chip: t("landing.personalWebsite") },
+        { label: t("landing.runMinutes"), done: true, chip: t("landing.fitness") },
+        { label: t("landing.readPages"), done: false, chip: null },
+      ],
+    },
+    {
+      progress: "64%",
+      focus: "1h 55m",
+      next: "5:00 PM",
+      week: "+11%",
+      streak: t("landing.habitStreak"),
+      rows: [
+        { label: t("landing.personalWebsite"), done: true, chip: t("landing.fitness") },
+        { label: t("landing.runMinutes"), done: false, chip: null },
+        { label: t("landing.readPages"), done: true, chip: t("landing.tapComplete") },
+      ],
+    },
+    {
+      progress: "92%",
+      focus: "3h 20m",
+      next: "Tomorrow",
+      week: "+24%",
+      streak: t("landing.onTrack"),
+      rows: [
+        { label: t("landing.finishOutline"), done: true, chip: t("landing.project") },
+        { label: t("landing.readPages"), done: true, chip: t("landing.progress") },
+        { label: t("landing.runMinutes"), done: false, chip: t("landing.fitness") },
+      ],
+    },
+  ];
+  const mockup = mockupSlides[mockupSlide];
 
   // Smooth-scroll to a section. Plain <a href="#features"> would fight the
   // HashRouter (it treats "#features" as a route → 404), so we scroll manually.
@@ -192,19 +231,15 @@ export default function Landing() {
           >
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold">{t("landing.goodMorning")}</p>
-              <span className="text-xs text-muted-foreground">{t("landing.today")} · 80%</span>
+              <span className="text-xs text-muted-foreground">{t("landing.today")} · {mockup.progress}</span>
             </div>
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
               <div className="h-full w-4/5 rounded-full bg-primary" />
             </div>
             <div className="mt-4 space-y-2">
-              {[
-                { t: t("landing.finishOutline"), done: false, chip: t("landing.personalWebsite") },
-                { t: t("landing.runMinutes"), done: true, chip: t("landing.fitness") },
-                { t: t("landing.readPages"), done: false, chip: null },
-              ].map((row) => (
+              {mockup.rows.map((row) => (
                 <div
-                  key={row.t}
+                  key={row.label}
                   className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2.5"
                 >
                   <span
@@ -223,7 +258,7 @@ export default function Landing() {
                         : "flex-1 text-sm font-medium"
                     }
                   >
-                    {row.t}
+                    {row.label}
                   </span>
                   {row.chip && (
                     <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
@@ -235,23 +270,35 @@ export default function Landing() {
             </div>
             <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
               <span className="flex items-center gap-1.5 text-xs font-medium">
-                <Flame className="size-3.5 text-amber-500" /> {t("landing.exerciseStreak")}
+                <Flame className="size-3.5 text-amber-500" /> {mockup.streak}
               </span>
               <span className="text-[10px] text-muted-foreground">{t("landing.tapComplete")}</span>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2">
               <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
                 <p className="text-[10px] text-muted-foreground">{t("landing.focusTime")}</p>
-                <p className="mt-1 text-sm font-bold">2h 40m</p>
+                <p className="mt-1 text-sm font-bold">{mockup.focus}</p>
               </div>
               <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
                 <p className="text-[10px] text-muted-foreground">{t("landing.nextUp")}</p>
-                <p className="mt-1 truncate text-sm font-bold">3:30 PM</p>
+                <p className="mt-1 truncate text-sm font-bold">{mockup.next}</p>
               </div>
               <div className="rounded-xl border border-border/60 bg-background/60 p-2.5">
                 <p className="text-[10px] text-muted-foreground">{t("landing.thisWeek")}</p>
-                <p className="mt-1 text-sm font-bold text-emerald-600">+18%</p>
+                <p className="mt-1 text-sm font-bold text-emerald-600">{mockup.week}</p>
               </div>
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-1.5" aria-label="Preview slides">
+              {mockupSlides.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  aria-label={`Show preview slide ${index + 1}`}
+                  aria-current={mockupSlide === index}
+                  onClick={() => setMockupSlide(index)}
+                  className={mockupSlide === index ? "h-1.5 w-6 rounded-full bg-primary" : "h-1.5 w-1.5 rounded-full bg-muted-foreground/30 transition hover:bg-primary/60"}
+                />
+              ))}
             </div>
           </motion.div>
           </AnimatePresence>
