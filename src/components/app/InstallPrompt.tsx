@@ -8,7 +8,7 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-const DISMISSED_KEY = "flowday-install-dismissed-v1";
+const DISMISSED_KEY = "flowday-install-dismissed-session";
 
 function isStandalone() {
   return (
@@ -27,7 +27,7 @@ export function InstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(() => {
     try {
-      return localStorage.getItem(DISMISSED_KEY) === "1";
+      return sessionStorage.getItem(DISMISSED_KEY) === "1";
     } catch {
       return false;
     }
@@ -48,7 +48,7 @@ export function InstallPrompt() {
       setInstalled(true);
       setInstallEvent(null);
       try {
-        localStorage.removeItem(DISMISSED_KEY);
+        sessionStorage.removeItem(DISMISSED_KEY);
       } catch {
         // Storage can be unavailable in private browsing.
       }
@@ -62,10 +62,12 @@ export function InstallPrompt() {
     };
   }, []);
 
+  const [showHelp, setShowHelp] = useState(false);
+
   const dismiss = () => {
     setDismissed(true);
     try {
-      localStorage.setItem(DISMISSED_KEY, "1");
+      sessionStorage.setItem(DISMISSED_KEY, "1");
     } catch {
       // Keep the banner hidden for this session even without storage.
     }
@@ -78,7 +80,7 @@ export function InstallPrompt() {
   const Icon = ios || mobile ? Smartphone : Monitor;
 
   return (
-    <aside className="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-lg items-center gap-3 border border-primary/20 bg-card p-3 shadow-xl sm:bottom-5 sm:p-4">
+    <aside className="fixed inset-x-3 bottom-3 z-[100] mx-auto flex max-w-lg items-center gap-3 border border-primary/30 bg-card p-3 shadow-2xl ring-1 ring-primary/10 sm:bottom-5 sm:p-4">
       <span className="flex size-10 shrink-0 items-center justify-center bg-primary/10 text-primary">
         <Icon className="size-5" />
       </span>
@@ -109,8 +111,22 @@ export function InstallPrompt() {
             {t("install.action")}
           </Button>
         ) : (
-          <span className="hidden text-xs font-semibold text-primary sm:inline">
-            {t("install.menu")}
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setShowHelp((value) => !value)}
+          >
+            <Download className="size-3.5" />
+            {t("install.action")}
+          </Button>
+        )}
+        {showHelp && !installEvent && (
+          <span className="absolute bottom-full right-0 mb-2 max-w-64 border border-border bg-card p-2 text-xs leading-4 text-muted-foreground shadow-lg">
+            {ios
+              ? t("install.ios")
+              : mobile
+                ? t("install.android")
+                : t("install.desktop")}
           </span>
         )}
         <Button variant="ghost" size="icon" className="size-8" onClick={dismiss} aria-label={t("install.later")}>
