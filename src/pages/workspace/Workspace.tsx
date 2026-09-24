@@ -71,6 +71,9 @@ export default function Workspace() {
 
   return (
     <div className="workspace-shell min-h-dvh bg-[#f7f8fc] text-slate-950 dark:bg-[#11131c] dark:text-slate-50">
+      <div className="border-b border-indigo-100 bg-white/80 px-4 py-2 text-center text-xs font-medium text-slate-500 backdrop-blur dark:border-white/10 dark:bg-white/[.04] dark:text-slate-400">
+        New workspace mode · classic Flowday remains available from the navigation
+      </div>
       <aside className="workspace-sidebar hidden lg:flex">
         <Link to="/workspace" className="flex items-center gap-2.5 px-2">
           <span className="flex size-9 items-center justify-center rounded-xl bg-indigo-600 text-sm font-black text-white shadow-lg shadow-indigo-600/25">F</span>
