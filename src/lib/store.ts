@@ -778,7 +778,10 @@ const listeners = new Set<() => void>();
  * real user data when new systems ship.
  */
 export function normalizeData(parsed: Partial<AppData> | null | undefined): AppData {
-  const fresh = seedData();
+  // Base is an EMPTY document, not the demo seed: a stored doc always wins,
+  // and any field it lacks becomes empty — demo content must never leak
+  // into a real user's account (each user's data is their own input only).
+  const fresh = emptyData();
   if (!parsed || typeof parsed !== "object") return fresh;
   return {
     ...fresh,
@@ -829,17 +832,74 @@ export function normalizeData(parsed: Partial<AppData> | null | undefined): AppD
   };
 }
 
+/**
+ * A brand-new account's document: completely empty, nothing pre-filled.
+ * Each user's data is their own input only — demo content is never added
+ * to a real account.
+ */
+function emptyData(): AppData {
+  return {
+    version: DATA_VERSION,
+    seeded: false,
+    settings: {
+      theme: "system",
+      name: "there",
+      weekStartsMonday: true,
+    },
+    tasks: [],
+    inboxItems: [],
+    projects: [],
+    processes: [],
+    processRuns: [],
+    habits: [],
+    goals: [],
+    tags: [],
+    notes: [],
+    calendarEvents: [],
+    activeSystem: null,
+    budgets: {},
+    transactions: [],
+    accounts: [],
+    recurring: [],
+    debts: [],
+    business: {
+      products: [],
+      customers: [],
+      suppliers: [],
+      orders: [],
+      heldOrders: [],
+      purchases: [],
+      expenses: [],
+      orderCounter: 0,
+      quoteCounter: 0,
+      staff: [],
+      quotes: [],
+      taxRate: 0,
+      taxEnabled: false,
+      shopName: "",
+    },
+  };
+}
+
 function load(): AppData {
   try {
     const raw = localStorage.getItem(storageKey());
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<AppData>;
-      if (parsed && parsed.version === DATA_VERSION) return normalizeData(parsed);
+      if (parsed && typeof parsed === "object") {
+        // normalizeData fills any missing fields and stamps the current
+        // version — an older stored document is upgraded, never discarded.
+        return normalizeData(parsed);
+      }
     }
   } catch {
-    // corrupted storage — fall through to fresh seed
+    // corrupted storage — fall through to a fresh document
   }
-  const fresh = seedData();
+  // Fresh context: signed-out visitors get the demo dataset (landing
+  // experience); a signed-in account with no stored document starts EMPTY —
+  // their data is whatever they input themselves. If the account already
+  // has a remote document, pullRemote() restores it right after.
+  const fresh = ownerId ? emptyData() : seedData();
   try {
     localStorage.setItem(storageKey(), JSON.stringify(fresh));
   } catch {
