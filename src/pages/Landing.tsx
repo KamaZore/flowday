@@ -1,4 +1,10 @@
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { loadSiteContent, useSiteContent, type CarouselSlide } from "@/lib/site-content";
@@ -11,13 +17,16 @@ import {
   Flame,
   Inbox,
   Languages,
+  LayoutGrid,
   ListChecks,
-  TrendingUp,
   Repeat2,
   Smartphone,
   ShieldCheck,
   Sparkles,
+  Store,
   Target,
+  TrendingUp,
+  Wallet,
   WifiOff,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -26,16 +35,22 @@ import { Link } from "react-router";
 
 const SYSTEMS = [
   { icon: Target, titleKey: "system.life.name", descKey: "system.life.desc", metricKey: "landing.systemLifeMetric", tone: "text-rose-500 bg-rose-500/10" },
-  { icon: BarChart3, titleKey: "system.expense.name", descKey: "system.expense.desc", metricKey: "landing.systemExpenseMetric", tone: "text-emerald-500 bg-emerald-500/10" },
-  { icon: BarChart3, titleKey: "system.business.name", descKey: "system.business.desc", metricKey: "landing.systemBusinessMetric", tone: "text-violet-500 bg-violet-500/10" },
+  { icon: Wallet, titleKey: "system.expense.name", descKey: "system.expense.desc", metricKey: "landing.systemExpenseMetric", tone: "text-emerald-500 bg-emerald-500/10" },
+  { icon: Store, titleKey: "system.business.name", descKey: "system.business.desc", metricKey: "landing.systemBusinessMetric", tone: "text-violet-500 bg-violet-500/10" },
 ];
 
-const FLOW = [
-  { labelKey: "landing.goal", icon: Target, color: "text-rose-500" },
-  { labelKey: "landing.project", icon: ListChecks, color: "text-amber-500" },
-  { labelKey: "landing.process", icon: Repeat2, color: "text-violet-500" },
-  { labelKey: "landing.tasks", icon: CheckCircle2, color: "text-primary" },
-  { labelKey: "landing.progress", icon: Flame, color: "text-emerald-500" },
+const STATS = [
+  { icon: LayoutGrid, labelKey: "landing.statSystems" },
+  { icon: WifiOff, labelKey: "landing.statOffline" },
+  { icon: Languages, labelKey: "landing.statLangs" },
+];
+
+const STEPS = [
+  { icon: Target, titleKey: "landing.goal", descKey: "landing.flowGoalD", tone: "text-rose-500 bg-rose-500/10" },
+  { icon: ListChecks, titleKey: "landing.project", descKey: "landing.flowProjectD", tone: "text-amber-500 bg-amber-500/10" },
+  { icon: Repeat2, titleKey: "landing.process", descKey: "landing.flowProcessD", tone: "text-violet-500 bg-violet-500/10" },
+  { icon: CheckCircle2, titleKey: "landing.tasks", descKey: "landing.flowTasksD", tone: "text-primary bg-primary/10" },
+  { icon: Flame, titleKey: "landing.progress", descKey: "landing.flowProgressD", tone: "text-emerald-500 bg-emerald-500/10" },
 ];
 
 const FEATURES = [
@@ -69,6 +84,24 @@ const FEATURES = [
     titleKey: "landing.featureOfflineTitle",
     textKey: "landing.featureOfflineText",
   },
+  {
+    icon: ShieldCheck,
+    titleKey: "landing.featureSecurityTitle",
+    textKey: "landing.featureSecurityText",
+  },
+  {
+    icon: Languages,
+    titleKey: "landing.featureKhmerTitle",
+    textKey: "landing.featureKhmerText",
+  },
+];
+
+const FAQS = [
+  { q: "landing.faq1Q", a: "landing.faq1A" },
+  { q: "landing.faq2Q", a: "landing.faq2A" },
+  { q: "landing.faq3Q", a: "landing.faq3A" },
+  { q: "landing.faq4Q", a: "landing.faq4A" },
+  { q: "landing.faq5Q", a: "landing.faq5A" },
 ];
 
 export default function Landing() {
@@ -130,8 +163,10 @@ export default function Landing() {
             <span className="text-lg font-bold">{localizedSiteName || "Flowday"}</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <button type="button" onClick={() => scrollTo("features")} className="hover:text-foreground">{t("landing.navFeatures")}</button>
-            <button type="button" onClick={() => scrollTo("insights")} className="hover:text-foreground">{t("landing.navInsights")}</button>
+            <button type="button" onClick={() => scrollTo("how")} className="transition-colors hover:text-foreground">{t("landing.navHow")}</button>
+            <button type="button" onClick={() => scrollTo("features")} className="transition-colors hover:text-foreground">{t("landing.navFeatures")}</button>
+            <button type="button" onClick={() => scrollTo("insights")} className="transition-colors hover:text-foreground">{t("landing.navInsights")}</button>
+            <button type="button" onClick={() => scrollTo("faq")} className="transition-colors hover:text-foreground">{t("landing.navFaq")}</button>
           </nav>
           <div className="flex items-center gap-2">
             <Button
@@ -163,182 +198,158 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 pb-16 pt-14 md:pt-24">
+      <section className="relative overflow-hidden px-4 pb-14 pt-14 md:pb-20 md:pt-24">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -top-40 mx-auto h-96 max-w-3xl rounded-full bg-primary/15 blur-3xl"
         />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 text-center md:grid-cols-[1.1fr_.9fr] md:gap-16 md:text-left">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="md:col-start-1 md:row-start-1"
-          >
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              <Sparkles className="size-3.5" />
-              {t("landing.badge")}
-            </span>
-            <h1 className="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl">
-              {localizedHeaderTitle || t("landing.heroA")}
-            </h1>
-            <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-              {localizedHeaderSubtitle || t("landing.heroSub")}
-            </p>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row md:col-start-1 md:row-start-2 md:justify-start"
-          >
-            <Button asChild size="lg" className="h-12 rounded-2xl px-7 text-base">
-              <Link to="/register">
-                {t("landing.ctaStartFree")} <ArrowRight className="ml-1 size-4" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 rounded-2xl px-7 text-base">
-              <Link to="/auth">{t("landing.ctaSignIn")}</Link>
-            </Button>
-          </motion.div>
+        <div className="relative mx-auto max-w-6xl">
+          <div className="grid items-center gap-12 text-center md:grid-cols-[1.05fr_.95fr] md:gap-16 md:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                <Sparkles className="size-3.5" />
+                {t("landing.badge")}
+              </span>
+              <h1 className="mt-5 text-4xl font-extrabold leading-[1.08] tracking-tight md:text-6xl">
+                {localizedHeaderTitle || t("landing.heroA")}
+              </h1>
+              <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:mx-0 md:text-lg">
+                {localizedHeaderSubtitle || t("landing.heroSub")}
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row md:justify-start">
+                <Button asChild size="lg" className="h-12 rounded-2xl px-7 text-base">
+                  <Link to="/register">
+                    {t("landing.ctaStartFree")} <ArrowRight className="ml-1 size-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="h-12 rounded-2xl px-7 text-base">
+                  <Link to="/auth">{t("landing.ctaSignIn")}</Link>
+                </Button>
+              </div>
+            </motion.div>
 
-          {/* App mockup carousel */}
-          <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={mockup?.id ?? safeSlideIndex}
-            initial={{ opacity: 0, x: reduceMotion ? 0 : 28 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: reduceMotion ? 0 : -28 }}
-            transition={{ duration: 0.45, ease: "easeInOut" }}
-            className="mx-auto mt-12 max-w-md text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
-          >
-            {mockup?.imageUrl ? (
-              <img
-                src={mockup.imageUrl}
-                alt={mockup.title || "Flowday carousel slide"}
-                className="h-auto w-full"
-                loading="lazy"
-                onError={(event) => { event.currentTarget.style.display = "none"; }}
-              />
-            ) : null}
-            <div className="mt-4 flex items-center justify-center gap-1.5" aria-label="Preview slides">
-              {mergedSlides.map((slide, index) => (
-                <button
-                  key={slide.id}
-                  type="button"
-                  aria-label={`Show preview slide ${index + 1}`}
-                  aria-current={safeSlideIndex === index}
-                  onClick={() => setMockupSlide(index)}
-                  className={safeSlideIndex === index ? "h-1.5 w-6 rounded-full bg-primary" : "h-1.5 w-1.5 rounded-full bg-muted-foreground/30 transition hover:bg-primary/60"}
-                />
-              ))}
-            </div>
-          </motion.div>
-          </AnimatePresence>
+            {/* App mockup carousel */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={mockup?.id ?? safeSlideIndex}
+                initial={{ opacity: 0, x: reduceMotion ? 0 : 28 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: reduceMotion ? 0 : -28 }}
+                transition={{ duration: 0.45, ease: "easeInOut" }}
+                className="mx-auto w-full max-w-md text-left"
+              >
+                {mockup?.imageUrl ? (
+                  <img
+                    src={mockup.imageUrl}
+                    alt={mockup.title || "Flowday carousel slide"}
+                    className="h-auto w-full"
+                    loading="lazy"
+                    onError={(event) => { event.currentTarget.style.display = "none"; }}
+                  />
+                ) : null}
+                <div className="mt-4 flex items-center justify-center gap-1.5" aria-label="Preview slides">
+                  {mergedSlides.map((slide, index) => (
+                    <button
+                      key={slide.id}
+                      type="button"
+                      aria-label={`Show preview slide ${index + 1}`}
+                      aria-current={safeSlideIndex === index}
+                      onClick={() => setMockupSlide(index)}
+                      className={safeSlideIndex === index ? "h-1.5 w-6 rounded-full bg-primary" : "h-1.5 w-1.5 rounded-full bg-muted-foreground/30 transition hover:bg-primary/60"}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Quick facts strip */}
+          <div className="mt-14 grid grid-cols-1 gap-3 border-t border-border/60 pt-8 sm:grid-cols-3">
+            {STATS.map((s) => (
+              <div key={s.labelKey} className="flex items-center justify-center gap-2.5 text-sm font-medium text-muted-foreground">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <s.icon className="size-4" />
+                </span>
+                {t(s.labelKey)}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* System introduction */}
-      <section className="border-t border-border/60 bg-card/30 px-4 py-16">
+      <section className="border-t border-border/60 bg-card/30 px-4 py-20">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{t("landing.systemIntroTitle")}</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("landing.systemIntroSub")}</p>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground md:text-base">{t("landing.systemIntroSub")}</p>
           </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
             {SYSTEMS.map((system) => (
-              <div key={system.titleKey} className="card-soft rounded-2xl border border-border/70 bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/30">
-                <div className={`flex size-10 items-center justify-center rounded-xl ${system.tone}`}><system.icon className="size-5" /></div>
-                <h3 className="mt-4 text-sm font-bold">{t(system.titleKey)}</h3>
-                <p className="mt-1 min-h-10 text-xs leading-5 text-muted-foreground">{t(system.descKey)}</p>
-                <p className="mt-4 border-t border-border/60 pt-3 text-[11px] font-semibold text-primary">{t(system.metricKey)}</p>
+              <div key={system.titleKey} className="group rounded-3xl border border-border/60 bg-card p-6 transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                <div className={`flex size-12 items-center justify-center rounded-2xl ${system.tone}`}><system.icon className="size-6" /></div>
+                <h3 className="mt-5 text-base font-bold">{t(system.titleKey)}</h3>
+                <p className="mt-2 min-h-10 text-sm leading-6 text-muted-foreground">{t(system.descKey)}</p>
+                <p className="mt-5 flex items-center gap-1 border-t border-border/60 pt-4 text-xs font-semibold text-primary">
+                  {t(system.metricKey)}
+                  <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Insights */}
-      <section id="insights" className="border-t border-border/60 bg-muted/20 px-4 py-16">
-        <div className="mx-auto max-w-5xl">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{t("landing.insightsTitle")}</h2>
-            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">{t("landing.insightsSub")}</p>
-          </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            <div className="card-soft rounded-2xl border border-border/70 bg-card p-5">
-              <div className="flex items-center justify-between">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600"><BarChart3 className="size-5" /></span>
-                <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-600">+18%</span>
-              </div>
-              <p className="mt-4 text-2xl font-extrabold">86%</p>
-              <p className="text-xs text-muted-foreground">{t("landing.completion")}</p>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full w-[86%] rounded-full bg-violet-500" /></div>
-            </div>
-            <div className="card-soft rounded-2xl border border-border/70 bg-card p-5">
-              <div className="flex items-center justify-between">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><Clock3 className="size-5" /></span>
-                <span className="text-xs font-semibold text-muted-foreground">{t("landing.today")}</span>
-              </div>
-              <p className="mt-4 text-2xl font-extrabold">4h 20m</p>
-              <p className="text-xs text-muted-foreground">{t("landing.focusPlanned")}</p>
-              <div className="mt-4 flex gap-1">{[40, 65, 45, 80, 55, 90, 70].map((height, i) => <span key={i} className="flex-1 rounded-full bg-amber-500/70" style={{ height: `${height / 4}px` }} />)}</div>
-            </div>
-            <div className="card-soft rounded-2xl border border-border/70 bg-card p-5">
-              <div className="flex items-center justify-between">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><TrendingUp className="size-5" /></span>
-                <span className="text-xs font-semibold text-emerald-600">{t("landing.onTrack")}</span>
-              </div>
-              <p className="mt-4 text-2xl font-extrabold">12 days</p>
-              <p className="text-xs text-muted-foreground">{t("landing.habitStreak")}</p>
-              <div className="mt-4 flex -space-x-1.5">{dayLetters.map((day, i) => <span key={i} className="flex size-6 items-center justify-center rounded-full border-2 border-card bg-emerald-500 text-[9px] font-bold text-white">{day}</span>)}</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Flow */}
-      <section id="flow" className="border-t border-border/60 bg-muted/30 px-4 py-16">
+      {/* How it works — numbered flow */}
+      <section id="how" className="scroll-mt-20 border-t border-border/60 px-4 py-20">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-2xl font-bold tracking-tight md:text-3xl">
             {t("landing.flowTitle")}
           </h2>
-          <p className="mx-auto mt-2 max-w-lg text-center text-sm text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-lg text-center text-sm text-muted-foreground md:text-base">
             {t("landing.flowSub")}
           </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-2 md:gap-3">
-            {FLOW.map((f, i) => (
-              <div key={f.labelKey} className="flex items-center gap-2 md:gap-3">
-                <div className="card-soft flex items-center gap-2 rounded-2xl border border-border/70 bg-card px-4 py-3">
-                  <f.icon className={`size-5 ${f.color}`} />
-                  <span className="text-sm font-semibold">{t(f.labelKey)}</span>
+          <ol className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4">
+            {STEPS.map((step, i) => (
+              <li key={step.titleKey} className="relative flex flex-col items-center text-center lg:items-start lg:text-left">
+                <div className="flex items-center gap-3">
+                  <span className={`relative flex size-11 shrink-0 items-center justify-center rounded-2xl ${step.tone}`}>
+                    <step.icon className="size-5" />
+                    <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background">
+                      {i + 1}
+                    </span>
+                  </span>
+                  <span className="hidden h-px flex-1 bg-border lg:block" aria-hidden />
                 </div>
-                {i < FLOW.length - 1 && (
-                  <ArrowRight className="size-4 text-muted-foreground/50" />
-                )}
-              </div>
+                <h3 className="mt-4 text-sm font-bold">{t(step.titleKey)}</h3>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{t(step.descKey)}</p>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
       {/* Features */}
-      <section id="features" className="px-4 py-16">
+      <section id="features" className="scroll-mt-20 border-t border-border/60 bg-card/30 px-4 py-20">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-2xl font-bold tracking-tight md:text-3xl">
             {t("landing.featuresTitle")}
           </h2>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map((f) => (
               <div
                 key={f.titleKey}
-                className="card-soft rounded-2xl border border-border/70 bg-card p-5 transition-transform hover:-translate-y-0.5"
+                className="rounded-3xl border border-border/60 bg-card p-5 transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
               >
                 <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <f.icon className="size-5" />
                 </div>
-                <h3 className="mt-3 text-sm font-bold">{t(f.titleKey)}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                <h3 className="mt-4 text-sm font-bold">{t(f.titleKey)}</h3>
+                <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
                   {t(f.textKey)}
                 </p>
               </div>
@@ -347,16 +358,81 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Insights */}
+      <section id="insights" className="scroll-mt-20 border-t border-border/60 px-4 py-20">
+        <div className="mx-auto max-w-5xl">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{t("landing.insightsTitle")}</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground md:text-base">{t("landing.insightsSub")}</p>
+          </div>
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl border border-border/60 bg-card p-6">
+              <div className="flex items-center justify-between">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600"><BarChart3 className="size-5" /></span>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-600">+18%</span>
+              </div>
+              <p className="mt-5 text-3xl font-extrabold tracking-tight">86%</p>
+              <p className="text-xs text-muted-foreground">{t("landing.completion")}</p>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full w-[86%] rounded-full bg-violet-500" /></div>
+            </div>
+            <div className="rounded-3xl border border-border/60 bg-card p-6">
+              <div className="flex items-center justify-between">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><Clock3 className="size-5" /></span>
+                <span className="text-xs font-semibold text-muted-foreground">{t("landing.today")}</span>
+              </div>
+              <p className="mt-5 text-3xl font-extrabold tracking-tight">4h 20m</p>
+              <p className="text-xs text-muted-foreground">{t("landing.focusPlanned")}</p>
+              <div className="mt-4 flex h-8 items-end gap-1">{[40, 65, 45, 80, 55, 90, 70].map((height, i) => <span key={i} className="flex-1 rounded-full bg-amber-500/70" style={{ height: `${height}%` }} />)}</div>
+            </div>
+            <div className="rounded-3xl border border-border/60 bg-card p-6">
+              <div className="flex items-center justify-between">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><TrendingUp className="size-5" /></span>
+                <span className="text-xs font-semibold text-emerald-600">{t("landing.onTrack")}</span>
+              </div>
+              <p className="mt-5 text-3xl font-extrabold tracking-tight">12</p>
+              <p className="text-xs text-muted-foreground">{t("landing.habitStreak")}</p>
+              <div className="mt-4 flex -space-x-1.5">{dayLetters.map((day, i) => <span key={i} className="flex size-6 items-center justify-center rounded-full border-2 border-card bg-emerald-500 text-[9px] font-bold text-white">{day}</span>)}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="scroll-mt-20 border-t border-border/60 bg-card/30 px-4 py-20">
+        <div className="mx-auto max-w-2xl">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{t("landing.faqTitle")}</h2>
+            <p className="mt-3 text-sm text-muted-foreground md:text-base">{t("landing.faqSub")}</p>
+          </div>
+          <Accordion type="single" collapsible className="mt-10 space-y-3">
+            {FAQS.map((faq, i) => (
+              <AccordionItem
+                key={faq.q}
+                value={`faq-${i}`}
+                className="rounded-2xl border border-border/60 bg-card px-5 last:border-b"
+              >
+                <AccordionTrigger className="text-left text-sm font-bold hover:no-underline">
+                  {t(faq.q)}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm leading-6 text-muted-foreground">
+                  {t(faq.a)}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
       {/* CTA */}
-      <section className="px-4 pb-20">
-        <div className="card-soft mx-auto max-w-3xl rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 text-center md:p-12">
+      <section className="px-4 py-20">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 text-center md:p-12">
           <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
             {t("landing.ctaTitle")}
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground md:text-base">
             {t("landing.ctaSub")}
           </p>
-          <Button asChild size="lg" className="mt-6 h-12 rounded-2xl px-8 text-base">
+          <Button asChild size="lg" className="mt-7 h-12 rounded-2xl px-8 text-base">
             <Link to={isAuthenticated ? "/select-system" : "/register"}>
               {isAuthenticated ? t("landing.ctaOpen") : t("landing.ctaButton")}{" "}
               <ArrowRight className="ml-1 size-4" />
