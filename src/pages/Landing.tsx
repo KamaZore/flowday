@@ -254,17 +254,15 @@ export default function Landing() {
             transition={{ duration: 0.45, ease: "easeInOut" }}
             className="mx-auto mt-12 max-w-md text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
           >
-            <div className="overflow-hidden rounded-xl">
-              {mockup?.imageUrl ? (
-                <img
-                  src={mockup.imageUrl}
-                  alt={mockup.title || "Flowday carousel slide"}
-                  className="aspect-[4/3] w-full object-cover"
-                  loading="lazy"
-                  onError={(event) => { event.currentTarget.style.display = "none"; }}
-                />
-              ) : null}
-            </div>
+            {mockup?.imageUrl ? (
+              <img
+                src={mockup.imageUrl}
+                alt={mockup.title || "Flowday carousel slide"}
+                className="h-auto w-full"
+                loading="lazy"
+                onError={(event) => { event.currentTarget.style.display = "none"; }}
+              />
+            ) : null}
             <div className="mt-4 flex items-center justify-center gap-1.5" aria-label="Preview slides">
               {mergedSlides.map((slide, index) => (
                 <button
