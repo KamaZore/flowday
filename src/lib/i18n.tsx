@@ -329,6 +329,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "auth.createBtn": "Create account",
     "auth.signingIn": "Signing in…",
     "auth.verifyHuman": "Verifying you're human…",
+    "auth.errCaptcha": "Verification failed — please try again.",
     "auth.creating": "Creating account…",
     "auth.emailInvalid": "Enter a valid email address",
     "auth.errInvalid": "Wrong email or password",
@@ -814,6 +815,7 @@ const dict: Record<Lang, Record<string, string>> = {
   },
 
   km: {
+    "auth.errCaptcha": "ការផ្ទៀងផ្ទាត់បរាជ័យ — សូមព្យាយាមម្តងទៀត។",
     "landing.featureSecurityTitle": "សុវត្ថិភាពល្អបំផុត",
     "landing.featureSecurityText": "គណនីរបស់អ្នកត្រូវបានការពារដោយពាក្យសម្ងាត់ bcrypt HTTPS គ្រប់ទីកន្លែង និងការការពារ bot Cloudflare Turnstile នៅពេលចូល។",
     "landing.featureKhmerTitle": "បង្កើតសម្រាប់កម្ពុជា",

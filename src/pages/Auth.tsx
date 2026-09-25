@@ -51,10 +51,14 @@ function AuthInner() {
     }
     setBusy(true);
     try {
-      await signIn(email, password);
+      await signIn(email, password, tsToken);
       // Auth state flip navigates via the effect above.
-    } catch {
-      setError(t("auth.errInvalid"));
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message === "captcha"
+          ? t("auth.errCaptcha")
+          : t("auth.errInvalid"),
+      );
     } finally {
       setBusy(false);
     }

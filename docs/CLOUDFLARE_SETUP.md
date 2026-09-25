@@ -1,115 +1,127 @@
 # Cloudflare Setup — flowday.com
 
-Two independent things Cloudflare provides for Flowday:
+This project integrates Cloudflare in three layers:
 
-1. **DNS / custom domain** — serve the site at `https://flowday.com` instead of `kamazore.github.io/my-life-flow`
-2. **Turnstile** — bot protection on login / registration (already wired in code)
+1. **DNS + CDN/WAF** — `https://flowday.com` served from GitHub Pages behind Cloudflare
+2. **Turnstile** — invisible bot protection on `/auth` and `/register`
+3. **Verify Worker** — server-side token verification (real enforcement, secret key never in the browser)
 
----
-
-## Part 1 — Fix "Invalid nameservers" and point flowday.com at GitHub Pages
-
-Your Cloudflare dashboard shows **Invalid nameservers** because your registrar
-(currently `ns1.adman.com` / `ns2.adman.com`) has not been switched over yet.
-Nameserver changes take 5 minutes – 24 h to propagate (Cloudflare re-checks
-automatically every few hours; you can also click **Check nameservers now**).
-
-### Step 1 — Change nameservers at your registrar
-
-1. Log into the account where you bought `flowday.com` (ICANN Lookup →
-   https://lookup.icann.org shows your registrar if unsure).
-2. Open the domain's **DNS / Nameservers** settings.
-3. Replace the existing nameservers with the two Cloudflare assigned you:
-
-   - `adrian.ns.cloudflare.com`
-   - `denver.ns.cloudflare.com`
-
-4. Delete the old ones (`ns1.adman.com`, `ns2.adman.com`) and save.
-5. Back in Cloudflare: **flowday.com → Check nameservers now**. Status flips to
-   **Active** when done.
-
-### Step 2 — Add the DNS records in Cloudflare (once Active)
-
-Cloudflare → flowday.com → **DNS → Records**. Add:
-
-| Type  | Name | Content                            | Proxy                |
-| ----- | ---- | ---------------------------------- | -------------------- |
-| A     | `@`  | `185.199.108.153`                  | Proxied (orange ☁️)  |
-| A     | `@`  | `185.199.109.153`                  | Proxied (orange ☁️)  |
-| A     | `@`  | `185.199.110.153`                  | Proxied (orange ☁️)  |
-| A     | `@`  | `185.199.111.153`                  | Proxied (orange ☁️)  |
-| CNAME | `www` | `kamazore.github.io`              | Proxied (orange ☁️)  |
-
-> The four A records are GitHub Pages' apex-domain IPs.
-> **Note:** with the orange-cloud proxy on, Cloudflare hides GitHub behind its
-> own IPs — HTTPS still works because Cloudflare terminates TLS.
-
-### Step 3 — Add the custom domain in GitHub
-
-1. Repo **KamaZore/my-life-flow → Settings → Pages**.
-2. Under **Custom domain**, enter `flowday.com` → **Save**.
-3. Wait for the DNS check ✓ (this repo ships a `public/CNAME` file containing
-   `flowday.com`, so the setting survives every deploy).
-4. Once verified, enable **Enforce HTTPS**.
-
-### Step 4 — Done
-
-- https://flowday.com → Flowday
-- https://www.flowday.com → Flowday (redirects/apex per DNS)
-- `kamazore.github.io/my-life-flow/` keeps working too.
-- Only hash-router URLs change form (`flowday.com/#/life/today` — same as now,
-  shorter host).
+All frontend code is already wired (`Turnstile.tsx`, `turnstile-verify.ts`,
+`use-auth.tsx`, deploy workflow). What remains is dashboard/account setup.
 
 ---
 
-## Part 2 — Turnstile (bot protection on login/register)
+## Part 1 — DNS: point flowday.com at GitHub Pages
 
-The widget is already integrated:
+### 1.1 Fix "Invalid nameservers"
 
-- `src/components/app/Turnstile.tsx` — invisible widget wrapper. Renders
-  nothing until a site key is configured, so the app never breaks without it.
-- `src/pages/Auth.tsx` / `src/pages/Register.tsx` — blocks submit until a
-  human-verification token exists.
-- `.github/workflows/deploy.yml` — injects `VITE_TURNSTILE_SITE_KEY` at build.
+At your registrar, replace `ns1.adman.com` / `ns2.adman.com` with the two
+Cloudflare nameservers shown when you added the site
+(`adrian.ns.cloudflare.com`, `denver.ns.cloudflare.com`). Cloudflare status
+flips to **Active** within 5 min – 24 h (**Check nameservers now**).
 
-> **Honest limitation:** GitHub Pages is static — there is no server to call
-> Cloudflare's `siteverify` API. The token is verified client-side by the
-> widget itself, which stops naive scripted signups but not a determined
-> attacker who bypasses the browser. For real enforcement, run a tiny
-> Cloudflare Worker (`flowday.com/api/verify-turnstile`) that POSTs the token +
-> `TURNSTILE_SECRET_KEY` to `https://challenges.cloudflare.com/turnstile/v0/siteverify`,
-> then verify inside `signIn`/`signUp` (in `src/hooks/use-auth.tsx`) before
-> hitting Neon. Ask and it can be added.
+### 1.2 DNS records (once Active)
 
-### Activate it (5 minutes)
+| Type | Name | Content | Proxy |
+|------|------|---------|-------|
+| A | `@` | `185.199.108.153` | DNS only first |
+| A | `@` | `185.199.109.153` | DNS only first |
+| A | `@` | `185.199.110.153` | DNS only first |
+| A | `@` | `185.199.111.153` | DNS only first |
+| CNAME | `www` | `kamazore.github.io` | DNS only first |
 
-1. Cloudflare dashboard → **Turnstile** → **Add site**.
-2. Domain: `flowday.com` (add `kamazore.github.io` + `localhost` too for dev).
-3. Widget mode: **Invisible** (matches the code). Copy the **Site Key**.
-4. Add the secret to GitHub: repo **Settings → Secrets and variables →
-   Actions → New repository secret**
-   - Name: `VITE_TURNSTILE_SITE_KEY`
-   - Value: *(the site key — this one is public by design, safe to embed)*
-5. Keep the **Secret Key** private in your Cloudflare account (only needed if
-   you later add the Worker verification above).
-6. Push to `main` — the next Pages build bakes the key in and the widget goes
-   live on /auth and /register.
+Grey cloud first so GitHub can verify the domain and issue its certificate.
 
-### Local development
+### 1.3 GitHub Pages
+
+Repo **Settings → Pages → Custom domain** → `flowday.com` → Save
+(the repo already contains `public/CNAME`). When the ✓ appears, enable
+**Enforce HTTPS**. Confirm `https://flowday.com` loads the app.
+
+### 1.4 Security settings
+
+| Where | Setting | Value |
+|---|---|---|
+| SSL/TLS → Overview | Encryption mode | **Full** |
+| SSL/TLS → Edge Certificates | Always Use HTTPS | **ON** |
+| Security → Bots | Bot Fight Mode | **ON** |
+| Security → WAF | Cloudflare Free Managed Ruleset | **ON** |
+| DNS | Switch all 5 records | **Proxied (orange)** |
+
+---
+
+## Part 2 — Turnstile keys
+
+1. Dashboard → **Turnstile → Add site**
+2. Domains: `flowday.com`, `kamazore.github.io`, `localhost`
+3. Widget type: **Invisible** (matches the code)
+4. You get two keys — they go to different places:
+
+| Key | Where it goes |
+|-----|---------------|
+| **Site Key** (public by design) | Project **Keys/API keys tab** as `VITE_TURNSTILE_SITE_KEY` — and/or GitHub Actions secret of the same name so Pages builds bake it in |
+| **Secret Key** (must stay server-side) | The Worker only (step 3.2). Never in `VITE_*` vars, never in the repo |
+
+After adding the site key, `/auth` and `/register` show the invisible widget
+and block submit until a human token exists.
+
+---
+
+## Part 3 — Verify Worker (server-side enforcement)
+
+### 3.1 Deploy
 
 ```bash
-# .env.local (never committed)
-VITE_TURNSTILE_SITE_KEY=0x4AAAAAAA_xxxxxxxx
+cd workers/turnstile-verify
+npm install
+npx wrangler login
+npx wrangler secret put TURNSTILE_SECRET_KEY   # paste the Turnstile SECRET key
+npx wrangler deploy
+```
+
+Wrangler prints the URL:
+`https://flowday-turnstile-verify.<account>.workers.dev`
+
+Sanity check: `curl https://flowday-turnstile-verify.<account>.workers.dev/health`
+→ `{"ok":true}`
+
+Optional (after flowday.com is proxied): uncomment the `routes` block in
+`wrangler.toml` and redeploy to serve it at
+`https://flowday.com/api/verify-turnstile`.
+
+### 3.2 Connect the app
+
+Project **Keys/API keys tab** → add:
+
+| Key | Value |
+|-----|-------|
+| `VITE_TURNSTILE_VERIFY_URL` | the Worker URL from 3.1 |
+
+When set, `signIn`/`signUp` POST the widget token to the Worker; failed
+tokens are rejected **before** touching the database. When unset, the app
+falls back to widget-only verification and never breaks.
+
+### 3.3 How verification flows
+
+```
+Browser: Turnstile widget issues token (tsToken)
+  → signIn/signUp(..., tsToken)
+  → verifyTurnstileToken()  POST { token } → Worker
+  → Worker: siteverify(secret, token)      [secret stays here]
+  → success:true → continue to bcrypt + Neon
+  → success:false → "Verification failed" error, DB untouched
 ```
 
 ---
 
-## Security status after this setup
+## Keys/API keys tab — exact entries
 
-| Layer                          | Status                                        |
-| ------------------------------ | --------------------------------------------- |
-| Password storage               | bcrypt (10 rounds) in Neon Postgres           |
-| Transport                      | HTTPS via Cloudflare + GitHub Pages           |
-| Bot protection on auth forms   | Turnstile invisible widget (client-side)      |
-| WAF / DDoS / cache             | Cloudflare proxy on flowday.com               |
-| Server-side token verification | Needs a Worker (documented above)             |
+| Name | Value | Notes |
+|------|-------|-------|
+| `VITE_TURNSTILE_SITE_KEY` | Turnstile **Site Key** (`0x4AAA…`) | Public widget key; also add as GitHub Actions secret for production builds |
+| `VITE_TURNSTILE_VERIFY_URL` | `https://flowday-turnstile-verify.<account>.workers.dev` | Only after deploying the Worker (Part 3) |
+| `TURNSTILE_SECRET_KEY` | *(not in this tab)* | Set via `wrangler secret put` — Worker-side only |
+
+Note: `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ZONE_ID` (account-level API keys)
+are **not** needed by this app — DNS/security are configured in the
+dashboard, and the Worker only holds the Turnstile secret.

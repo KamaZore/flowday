@@ -57,14 +57,16 @@ function RegisterInner() {
     }
     setBusy(true);
     try {
-      await signUp(name, email, password);
+      await signUp(name, email, password, tsToken);
       // Auth state flip navigates via the effect above.
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(
-        /exists/i.test(msg)
-          ? t("auth.errExists")
-          : t("auth.errGeneric"),
+        msg === "captcha"
+          ? t("auth.errCaptcha")
+          : /exists/i.test(msg)
+            ? t("auth.errExists")
+            : t("auth.errGeneric"),
       );
     } finally {
       setBusy(false);

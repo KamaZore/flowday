@@ -21,6 +21,7 @@ import {
   uid,
   writeSession,
 } from "@/lib/store";
+import { verifyTurnstileToken } from "@/lib/turnstile-verify";
 import { effectivePerms } from "@/lib/superadmin";
 
 /**
@@ -43,8 +44,8 @@ export type AuthContextValue = {
   user: AppUser | null;
   isSuperAdmin: boolean;
   can: (system: keyof SystemPerms) => boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (name: string, email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, turnstileToken?: string | null) => Promise<void>;
+  signUp: (name: string, email: string, password: string, turnstileToken?: string | null) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -73,9 +74,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = Boolean(session);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string, turnstileToken?: string | null) => {
     setIsLoading(true);
     try {
+      // Cloudflare Turnstile server verification (Worker-backed when the
+      // verify URL is configured). A failed token blocks the auth attempt
+      // before any database call.
+      const human = await verifyTurnstileToken(turnstileToken);
+      if (!human) throw new Error("captcha");
       const normalized = email.trim().toLowerCase();
       const row = await getAuthRow(normalized);
       if (!row) throw new Error("invalid");
@@ -97,9 +103,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = useCallback(
-    async (name: string, email: string, password: string) => {
+    async (name: string, email: string, password: string, turnstileToken?: string | null) => {
       setIsLoading(true);
       try {
+        const human = await verifyTurnstileToken(turnstileToken);
+        if (!human) throw new Error("captcha");
         const normalized = email.trim().toLowerCase();
         const existing = await findUserByEmail(normalized);
         if (existing) throw new Error("exists");
