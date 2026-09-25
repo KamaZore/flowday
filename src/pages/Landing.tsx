@@ -86,51 +86,9 @@ export default function Landing() {
   const localizedHeaderTitle = lang === "km" ? siteContent.headerTitleKm : siteContent.headerTitle;
   const localizedHeaderSubtitle = lang === "km" ? siteContent.headerSubtitleKm : siteContent.headerSubtitle;
   const dayLetters = lang === "km" ? ["ច", "អ", "ព", "ព", "ព្រ", "ស", "ស"] : ["M", "T", "W", "T", "F", "S", "S"];
-  const mockupSlides = [
-    {
-      header: t("landing.goodMorning"),
-      progress: "80%",
-      focus: "2h 40m",
-      next: "3:30 PM",
-      week: "+18%",
-      streak: t("landing.exerciseStreak"),
-      rows: [
-        { label: t("landing.finishOutline"), done: false, chip: t("landing.personalWebsite") },
-        { label: t("landing.runMinutes"), done: true, chip: t("landing.fitness") },
-        { label: t("landing.readPages"), done: false, chip: null },
-      ],
-    },
-    {
-      header: t("system.expense.name"),
-      progress: "64%",
-      focus: "1h 55m",
-      next: "5:00 PM",
-      week: "+11%",
-      streak: t("landing.habitStreak"),
-      rows: [
-        { label: t("exp.totalIncome"), done: true, chip: lang === "km" ? "ចំណូលរកបាន" : t("exp.type.income") },
-        { label: t("exp.totalExpense"), done: true, chip: lang === "km" ? "ចំណាយ" : t("exp.type.expense") },
-        { label: t("exp.balance"), done: false, chip: t("exp.chart.categories") },
-      ],
-    },
-    {
-      header: t("system.business.name"),
-      progress: "92%",
-      focus: "3h 20m",
-      next: "Tomorrow",
-      week: "+24%",
-      streak: t("landing.onTrack"),
-      rows: [
-        { label: t("biz.revenue"), done: true, chip: t("biz.todaySales") },
-        { label: t("biz.totalProducts"), done: true, chip: t("biz.lowStock") },
-        { label: t("biz.profit"), done: false, chip: t("biz.netProfit") },
-      ],
-    },
-  ];
   const activeSlides: CarouselSlide[] = siteContent.slides.filter((slide) => slide.enabled);
   const publicSlides = activeSlides.length > 0 ? activeSlides : siteContent.slides;
-  const mergedSlides = publicSlides.map((slide, index) => ({
-    ...mockupSlides[index % mockupSlides.length],
+  const mergedSlides = publicSlides.map((slide) => ({
     ...slide,
     id: slide.id,
     title: lang === "km" ? slide.titleKm || slide.title : slide.title,
