@@ -252,9 +252,9 @@ export default function Landing() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: reduceMotion ? 0 : -28 }}
             transition={{ duration: 0.45, ease: "easeInOut" }}
-            className="card-soft mx-auto mt-12 max-w-md rounded-[4px] border border-border/70 bg-card p-4 text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
+            className="mx-auto mt-12 max-w-md text-left md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:w-full"
           >
-            <div className="overflow-hidden rounded-xl border border-border/60 bg-muted">
+            <div className="overflow-hidden rounded-xl">
               {mockup?.imageUrl ? (
                 <img
                   src={mockup.imageUrl}
