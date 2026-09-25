@@ -129,7 +129,7 @@ export default function ExpenseTransactions() {
       {/* Filters — stack on narrow phones, 3-up from sm */}
       <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
         <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
-          <SelectTrigger className="h-9 rounded-xl text-xs">
+          <SelectTrigger className="h-9 min-w-0 rounded-xl text-xs [&>span]:truncate">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -139,7 +139,7 @@ export default function ExpenseTransactions() {
           </SelectContent>
         </Select>
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="h-9 rounded-xl text-xs">
+          <SelectTrigger className="h-9 min-w-0 rounded-xl text-xs [&>span]:truncate">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -152,7 +152,7 @@ export default function ExpenseTransactions() {
           </SelectContent>
         </Select>
         <Select value={method} onValueChange={setMethod}>
-          <SelectTrigger className="h-9 rounded-xl text-xs">
+          <SelectTrigger className="h-9 min-w-0 rounded-xl text-xs [&>span]:truncate">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
