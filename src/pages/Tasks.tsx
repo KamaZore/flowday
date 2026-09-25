@@ -172,7 +172,7 @@ export default function Tasks() {
       </div>
 
       {/* Filters */}
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+      <div className="no-scrollbar -mx-2 flex gap-2 overflow-x-auto px-2 pb-1">
         {chip("all", t("filter.all"))}
         {chip("today", t("filter.today"))}
         {chip("upcoming", t("filter.upcoming"))}

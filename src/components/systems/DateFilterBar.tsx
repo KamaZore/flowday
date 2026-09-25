@@ -43,8 +43,8 @@ export function DateFilterBar({
 
   return (
     <div className="space-y-2">
-      <div className="-mx-4 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-        <div className="flex w-max gap-1.5 md:w-auto md:flex-wrap">
+      <div className="-mx-2 overflow-x-auto px-2 pb-1 md:mx-0 md:px-0">
+        <div className="flex w-max gap-2 md:w-auto md:flex-wrap">
           {kinds.map((k) => (
             <Button
               key={k}
