@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { TurnstileWidget, turnstileEnabled } from "@/components/app/Turnstile";
 import { OfflineBanner } from "@/components/app/OfflineBanner";
 import { hasDb } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
@@ -33,6 +34,7 @@ function RegisterInner() {
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tsToken, setTsToken] = useState<string | null>(null);
 
   // Already signed in (e.g. revisiting /register) → straight to the app.
   useEffect(() => {
@@ -43,6 +45,12 @@ function RegisterInner() {
     e.preventDefault();
     if (busy) return;
     setError(null);
+    // Cloudflare Turnstile: when the site key is configured, a fresh token
+    // must exist before the registration request is allowed through.
+    if (turnstileEnabled() && !tsToken) {
+      setError(t("auth.verifyHuman"));
+      return;
+    }
     if (password.length < 8) {
       setError(t("auth.passwordHint"));
       return;
@@ -150,6 +158,8 @@ function RegisterInner() {
               {error}
             </p>
           )}
+
+          <TurnstileWidget onToken={setTsToken} />
 
           <Button type="submit" className="h-10 w-full rounded-xl" disabled={busy}>
             {busy ? (

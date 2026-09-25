@@ -30,6 +30,7 @@ jobs:
       - name: Build (relative base for GitHub Pages)
         env:
           VITE_NEON_DATABASE_URL: ${{ secrets.VITE_NEON_DATABASE_URL }}
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.VITE_TURNSTILE_SITE_KEY }}
         run: bun run build:pages
 
       - name: Upload artifact

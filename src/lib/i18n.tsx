@@ -328,6 +328,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "auth.signInBtn": "Sign in",
     "auth.createBtn": "Create account",
     "auth.signingIn": "Signing in…",
+    "auth.verifyHuman": "Verifying you're human…",
     "auth.creating": "Creating account…",
     "auth.emailInvalid": "Enter a valid email address",
     "auth.errInvalid": "Wrong email or password",
@@ -788,6 +789,7 @@ const dict: Record<Lang, Record<string, string>> = {
   },
 
   km: {
+    "auth.verifyHuman": "កំពុងផ្ទៀងផ្ទាត់ថាអ្នកមិនមែនជាកុំព្យូទ័រ…",
     "install.unavailable": "មិនទាន់អាចដំឡើងបាននៅក្នុងកម្មវិធីរុកនេះទេ។ សូមព្យាយាមម្តងទៀតពីទំព័រចម្បងរបស់កម្មវិធីរុក។",
     "sa.controlCenter": "ម៉ាស៊ីនត្រុងការត្រូវបានគ្រប់គ្រង",
     "sa.menuUsers": "អ្នកប្រើ និងសិទ្ធិ",
