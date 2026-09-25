@@ -414,7 +414,7 @@ export default function Landing() {
       </section>
 
       <footer className="border-t border-border/60 px-4 py-8 text-center text-xs text-muted-foreground">
-        {t("landing.footer")}
+        {lang === "km" ? "Flowday — ថ្ងៃរបស់អ្នក ជាលំហូរ។ បង្កើតដោយ Roeung Nak។" : t("landing.footer")}
       </footer>
     </div>
   );
