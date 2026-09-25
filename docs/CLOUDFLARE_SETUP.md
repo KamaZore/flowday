@@ -1,8 +1,8 @@
-# Cloudflare Setup — flowday.com
+# Cloudflare Setup — flowdaykh.com
 
 This project integrates Cloudflare in three layers:
 
-1. **DNS + CDN/WAF** — `https://flowday.com` served from GitHub Pages behind Cloudflare
+1. **DNS + CDN/WAF** — `https://flowdaykh.com` served from GitHub Pages behind Cloudflare
 2. **Turnstile** — invisible bot protection on `/auth` and `/register`
 3. **Verify Worker** — server-side token verification (real enforcement, secret key never in the browser)
 
@@ -15,10 +15,11 @@ All frontend code is already wired (`Turnstile.tsx`, `turnstile-verify.ts`,
 
 ### 1.1 Fix "Invalid nameservers"
 
-At your registrar, replace `ns1.adman.com` / `ns2.adman.com` with the two
-Cloudflare nameservers shown when you added the site
-(`adrian.ns.cloudflare.com`, `denver.ns.cloudflare.com`). Cloudflare status
-flips to **Active** within 5 min – 24 h (**Check nameservers now**).
+At your registrar, replace the current nameservers with the two
+Cloudflare nameservers shown on the zone's Overview page
+(e.g. `dante.ns.cloudflare.com`, `elisa.ns.cloudflare.com` — use exactly the
+pair Cloudflare assigns). Cloudflare status flips to **Active** within
+5 min – 24 h (**Check nameservers now**).
 
 ### 1.2 DNS records (once Active)
 
@@ -34,9 +35,9 @@ Grey cloud first so GitHub can verify the domain and issue its certificate.
 
 ### 1.3 GitHub Pages
 
-Repo **Settings → Pages → Custom domain** → `flowday.com` → Save
+Repo **Settings → Pages → Custom domain** → `flowdaykh.com` → Save
 (the repo already contains `public/CNAME`). When the ✓ appears, enable
-**Enforce HTTPS**. Confirm `https://flowday.com` loads the app.
+**Enforce HTTPS**. Confirm `https://flowdaykh.com` loads the app.
 
 ### 1.4 Security settings
 
@@ -53,7 +54,7 @@ Repo **Settings → Pages → Custom domain** → `flowday.com` → Save
 ## Part 2 — Turnstile keys
 
 1. Dashboard → **Turnstile → Add site**
-2. Domains: `flowday.com`, `kamazore.github.io`, `localhost`
+2. Domains: `flowdaykh.com`, `kamazore.github.io`, `localhost`
 3. Widget type: **Invisible** (matches the code)
 4. You get two keys — they go to different places:
 
@@ -85,7 +86,7 @@ Wrangler prints the URL:
 Sanity check: `curl https://flowday-turnstile-verify.<account>.workers.dev/health`
 → `{"ok":true}`
 
-Optional (after flowday.com is proxied): uncomment the `routes` block in
+Optional (after flowdaykh.com is proxied): uncomment the `routes` block in
 `wrangler.toml` and redeploy to serve it at
 `https://flowday.com/api/verify-turnstile`.
 

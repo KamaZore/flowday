@@ -5,10 +5,10 @@ compatibility_date = "2026-09-01"
 # The secret key is stored with: npx wrangler secret put TURNSTILE_SECRET_KEY
 # No vars are needed here — everything else is in code.
 
-# Optional: add a route once flowday.com is proxied (orange cloud) in
+# Optional: add a route once flowdaykh.com is proxied (orange cloud) in
 # Cloudflare, e.g.:
 # routes = [
-#   { pattern = "flowday.com/api/verify-turnstile", zone_name = "flowday.com" }
+#   { pattern = "flowdaykh.com/api/verify-turnstile", zone_name = "flowdaykh.com" }
 # ]
 # Until then the Worker is reachable at
 # https://flowday-turnstile-verify.<your-subdomain>.workers.dev
